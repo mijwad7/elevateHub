@@ -1,0 +1,17 @@
+{% extends './base_template.html' %}
+
+{% block content %}
+  <h1 class="mb-4">{% if form.instance.pk %}Edit{% else %}Create{% endif %} User</h1>
+
+  <form method="post" class="mb-4">
+    {% csrf_token %}
+    <div class="mb-3">
+      {{ form.as_p }}
+    </div>
+    <button type="submit" class="btn btn-primary">
+      {% if form.instance.pk %}Update{% else %}Create{% endif %}
+    </button>
+  </form>
+
+  <a href="{% url 'user_list' %}" class="btn btn-secondary">Back to user list</a>
+{% endblock %}
