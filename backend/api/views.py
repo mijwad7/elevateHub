@@ -2,12 +2,13 @@ from django.contrib.auth.models import User
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import generics, permissions
-from .serializers import UserSerializer
+from .serializers import UserSerializer, DiscussionSerializer, DiscussionPostSerializer
 from rest_framework.permissions import AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import CustomUser
+from .models import CustomUser, Discussion, DiscussionPost
+
 
 
 # ✅ Custom serializer to include user details in login response
@@ -75,3 +76,33 @@ class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAdminUser]
+
+class DiscussionListCreateView(generics.ListCreateAPIView):
+    queryset = Discussion.objects.all()
+    serializer_class = DiscussionSerializer
+
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+class DiscussionDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Discussion.objects.all()
+    serializer_class = DiscussionSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+class DiscussionPostListCreateView(generics.ListCreateAPIView):
+    serializer_class = DiscussionPostSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        discussion_id = self.kwargs.get('discussion_id')
+        return DiscussionPost.objects.filter(discussion_id=discussion_id).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class DiscussionPostDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = DiscussionPost.objects.all()
+    serializer_class = DiscussionPostSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]

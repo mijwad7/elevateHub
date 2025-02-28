@@ -1,5 +1,29 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.conf import settings
 
 class CustomUser(AbstractUser):
     profile_image = models.ImageField(upload_to="profile_images/", blank=True, null=True)
+
+class Discussion(models.Model):
+    title = models.CharField(max_length=255)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="discussions")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    total_posts = models.IntegerField(default=0)  # Can be updated via signals or manually
+
+    def __str__(self):
+        return self.title
+
+class DiscussionPost(models.Model):
+    discussion = models.ForeignKey(Discussion, on_delete=models.CASCADE, related_name="posts")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="discussion_posts")
+    content = models.TextField()
+    upvotes = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Post by {self.user.username} in {self.discussion.title}"
+
+
+
