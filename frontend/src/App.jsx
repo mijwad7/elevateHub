@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Home from './pages/Home'
+import Discussions from './pages/Discussions'
 import NotFound from './pages/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
 import "./App.css"
@@ -36,6 +37,7 @@ function App() {
           <Route path="/logout" element={<Logout />} />
           <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/discussions" element={<ProtectedRoute><Discussions /></ProtectedRoute>} />
           <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
           <Route path="/admin/create" element={<AdminProtectedRoute><CreateUser /></AdminProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
