@@ -24,7 +24,15 @@ class DiscussionSerializer(serializers.ModelSerializer):
 
 class DiscussionPostSerializer(serializers.ModelSerializer):
     user_username = serializers.ReadOnlyField(source='user.username')
+    has_upvoted = serializers.SerializerMethodField()
 
     class Meta:
         model = DiscussionPost
-        fields = ['id', 'discussion', 'user', 'user_username', 'content', 'upvotes', 'created_at']
+        fields = ['id', 'discussion', 'user', 'user_username', 'content', 'upvotes', 'created_at', 'has_upvoted']
+        read_only_fields = ['user', 'discussion', 'created_at']
+
+    def get_has_upvoted(self, obj):
+        user = self.context.get('request').user
+        if user and user.is_authenticated:
+            return obj.post_upvotes.filter(user=user).exists()
+        return False

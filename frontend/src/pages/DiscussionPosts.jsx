@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getDiscussionPosts } from "../apiRequests";
+import { getDiscussionPosts, toggleUpvote } from "../apiRequests";
 import Navbar from "../components/Navbar";
 
 function DiscussionPosts() {
@@ -10,6 +10,15 @@ function DiscussionPosts() {
   useEffect(() => {
     getDiscussionPosts(discussionId).then((posts) => setPosts(posts));
   }, [discussionId]);
+
+  const handleUpvoteToggle = async (postId) => {
+    const updatedPost = await toggleUpvote(postId);
+    if (updatedPost) {
+      setPosts(posts.map(post => 
+        post.id === postId ? { ...post, upvotes: updatedPost.upvotes, has_upvoted: !post.has_upvoted } : post
+      ));
+    }
+  };
 
   return (
     <>
@@ -25,6 +34,15 @@ function DiscussionPosts() {
                 <h3>{post.author}</h3>
                 <p>{post.content}</p>
                 <small>{new Date(post.created_at).toLocaleString()}</small>
+                <div>
+                  <button 
+                    onClick={() => handleUpvoteToggle(post.id)}
+                    style={{ background: "none", border: "none", cursor: "pointer" }}
+                  >
+                    {post.has_upvoted ? "⬆️" : "⬆"} {/* Filled icon for upvoted */}
+                  </button>
+                  <span> {post.upvotes} Upvotes</span>
+                </div>
               </li>
             ))}
           </ul>

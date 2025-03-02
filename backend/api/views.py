@@ -7,7 +7,10 @@ from rest_framework.permissions import AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import CustomUser, Discussion, DiscussionPost
+from .models import CustomUser, Discussion, DiscussionPost, DiscussionPostUpvote
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 
 
 
@@ -106,3 +109,22 @@ class DiscussionPostDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = DiscussionPost.objects.all()
     serializer_class = DiscussionPostSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def toggle_upvote(request, post_id):
+    try:
+        post = DiscussionPost.objects.get(id=post_id)
+        upvote, created = DiscussionPostUpvote.objects.get_or_create(user=request.user, post=post)
+        if not created:
+            upvote.delete()
+            post.upvotes -= 1
+            message = "Upvote removed"
+        else:
+            post.upvotes += 1
+            message = "Upvote added"
+        post.save()
+        return Response({"message": message, "upvotes": post.upvotes}, status=status.HTTP_200_OK)
+
+    except DiscussionPost.DoesNotExist:
+        return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)

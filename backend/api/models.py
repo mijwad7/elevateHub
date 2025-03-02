@@ -26,4 +26,13 @@ class DiscussionPost(models.Model):
         return f"Post by {self.user.username} in {self.discussion.title}"
 
 
+class DiscussionPostUpvote(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    post = models.ForeignKey("DiscussionPost", on_delete=models.CASCADE, related_name="post_upvotes")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'post'], name='unique_upvote'),
+        ]
+
 
