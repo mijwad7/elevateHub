@@ -13,6 +13,12 @@ export const getDiscussions = async () => {
 
 
 export const getDiscussionPosts = async (discussionId) => {
-    const response = await api.get(`/api/discussions/${discussionId}/posts`);
-    return response.data;
+    try {
+        console.log("Fetching discussion posts for discussion:", discussionId);
+        const response = await api.get(`/api/discussions/${discussionId}/posts/`);
+        console.log("Response received:", response.data);
+        return response.data;
+    } catch(error) {
+        console.error("Error fetching discussion posts:", error);
+    }
 }
