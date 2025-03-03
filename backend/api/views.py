@@ -11,6 +11,7 @@ from .models import CustomUser, Discussion, DiscussionPost, DiscussionPostUpvote
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
 
 
 
@@ -108,7 +109,10 @@ class DiscussionPostListCreateView(generics.ListCreateAPIView):
         return DiscussionPost.objects.filter(discussion_id=discussion_id).order_by('-created_at')
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        discussion_id = self.kwargs.get("discussion_id")  # Get discussion_id from URL
+        discussion = get_object_or_404(Discussion, id=discussion_id)  # Fetch the discussion
+        serializer.save(user=self.request.user, discussion=discussion) 
+
 
 class DiscussionPostDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = DiscussionPost.objects.all()

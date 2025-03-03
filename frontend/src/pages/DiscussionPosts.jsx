@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getDiscussionPosts, toggleUpvote } from "../apiRequests";
+import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
 function DiscussionPosts() {
@@ -25,6 +26,7 @@ function DiscussionPosts() {
       <Navbar />
       <div>
         <h1>Discussion Posts</h1>
+        <Link to={`/discussions/${discussionId}/create-discussion-post`}>Add to the Discussion</Link>
         {posts.length === 0 ? (
           <p>No posts yet.</p>
         ) : (

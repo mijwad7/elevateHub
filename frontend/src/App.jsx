@@ -6,6 +6,7 @@ import Home from './pages/Home'
 import Discussions from './pages/Discussions'
 import DiscussionPosts from './pages/DiscussionPosts'
 import CreateDiscussion from './pages/CreateDiscussion'
+import CreateDiscussionPost from './pages/CreateDiscussionPost'
 import NotFound from './pages/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
 import "./App.css"
@@ -42,6 +43,7 @@ function App() {
           <Route path="/discussions" element={<ProtectedRoute><Discussions /></ProtectedRoute>} />
           <Route path="/create-discussion" element={<CreateDiscussion />} />
           <Route path="/discussions/:discussionId" element={<DiscussionPosts />} />
+          <Route path="/discussions/:discussionId/create-discussion-post" element={<CreateDiscussionPost />} />
           <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
           <Route path="/admin/create" element={<AdminProtectedRoute><CreateUser /></AdminProtectedRoute>} />
           <Route path="*" element={<NotFound />} />

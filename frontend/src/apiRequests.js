@@ -12,6 +12,18 @@ export const createDiscussion = async (title, description, categoryId) => {
   }
 };
 
+export const createDiscussionPost = async (discussionId, content) => {
+  try {
+    console.log("Creating new discussion post...");
+    const response = await api.post(`/api/discussions/${discussionId}/posts/`, { content });
+    console.log("Discussion post created:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating discussion post:", error);
+    return null;
+  }
+}
+
 export const getDiscussions = async () => {
   try {
     console.log("Fetching discussions...");
