@@ -32,3 +32,15 @@ export const toggleUpvote = async (postId) => {
     console.error("Error toggling upvote:", error);
   }
 };
+
+export const createDiscussion = async (title) => {
+  try {
+    console.log("Creating new discussion...");
+    const response = await api.post("/api/discussions/", { title });
+    console.log("Discussion created:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating discussion:", error);
+    return null;
+  }
+};

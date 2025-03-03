@@ -5,6 +5,7 @@ import Register from './pages/Register'
 import Home from './pages/Home'
 import Discussions from './pages/Discussions'
 import DiscussionPosts from './pages/DiscussionPosts'
+import CreateDiscussion from './pages/CreateDiscussion'
 import NotFound from './pages/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
 import "./App.css"
@@ -39,7 +40,8 @@ function App() {
           <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/discussions" element={<ProtectedRoute><Discussions /></ProtectedRoute>} />
-          <Route path="/discussion/:discussionId" element={<DiscussionPosts />} />
+          <Route path="/create-discussion" element={<CreateDiscussion />} />
+          <Route path="/discussions/:discussionId" element={<DiscussionPosts />} />
           <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
           <Route path="/admin/create" element={<AdminProtectedRoute><CreateUser /></AdminProtectedRoute>} />
           <Route path="*" element={<NotFound />} />

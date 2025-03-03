@@ -21,7 +21,7 @@ function Discussions() {
         <ul>
           {discussions.map((discussion) => (
             <li key={discussion.id}>
-              <Link to={`/discussion/${discussion.id}`}>
+              <Link to={`/discussions/${discussion.id}`}>
                 {discussion.title}
               </Link>
             </li>

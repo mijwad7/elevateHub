@@ -19,7 +19,8 @@ class DiscussionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Discussion
-        fields = ['id', 'title', 'created_by', 'created_by_username', 'created_at', 'updated_at', 'total_posts']
+        fields = ["id", "title", "created_by", "created_by_username", "created_at", "total_posts"]
+        read_only_fields = ["created_by", "created_at"]
 
 
 class DiscussionPostSerializer(serializers.ModelSerializer):
