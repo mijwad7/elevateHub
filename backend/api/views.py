@@ -2,12 +2,12 @@ from django.contrib.auth.models import User
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import generics, permissions
-from .serializers import UserSerializer, DiscussionSerializer, DiscussionPostSerializer
+from .serializers import UserSerializer, DiscussionSerializer, DiscussionPostSerializer, CategorySerializer
 from rest_framework.permissions import AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import CustomUser, Discussion, DiscussionPost, DiscussionPostUpvote
+from .models import CustomUser, Discussion, DiscussionPost, DiscussionPostUpvote, Category
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -79,6 +79,11 @@ class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAdminUser]
+
+class CategoryListView(generics.ListAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 class DiscussionListCreateView(generics.ListCreateAPIView):
     queryset = Discussion.objects.all()
