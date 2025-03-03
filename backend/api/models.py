@@ -5,15 +5,26 @@ from django.conf import settings
 class CustomUser(AbstractUser):
     profile_image = models.ImageField(upload_to="profile_images/", blank=True, null=True)
 
+class Category(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    class Meta:
+        verbose_name = "Category"
+        verbose_name_plural = "Categories"
+
+    def __str__(self):
+        return self.name
+
 class Discussion(models.Model):
     title = models.CharField(max_length=255)
+    description = models.TextField(default="description")
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name="discussions")
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="discussions")
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    total_posts = models.IntegerField(default=0)  # Can be updated via signals or manually
 
     def __str__(self):
         return self.title
+
 
 class DiscussionPost(models.Model):
     discussion = models.ForeignKey(Discussion, on_delete=models.CASCADE, related_name="posts")

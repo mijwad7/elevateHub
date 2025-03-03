@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import CustomUser, Discussion, DiscussionPost
+from .models import CustomUser, Discussion, DiscussionPost, Category
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -13,13 +13,21 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ["id", "name"]
+
 class DiscussionSerializer(serializers.ModelSerializer):
     created_by_username = serializers.ReadOnlyField(source='created_by.username')
-    total_posts = serializers.IntegerField(read_only=True)
+    category = CategorySerializer(read_only=True)  # Changed to show category details
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(), source="category", write_only=True
+    )  # Allow setting category via ID
 
     class Meta:
         model = Discussion
-        fields = ["id", "title", "created_by", "created_by_username", "created_at", "total_posts"]
+        fields = ["id", "title", "description", "category", "category_id", "created_by", "created_by_username", "created_at"]
         read_only_fields = ["created_by", "created_at"]
 
 
