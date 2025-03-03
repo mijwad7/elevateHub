@@ -7,6 +7,8 @@ import Discussions from './pages/Discussions'
 import DiscussionPosts from './pages/DiscussionPosts'
 import CreateDiscussion from './pages/CreateDiscussion'
 import CreateDiscussionPost from './pages/CreateDiscussionPost'
+import ResetPassword from './pages/ResetPassword'
+import ForgotPassword from './pages/ForgotPassword'
 import NotFound from './pages/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
 import "./App.css"
@@ -36,6 +38,8 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:uid/:token" element={<ResetPassword />} />
           <Route path="/register" element={<RegisterAndLogout />} />
           <Route path="/logout" element={<Logout />} />
           <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />

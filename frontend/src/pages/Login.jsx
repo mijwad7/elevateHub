@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import Form from "../components/Form";
 import Navbar from "../components/Navbar";
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const Login = () => {
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -17,6 +17,7 @@ const Login = () => {
     <>
       <Navbar />
       <Form route="api/token/" method="login" />
+      <Link to="/forgot-password">Forgot password?</Link>
     </>
   );
 };
