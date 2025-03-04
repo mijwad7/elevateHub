@@ -29,7 +29,14 @@ export const getDiscussions = async () => {
     console.log("Fetching discussions...");
     const response = await api.get("/api/discussions/");
     console.log("Response received:", response.data);
-    return response.data;
+    return response.data.map((discussion) => ({
+      ...discussion,
+      posts_count: discussion.posts_count,
+      created_by: {
+        username: discussion.created_by_username,
+        profile: `${import.meta.env.VITE_API_URL}${discussion.created_by_profile}`,
+      }
+    }))
   } catch (error) {
     console.error("Error fetching discussions:", error);
   }

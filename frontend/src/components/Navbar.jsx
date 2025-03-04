@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logOut } from "../redux/authSlice"; // Import the logout action
-import { FaHome, FaUser, FaSignInAlt, FaUserPlus, FaSignOutAlt } from "react-icons/fa";
+import { FaHome, FaUser, FaSignInAlt, FaUserPlus, FaSignOutAlt, FaComments } from "react-icons/fa";
 
 const Navbar = () => {
     const dispatch = useDispatch();
@@ -32,6 +32,11 @@ const Navbar = () => {
                         <li className="nav-item">
                             <Link className="nav-link" to="/">
                                 <FaHome /> Home
+                            </Link>
+                        </li>
+                        <li className="nav-item">
+                            <Link className="nav-link" to="/discussions">
+                                <FaComments /> Discussions
                             </Link>
                         </li>
 
