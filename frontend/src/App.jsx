@@ -14,11 +14,12 @@ import ProtectedRoute from './components/ProtectedRoute'
 import "./App.css"
 import { Provider } from 'react-redux'
 import store from './redux/store'
+import AdminDiscussions from './pages/AdminDiscussions'
 import Profile from './pages/Profile'
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import NotAuthorized from './pages/NotAuthorized'
-import CreateUser from './pages/CreateUser'
+import "@fortawesome/fontawesome-free/css/all.min.css";
 
 function Logout() {
   localStorage.clear()
@@ -49,7 +50,7 @@ function App() {
           <Route path="/discussions/:discussionId" element={<DiscussionPosts />} />
           <Route path="/discussions/:discussionId/create-discussion-post" element={<CreateDiscussionPost />} />
           <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
-          <Route path="/admin/create" element={<AdminProtectedRoute><CreateUser /></AdminProtectedRoute>} />
+          <Route path="/admin/discussions" element={<AdminProtectedRoute><AdminDiscussions /></AdminProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
           <Route path="/not-authorized" element={<NotAuthorized />} />
         </Routes>
