@@ -53,6 +53,23 @@ export const getCategories = async () => {
   }
 };
 
+export const getDiscussionsByCategory = async (categoryId) => {
+  try {
+    const response = await api.get(`/api/discussions/?category=${categoryId}`);
+    return response.data.map((discussion) => ({
+      ...discussion,
+      created_by: {
+        username: discussion.created_by_username,
+        profile: `${import.meta.env.VITE_API_URL}${discussion.created_by_profile}`,
+      },
+    }));
+  } catch (error) {
+    console.error("Error fetching discussions by category:", error);
+    return [];
+  }
+};
+
+
 
 export const getDiscussionPosts = async (discussionId) => {
   try {

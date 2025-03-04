@@ -15,6 +15,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth import get_user_model
+from rest_framework.filters import SearchFilter
 
 User = get_user_model()
 
@@ -91,10 +92,18 @@ class CategoryListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 class DiscussionListCreateView(generics.ListCreateAPIView):
-    queryset = Discussion.objects.all()
     serializer_class = DiscussionSerializer
+    filter_backends = [SearchFilter]
+    search_fields = ['title', 'description']  # Optional: Search by title & description
 
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    def get_queryset(self):
+        queryset = Discussion.objects.all()
+        category_id = self.request.query_params.get('category')
+
+        if category_id:
+            queryset = queryset.filter(category__id=category_id)
+
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)

@@ -1,16 +1,23 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getDiscussions } from "../apiRequests";
+import { getDiscussions, getDiscussionsByCategory } from "../apiRequests";
 import Navbar from "../components/Navbar";
+import CategoryFilter from "../components/CategoryFilter";
 import { FaCommentAlt, FaArrowUp, FaEllipsisV } from "react-icons/fa";
 
 
 function Discussions() {
   const [discussions, setDiscussions] = useState([]);
 
+  const [selectedCategory, setSelectedCategory] = useState("");
+
   useEffect(() => {
-    getDiscussions().then((data) => setDiscussions(data || []));
-  }, []);
+    if (selectedCategory) {
+      getDiscussionsByCategory(selectedCategory).then(setDiscussions);
+    } else {
+      getDiscussions().then(setDiscussions);
+    }
+  }, [selectedCategory]);
 
   return (
     <>
@@ -20,6 +27,11 @@ function Discussions() {
         <Link to="/create-discussion" className="btn btn-primary mb-3">
           + Start a Discussion
         </Link>
+
+        <CategoryFilter
+          selectedCategory={selectedCategory}
+          onSelectCategory={setSelectedCategory}
+        />
 
         {discussions.map((discussion) => (
           <div key={discussion.id} className="card mb-3 p-3">
