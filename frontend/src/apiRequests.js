@@ -70,18 +70,6 @@ export const getDiscussionsByCategory = async (categoryId) => {
 };
 
 
-
-export const getDiscussionPosts = async (discussionId) => {
-  try {
-    console.log("Fetching discussion posts for discussion:", discussionId);
-    const response = await api.get(`/api/discussions/${discussionId}/posts/`);
-    console.log("Response received:", response.data);
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching discussion posts:", error);
-  }
-};
-
 export const toggleUpvote = async (postId) => {
   try {
     console.log(`Toggling upvote for post ${postId}...`);
@@ -93,3 +81,39 @@ export const toggleUpvote = async (postId) => {
   }
 };
 
+
+export const getDiscussionPosts = async (discussionId) => {
+  try {
+    console.log("Fetching discussion posts for discussion:", discussionId);
+    const response = await api.get(`/api/discussions/${discussionId}/posts/`);
+    console.log("Response received:", response.data);
+
+    return response.data.map((post) => ({
+      ...post,
+      user: {
+        username: post.user_username,
+        profile: post.user_profile 
+          ? `${import.meta.env.VITE_API_URL}${post.user_profile}`
+          : "/default-avatar.png",
+      },
+    }));
+  } catch (error) {
+    console.error("Error fetching discussion posts:", error);
+  }
+};
+
+export const getDiscussionDetails = async (discussionId) => {
+  try {
+    const response = await api.get(`/api/discussions/${discussionId}/`);
+    console.log("Response received:", response.data);
+    return {
+      ...response.data,
+      created_by: {
+        username: response.data.created_by_username,
+        profile: `${import.meta.env.VITE_API_URL}${response.data.created_by_profile}`
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching discussion details:", error);
+  }
+};

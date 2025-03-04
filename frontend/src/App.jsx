@@ -44,8 +44,8 @@ function App() {
           <Route path="/logout" element={<Logout />} />
           <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          <Route path="/discussions" element={<ProtectedRoute><Discussions /></ProtectedRoute>} />
-          <Route path="/create-discussion" element={<CreateDiscussion />} />
+          <Route path="/discussions" element={<Discussions />} />
+          <Route path="/create-discussion" element={<ProtectedRoute><CreateDiscussion /></ProtectedRoute>} />
           <Route path="/discussions/:discussionId" element={<DiscussionPosts />} />
           <Route path="/discussions/:discussionId/create-discussion-post" element={<CreateDiscussionPost />} />
           <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />

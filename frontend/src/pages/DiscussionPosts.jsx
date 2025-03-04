@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { getDiscussionPosts, toggleUpvote } from "../apiRequests";
-import { Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
+import { getDiscussionPosts, getDiscussionDetails, toggleUpvote } from "../apiRequests";
 import Navbar from "../components/Navbar";
 
 function DiscussionPosts() {
-  const { discussionId } = useParams(); // Get the discussion ID from the URL
+  const { discussionId } = useParams(); 
+  const [discussion, setDiscussion] = useState(null);
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
-    getDiscussionPosts(discussionId).then((posts) => setPosts(posts));
+    getDiscussionDetails(discussionId).then(setDiscussion);
+    getDiscussionPosts(discussionId).then(setPosts);
   }, [discussionId]);
 
   const handleUpvoteToggle = async (postId) => {
@@ -24,30 +25,59 @@ function DiscussionPosts() {
   return (
     <>
       <Navbar />
-      <div>
-        <h1>Discussion Posts</h1>
-        <Link to={`/discussions/${discussionId}/create-discussion-post`}>Add to the Discussion</Link>
+      <div className="container mt-4">
+        {/* Discussion Details */}
+        {discussion && (
+          <div className="card p-3 mb-4">
+            <div className="d-flex align-items-center">
+              <img src={discussion.created_by.profile} alt="User" className="rounded-circle me-2" width="40" />
+              <div>
+                <strong>@{discussion.created_by_username}</strong>
+                <small className="text-muted d-block">{discussion.created_at_formatted}</small>
+              </div>
+            </div>
+            <h4 className="mt-2">{discussion.title}</h4>
+            <p>{discussion.description}</p>
+          </div>
+        )}
+
+        {/* Add to Discussion Button */}
+        <div className="d-flex justify-content-end mb-3">
+          <Link to={`/discussions/${discussionId}/create-discussion-post`} className="btn btn-primary">
+            Add to the Discussion
+          </Link>
+        </div>
+
+        {/* Discussion Posts */}
         {posts.length === 0 ? (
-          <p>No posts yet.</p>
+          <p className="text-center text-muted">No posts yet.</p>
         ) : (
-          <ul>
-            {posts.map((post) => (
-              <li key={post.id}>
-                <h3>{post.author}</h3>
-                <p>{post.content}</p>
-                <small>{new Date(post.created_at).toLocaleString()}</small>
+          posts.map((post) => (
+            <div className="card p-3 mb-3" key={post.id}>
+              {/* Post Author */}
+              <div className="d-flex align-items-center">
+                <img src={post.user.profile} alt="User" className="rounded-circle me-2" width="40" />
                 <div>
-                  <button 
-                    onClick={() => handleUpvoteToggle(post.id)}
-                    style={{ background: "none", border: "none", cursor: "pointer" }}
-                  >
-                    {post.has_upvoted ? "⬆️" : "⬆"} {/* Filled icon for upvoted */}
-                  </button>
-                  <span> {post.upvotes} Upvotes</span>
+                  <strong>@{post.user_username}</strong>
+                  <small className="text-muted d-block">{new Date(post.created_at).toLocaleString()}</small>
                 </div>
-              </li>
-            ))}
-          </ul>
+              </div>
+
+              {/* Post Content */}
+              <p className="mt-2">{post.content}</p>
+
+              {/* Upvote & Reply */}
+              <div className="d-flex align-items-center">
+                <button 
+                  onClick={() => handleUpvoteToggle(post.id)}
+                  className={`btn btn-sm ${post.has_upvoted ? "btn-primary" : "btn-outline-primary"} me-2`}
+                >
+                  ⬆ {post.upvotes}
+                </button>
+                <span className="text-muted">Reply</span>
+              </div>
+            </div>
+          ))
         )}
       </div>
     </>

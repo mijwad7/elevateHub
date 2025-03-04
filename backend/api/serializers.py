@@ -92,6 +92,7 @@ class DiscussionSerializer(serializers.ModelSerializer):
 
 class DiscussionPostSerializer(serializers.ModelSerializer):
     user_username = serializers.ReadOnlyField(source="user.username")
+    user_profile = serializers.SerializerMethodField()  # Add this field
     has_upvoted = serializers.SerializerMethodField()
 
     class Meta:
@@ -101,12 +102,16 @@ class DiscussionPostSerializer(serializers.ModelSerializer):
             "discussion",
             "user",
             "user_username",
+            "user_profile",  # Add profile to API response
             "content",
             "upvotes",
             "created_at",
             "has_upvoted",
         ]
         read_only_fields = ["user", "discussion", "created_at"]
+
+    def get_user_profile(self, obj):
+        return obj.user.profile_image.url if obj.user.profile_image else None
 
     def get_has_upvoted(self, obj):
         user = self.context.get("request").user

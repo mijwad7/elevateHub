@@ -4,12 +4,15 @@ import { getDiscussions, getDiscussionsByCategory } from "../apiRequests";
 import Navbar from "../components/Navbar";
 import CategoryFilter from "../components/CategoryFilter";
 import { FaCommentAlt, FaArrowUp, FaEllipsisV } from "react-icons/fa";
+import { useSelector } from "react-redux";
 
 
 function Discussions() {
   const [discussions, setDiscussions] = useState([]);
 
   const [selectedCategory, setSelectedCategory] = useState("");
+
+  const user = useSelector((state) => state.auth.user);
 
   useEffect(() => {
     if (selectedCategory) {
@@ -24,9 +27,9 @@ function Discussions() {
       <Navbar />
       <div className="container mt-4">
         <h1 className="mb-3">Discussions</h1>
-        <Link to="/create-discussion" className="btn btn-primary mb-3">
+        {user && <Link to="/create-discussion" className="btn btn-primary mb-3">
           + Start a Discussion
-        </Link>
+        </Link>}
 
         <CategoryFilter
           selectedCategory={selectedCategory}
