@@ -1,9 +1,9 @@
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
-import api from "../api";
+import api from "../../apiRequests/api";
 import { useState } from "react";
-import { loginSuccess } from "../redux/authSlice";
-import Navbar from "../components/Navbar";
+import { loginSuccess } from "../../redux/authSlice";
+import Navbar from "../../components/Navbar";
 
 const Profile = () => {
   const { user } = useSelector((state) => state.auth);

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getDiscussions, getDiscussionsByCategory } from "../apiRequests";
-import Navbar from "../components/Navbar";
-import CategoryFilter from "../components/CategoryFilter";
+import { getDiscussions, getDiscussionsByCategory } from "../../apiRequests";
+import Navbar from "../../components/Navbar";
+import CategoryFilter from "../../components/CategoryFilter";
 import { FaCommentAlt, FaArrowUp, FaEllipsisV } from "react-icons/fa";
 import { useSelector } from "react-redux";
 

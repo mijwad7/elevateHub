@@ -5,8 +5,8 @@ import {
   createDiscussion,
   editDiscussion,
   deleteDiscussion,
-} from "../redux/discussionSlice";
-import AdminNavbar from "../components/AdminNavbar";
+} from "../../redux/discussionSlice";
+import AdminNavbar from "../../components/AdminNavbar";
 
 function AdminDiscussions() {
   const dispatch = useDispatch();

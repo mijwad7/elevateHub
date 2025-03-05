@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import api from "../api";
+import api from "../apiRequests/api";
 import { ACCESS_TOKEN } from "../constants";
 
 const initialState = {

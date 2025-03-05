@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
-import Form from "../components/Form";
-import Navbar from "../components/Navbar";
+import Form from "../../components/Form";
+import Navbar from "../../components/Navbar";
 import { useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 

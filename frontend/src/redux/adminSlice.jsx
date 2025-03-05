@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import api from "../api";
+import api from "../apiRequests/api";
 import { ACCESS_TOKEN } from "../constants";
 
 export const fetchUsers = createAsyncThunk("admin/fetchUsers", async (query = "") => {

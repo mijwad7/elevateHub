@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { createDiscussionPost } from "../apiRequests";
-import Navbar from "../components/Navbar";
+import { createDiscussionPost } from "../../apiRequests";
+import Navbar from "../../components/Navbar";
 
 function CreateDiscussionPost() {
   const { discussionId } = useParams();

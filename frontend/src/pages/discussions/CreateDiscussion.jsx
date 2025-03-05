@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { createDiscussion, getCategories } from "../apiRequests";
-import Navbar from "../components/Navbar";
+import { createDiscussion, getCategories } from "../../apiRequests";
+import Navbar from "../../components/Navbar";
 
 function CreateDiscussion() {
   const [title, setTitle] = useState("");

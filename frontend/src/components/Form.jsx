@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../redux/authSlice";
-import api from "../api";
+import api from "../apiRequests/api";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants";
 import LoadingIndicator from "./LoadingIndicator";
 import "../styles/Form.css";

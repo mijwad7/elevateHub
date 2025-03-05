@@ -5,8 +5,8 @@ import {
   deleteUser,
   editUser,
   createUser,
-} from "../redux/adminSlice";
-import AdminNavbar from "../components/AdminNavbar";
+} from "../../redux/adminSlice";
+import AdminNavbar from "../../components/AdminNavbar";
 
 const AdminDashboard = () => {
   const dispatch = useDispatch();

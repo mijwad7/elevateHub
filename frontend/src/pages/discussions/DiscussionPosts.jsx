@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getDiscussionPosts, getDiscussionDetails, toggleUpvote } from "../apiRequests";
-import Navbar from "../components/Navbar";
+import { getDiscussionPosts, getDiscussionDetails, toggleUpvote } from "../../apiRequests";
+import Navbar from "../../components/Navbar";
 import { useSelector } from "react-redux";
 
 function DiscussionPosts() {
