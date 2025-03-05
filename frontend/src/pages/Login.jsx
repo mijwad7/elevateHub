@@ -17,7 +17,6 @@ const Login = () => {
     <>
       <Navbar />
       <Form route="api/token/" method="login" />
-      <Link to="/forgot-password">Forgot password?</Link>
     </>
   );
 };

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../redux/authSlice";
 import api from "../api";
@@ -68,6 +68,7 @@ function Form({ route, method }) {
       <button className="form-button" type="submit">
         {name}
       </button>
+      {name === "Login" && <Link to="/forgot-password">Forgot password?</Link>}
     </form>
   );
 }

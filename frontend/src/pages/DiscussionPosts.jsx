@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getDiscussionPosts, getDiscussionDetails, toggleUpvote } from "../apiRequests";
 import Navbar from "../components/Navbar";
+import { useSelector } from "react-redux";
 
 function DiscussionPosts() {
   const { discussionId } = useParams(); 
   const [discussion, setDiscussion] = useState(null);
   const [posts, setPosts] = useState([]);
+  const user = useSelector((state) => state.auth.user);
 
   useEffect(() => {
     getDiscussionDetails(discussionId).then(setDiscussion);
@@ -67,15 +69,14 @@ function DiscussionPosts() {
               <p className="mt-2">{post.content}</p>
 
               {/* Upvote & Reply */}
-              <div className="d-flex align-items-center">
+              {user && <div className="d-flex align-items-center">
                 <button 
                   onClick={() => handleUpvoteToggle(post.id)}
                   className={`btn btn-sm ${post.has_upvoted ? "btn-primary" : "btn-outline-primary"} me-2`}
                 >
                   ⬆ {post.upvotes}
                 </button>
-                <span className="text-muted">Reply</span>
-              </div>
+              </div>}
             </div>
           ))
         )}

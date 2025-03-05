@@ -24,42 +24,64 @@ function CreateDiscussion() {
       return;
     }
 
-    const newDiscussion = await createDiscussion(title, description, categoryId);
+    const newDiscussion = await createDiscussion(
+      title,
+      description,
+      categoryId
+    );
 
-    if (newDiscussion){
-        navigate("/discussions");
+    if (newDiscussion) {
+      navigate("/discussions");
     } else {
-        setError("Failed to create a new discussion.");
+      setError("Failed to create a new discussion.");
     }
   };
 
   return (
     <>
       <Navbar />
-      <div>
-        <h1>Create New Discussion</h1>
-        {error && <p style={{ color: "red" }}>{error}</p>}
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            placeholder="Enter discussion title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-          <textarea
-            placeholder="Enter discussion description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-          <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-            <option value="">Select a category</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-          <button type="submit">Create Discussion</button>
+      <div className="container mt-4">
+        <h1 className="mb-3">Create New Discussion</h1>
+        {error && <p className="text-danger">{error}</p>}
+        <form onSubmit={handleSubmit} className="card p-4 shadow-sm">
+          <div className="mb-3">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Enter discussion title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <textarea
+              className="form-control"
+              placeholder="Enter discussion description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows="4"
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <select
+              className="form-select"
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              required
+            >
+              <option value="">Select a category</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button type="submit" className="btn btn-primary">
+            Create Discussion
+          </button>
         </form>
       </div>
     </>
