@@ -29,13 +29,15 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("admin-panel/", include("admin_panel.urls")),
     path("api/", include("api.urls")),
-    path("api/user/register/", CreateUserView.as_view(), name="register"),
-    path("api/token/", CustomTokenObtainPairView.as_view(), name="get_token"),
-    path("api/token/refresh/", TokenRefreshView.as_view(), name="refresh"),
-    path("api-auth/", include("rest_framework.urls")),
-    path("api/users/", UserListCreateView.as_view(), name="user_list_create"),
-    path("api/users/<int:pk>/", UserRetrieveUpdateDestroyView.as_view(), name="user_detail"),
-    path("api/users/<int:user_id>/upload-profile/", ProfileImageUploadView.as_view(), name="upload-profile"),
+    path("api/", include("discussions.urls")),  # Include discussions URLs
+
+    # path("api/user/register/", CreateUserView.as_view(), name="register"),
+    # path("api/token/", CustomTokenObtainPairView.as_view(), name="get_token"),
+    # path("api/token/refresh/", TokenRefreshView.as_view(), name="refresh"),
+    # path("api-auth/", include("rest_framework.urls")),
+    # path("api/users/", UserListCreateView.as_view(), name="user_list_create"),
+    # path("api/users/<int:pk>/", UserRetrieveUpdateDestroyView.as_view(), name="user_detail"),
+    # path("api/users/<int:user_id>/upload-profile/", ProfileImageUploadView.as_view(), name="upload-profile"),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

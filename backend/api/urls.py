@@ -1,17 +1,23 @@
-from django.urls import path
+from django.urls import path, include
 from .views import (
-    DiscussionListCreateView, DiscussionDetailView,
-    DiscussionPostListCreateView, DiscussionPostDetailView, toggle_upvote, CategoryListView,
+    CreateUserView, CustomTokenObtainPairView, UserListView, UserDeleteView,
+    ProfileImageUploadView, UserListCreateView, UserRetrieveUpdateDestroyView,
     PasswordResetRequestView, PasswordResetConfirmView,
 )
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
-    path('categories/', CategoryListView.as_view(), name='category_list'),
-    path('discussions/', DiscussionListCreateView.as_view(), name='discussion-list'),
-    path('discussions/<int:pk>/', DiscussionDetailView.as_view(), name='discussion-detail'),
-    path('discussions/<int:discussion_id>/posts/', DiscussionPostListCreateView.as_view(), name='discussion-post-list'),
-    path('posts/<int:pk>/', DiscussionPostDetailView.as_view(), name='discussion-post-detail'),
-    path('posts/<int:post_id>/toggle-upvote/', toggle_upvote, name='toggle-upvote'),
+    path("user/register/", CreateUserView.as_view(), name="register"),
+    path("token/", CustomTokenObtainPairView.as_view(), name="get_token"),
+    path("token/refresh/", TokenRefreshView.as_view(), name="refresh"),
+    path("api-auth/", include("rest_framework.urls")),
+    path("users/", UserListCreateView.as_view(), name="user_list_create"),
+    path("users/<int:pk>/", UserRetrieveUpdateDestroyView.as_view(), name="user_detail"),
+    path("users/<int:user_id>/upload-profile/", ProfileImageUploadView.as_view(), name="upload-profile"),
     path("reset-password/", PasswordResetRequestView.as_view(), name="password_reset_request"),
     path("reset-password/<uidb64>/<token>/", PasswordResetConfirmView.as_view(), name="password_reset_confirm"),
 ]
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

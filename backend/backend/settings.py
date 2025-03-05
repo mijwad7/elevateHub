@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     'admin_panel',
+    'discussions'
 ]
 
 MEDIA_URL = "/media/"
