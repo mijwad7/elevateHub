@@ -68,7 +68,7 @@ function Form({ route, method }) {
       <button className="form-button" type="submit">
         {name}
       </button>
-      {name === "Login" && <Link to="/forgot-password">Forgot password?</Link>}
+      {name === "Login" && <Link className="link-primary" to="/forgot-password">Forgot password?</Link>}
     </form>
   );
 }

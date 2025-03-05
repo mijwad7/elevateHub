@@ -1,3 +1,55 @@
 body {
-    font-family: 'Poppins';
+  font-family: "Poppins";
+}
+:root {
+  --bs-primary: #0b2447 !important;
+  --bs-secondary: #1d3557 !important; /* Adjusted secondary color */
+}
+
+.btn-primary, .form-button {
+  background-color: var(--bs-primary) !important;
+  border-color: var(--bs-primary) !important;
+}
+
+.link-primary {
+    color: var(--bs-primary) !important;
+    text-decoration: none !important;
+}
+
+.btn-outline-primary{
+  background-color: transparent !important;
+  border-color: var(--bs-primary) !important;
+  color: var(--bs-primary) !important;
+}
+
+.btn-primary:hover, .form-button:hover {
+  background-color: #091a36 !important; /* Darker shade for hover effect */
+  border-color: #091a36 !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--bs-primary) !important;
+  border-color: transparent !important;
+  color: white !important;
+}
+
+.btn-secondary {
+  background-color: var(--bs-secondary) !important;
+  border-color: var(--bs-secondary) !important;
+}
+
+.btn-secondary:hover {
+  background-color: #122b4a !important; /* Slightly darker shade */
+  border-color: #122b4a !important;
+}
+
+.card-header,
+.form-select {
+  background-color: var(--bs-primary) !important;
+  color: white !important;
+}
+
+.form-control:focus {
+  border-color: var(--bs-primary) !important;
+  box-shadow: 0 0 5px rgba(11, 36, 71, 0.5) !important;
 }

@@ -63,7 +63,7 @@ function Discussions() {
             <div className="d-flex justify-content-between align-items-center mt-2">
               <div>
                 {discussion.category && (
-                  <span className="badge bg-secondary me-1">{discussion.category.name}</span>
+                  <span className="badge btn-secondary me-1">{discussion.category.name}</span>
                 )}
               </div>
               <div className="d-flex align-items-center text-muted">

@@ -15,7 +15,7 @@ const Home = () => {
             A collaborative learning platform where you earn credits by helping
             others and use them to improve your skills.
           </p>
-          <a href="#" className="btn btn-dark btn-lg mt-3 fw-semibold">
+          <a href="#" className="btn btn-primary btn-lg mt-3 fw-semibold">
             Get Started
           </a>
         </div>
@@ -30,7 +30,7 @@ const Home = () => {
           </p>
           <div className="d-flex justify-content-between align-items-center mb-4">
             <div></div> {/* Spacer for alignment */}
-            <a href="#" className="btn btn-dark">
+            <a href="#" className="btn btn-primary">
               View All
             </a>
           </div>
@@ -88,7 +88,7 @@ const Home = () => {
           </p>
           <div className="d-flex justify-content-between align-items-center mb-4">
             <div></div> {/* Spacer for alignment */}
-            <a href="#" className="btn btn-dark">
+            <a href="#" className="btn btn-primary">
               View All
             </a>
           </div>
@@ -146,7 +146,7 @@ const Home = () => {
           </p>
           <div className="d-flex justify-content-between align-items-center mb-4">
             <div></div> {/* Spacer for alignment */}
-            <a href="#" className="btn btn-dark">
+            <a href="#" className="btn btn-primary">
               Learn More
             </a>
           </div>
@@ -219,7 +219,7 @@ const Home = () => {
                   support@ElevateHub.com
                 </a>
               </p>
-              <button className="btn btn-dark">See All FAQ’s</button>
+              <button className="btn btn-primary">See All FAQ’s</button>
             </div>
 
             <div className="col-md-8">
