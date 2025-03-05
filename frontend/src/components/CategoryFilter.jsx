@@ -4,7 +4,7 @@ import { useMediaQuery } from "react-responsive";
 
 function CategoryFilter({ selectedCategory, onSelectCategory }) {
   const [categories, setCategories] = useState([]);
-  const isMobile = useMediaQuery({ maxWidth: 768 }); // Detect mobile
+  const isMobile = useMediaQuery({ maxWidth: 768 });
 
   useEffect(() => {
     getCategories().then(setCategories);
@@ -12,10 +12,8 @@ function CategoryFilter({ selectedCategory, onSelectCategory }) {
 
   return (
     <div className="mb-3">
-      <h5 className="mb-2">Filter by Category</h5>
 
       {isMobile ? (
-        // 📱 Show dropdown on mobile
         <select
           className="form-select"
           value={selectedCategory}
@@ -29,7 +27,6 @@ function CategoryFilter({ selectedCategory, onSelectCategory }) {
           ))}
         </select>
       ) : (
-        // 💻 Show buttons on desktop
         <div className="d-flex flex-wrap gap-2">
           <button
             className={`btn btn-sm ${selectedCategory === "" ? "btn-primary" : "btn-outline-primary"}`}

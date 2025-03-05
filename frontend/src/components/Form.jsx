@@ -10,6 +10,7 @@ import "../styles/Form.css";
 
 function Form({ route, method }) {
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -20,10 +21,11 @@ function Form({ route, method }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    console.log({ username, password });
+    const payload = method === "register" ? { username, email, password } : { username, password };
+    console.log(payload);
 
     try {
-        const res = await api.post(route, { username, password })
+        const res = await api.post(route, payload)
 
         if (method === "login") {
             dispatch(loginSuccess({
@@ -57,6 +59,15 @@ function Form({ route, method }) {
         onChange={(e) => setUsername(e.target.value)}
         placeholder="Username"
       />
+      {method === "register" && (
+        <input
+          className="form-input"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
+        />
+      )}
       <input
         className="form-input"
         type="password"

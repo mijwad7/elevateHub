@@ -5,9 +5,9 @@ import Navbar from "../components/Navbar";
 
 function CreateDiscussion() {
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState(""); // Added description
-  const [categoryId, setCategoryId] = useState(""); // Added category selection
-  const [categories, setCategories] = useState([]); // Fetch available categories
+  const [description, setDescription] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [categories, setCategories] = useState([]);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 

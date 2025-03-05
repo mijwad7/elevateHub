@@ -52,7 +52,6 @@ function Discussions() {
                   <p className="text-muted small">{discussion.created_at}</p>
                 </div>
               </div>
-              <FaEllipsisV />
             </div>
 
             <Link to={`/discussions/${discussion.id}`} className="text-decoration-none text-dark">

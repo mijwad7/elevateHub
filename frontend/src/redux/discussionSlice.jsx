@@ -2,7 +2,6 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../api";
 import { ACCESS_TOKEN } from "../constants";
 
-// Fetch discussions
 export const fetchDiscussions = createAsyncThunk("admin/fetchDiscussions", async () => {
     const token = localStorage.getItem(ACCESS_TOKEN);
     const response = await api.get("/api/discussions/", {
@@ -13,7 +12,6 @@ export const fetchDiscussions = createAsyncThunk("admin/fetchDiscussions", async
     return response.data;
 });
 
-// Create a new discussion
 export const createDiscussion = createAsyncThunk("admin/createDiscussion", async (discussionData) => {
     const token = localStorage.getItem(ACCESS_TOKEN);
     const response = await api.post("/api/discussions/", discussionData, {
@@ -25,7 +23,6 @@ export const createDiscussion = createAsyncThunk("admin/createDiscussion", async
     return response.data;
 });
 
-// Edit discussion
 export const editDiscussion = createAsyncThunk("admin/editDiscussion", async ({ discussionId, discussionData }) => {
     const token = localStorage.getItem(ACCESS_TOKEN);
     const response = await api.patch(`/api/discussions/${discussionId}/`, discussionData, {
@@ -37,7 +34,6 @@ export const editDiscussion = createAsyncThunk("admin/editDiscussion", async ({ 
     return { discussionId, updatedDiscussion: response.data };
 });
 
-// Delete discussion
 export const deleteDiscussion = createAsyncThunk("admin/deleteDiscussion", async (discussionId) => {
     const token = localStorage.getItem(ACCESS_TOKEN);
     await api.delete(`/api/discussions/${discussionId}/`, {

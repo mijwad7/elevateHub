@@ -53,3 +53,7 @@ body {
   border-color: var(--bs-primary) !important;
   box-shadow: 0 0 5px rgba(11, 36, 71, 0.5) !important;
 }
+
+.btn {
+    border-radius: 0 !important;
+}
