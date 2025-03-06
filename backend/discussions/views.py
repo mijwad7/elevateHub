@@ -57,14 +57,13 @@ def toggle_upvote(request, post_id):
     try:
         post = DiscussionPost.objects.get(id=post_id)
         upvote, created = DiscussionPostUpvote.objects.get_or_create(user=request.user, post=post)
-        if not created:
+        if not created:  # If upvote exists, remove it
             upvote.delete()
-            post.upvotes -= 1
+            post.upvotes -= 1  # Decrement only on removal
+            post.save()
             message = "Upvote removed"
         else:
-            post.upvotes += 1
-            message = "Upvote added"
-        post.save()
+            message = "Upvote added"  # Increment handled by signal
         return Response({"message": message, "upvotes": post.upvotes}, status=status.HTTP_200_OK)
     except DiscussionPost.DoesNotExist:
         return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)

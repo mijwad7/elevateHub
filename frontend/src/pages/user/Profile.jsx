@@ -1,19 +1,28 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import api from "../../apiRequests/api";
 import { useState } from "react";
-import { loginSuccess } from "../../redux/authSlice";
+import { loginSuccess, updateCredits } from "../../redux/authSlice";
 import Navbar from "../../components/Navbar";
+import { getCreditBalance, getCreditTransactions } from "../../apiRequests";
 
 const Profile = () => {
   const { user } = useSelector((state) => state.auth);
   console.log(user);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [transactions, setTransactions] = useState([]);
   const dispatch = useDispatch();
 
   if (!user) {
     return <p>Loading...</p>;
   }
+
+  useEffect(() => {
+    if (user) {
+      getCreditBalance().then((balance) => dispatch(updateCredits(balance)));
+      getCreditTransactions().then((transactions) => setTransactions(transactions));
+    }
+  }, [user, dispatch])
 
   const handleFileChange = (event) => {
     setSelectedFile(event.target.files[0]);
@@ -80,6 +89,26 @@ const Profile = () => {
                   <p>
                     <strong>Email:</strong> {user.email}
                   </p>
+                )}
+                <p><strong>Credits:</strong> {user.credits !== undefined ? user.credits : "Loading..."}</p>
+              </div>
+
+              {/* Transaction History */}
+              <div className="mt-4">
+                <h5>Credit Transactions</h5>
+                {transactions.length > 0 ? (
+                  <ul className="list-group">
+                    {transactions.map((tx) => (
+                      <li key={tx.timestamp} className="list-group-item">
+                        {tx.amount > 0 ? "+" : ""}{tx.amount} credits - {tx.description} 
+                        <small className="text-muted d-block">
+                          {new Date(tx.timestamp).toLocaleString()}
+                        </small>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-muted">No transactions yet.</p>
                 )}
               </div>
 

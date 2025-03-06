@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getDiscussionPosts, getDiscussionDetails, toggleUpvote } from "../../apiRequests";
+import { getDiscussionPosts, getDiscussionDetails, toggleUpvote, getCreditBalance } from "../../apiRequests";
 import Navbar from "../../components/Navbar";
 import { useSelector } from "react-redux";
+import { updateCredits } from "../../redux/authSlice";
 
 function DiscussionPosts() {
   const { discussionId } = useParams(); 
@@ -21,6 +22,8 @@ function DiscussionPosts() {
       setPosts(posts.map(post => 
         post.id === postId ? { ...post, upvotes: updatedPost.upvotes, has_upvoted: !post.has_upvoted } : post
       ));
+      const newBalance = await getCreditBalance();
+      dispatch(updateCredits(newBalance));
     }
   };
 
