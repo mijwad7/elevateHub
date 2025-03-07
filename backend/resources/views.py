@@ -8,7 +8,6 @@ from .serializers import ResourceSerializer
 class ResourceListCreateView(generics.ListCreateAPIView):
     queryset = Resource.objects.all()
     serializer_class = ResourceSerializer
-    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         serializer.save(uploaded_by=self.request.user)

@@ -46,6 +46,11 @@ const Navbar = () => {
                 <FaComments /> Discussions
               </Link>
             </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/resources">
+                <FaComments /> Resources
+              </Link>
+            </li>
 
             {user ? (
               <>

@@ -7,6 +7,7 @@ import Discussions from "./pages/discussions/Discussions";
 import DiscussionPosts from "./pages/discussions/DiscussionPosts";
 import CreateDiscussion from "./pages/discussions/CreateDiscussion";
 import CreateDiscussionPost from "./pages/discussions/CreateDiscussionPost";
+import Resources from "./pages/resources/Resources";
 import ResetPassword from "./pages/auth/ResetPassword";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import NotFound from "./pages/NotFound";
@@ -76,6 +77,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/resources" element={<Resources />} />
 
           {/* Admin Routes */}
           <Route
