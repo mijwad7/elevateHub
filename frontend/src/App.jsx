@@ -8,6 +8,7 @@ import DiscussionPosts from "./pages/discussions/DiscussionPosts";
 import CreateDiscussion from "./pages/discussions/CreateDiscussion";
 import CreateDiscussionPost from "./pages/discussions/CreateDiscussionPost";
 import Resources from "./pages/resources/Resources";
+import ResourceDetail from "./pages/resources/ResourceDetail";
 import ResetPassword from "./pages/auth/ResetPassword";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import NotFound from "./pages/NotFound";
@@ -78,6 +79,8 @@ function App() {
             }
           />
           <Route path="/resources" element={<Resources />} />
+          <Route path="/resources/:id" element={<ResourceDetail />} />
+          {/* <Route path="/resources/upload" element={<UploadResource />} /> */}
 
           {/* Admin Routes */}
           <Route

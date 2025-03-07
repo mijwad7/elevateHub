@@ -1,71 +1,157 @@
 import React, { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
-import { getResources, toggleVote, downloadResource } from "../../apiRequests";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  getResources,
+  toggleVote,
+  downloadResource,
+  getCategories,
+  getCreditBalance,
+} from "../../apiRequests";
+import { Link } from "react-router-dom";
 import Navbar from "../../components/Navbar";
+import { updateCredits } from "../../redux/authSlice";
 
 function Resources() {
   const [resources, setResources] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [filter, setFilter] = useState({ category: "", search: "" });
   const user = useSelector((state) => state.auth.user);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     getResources().then(setResources);
+    getCategories().then(setCategories);
   }, []);
 
   const handleVote = async (resourceId) => {
     const updated = await toggleVote(resourceId);
     setResources(
       resources.map((r) =>
-        r.id === resourceId ? { ...r, upvotes: updated.upvotes } : r
+        r.id === resourceId
+          ? { ...r, upvotes: updated.upvotes, has_upvoted: !r.has_upvoted }
+          : r
       )
     );
+    const newBalance = await getCreditBalance();
+    dispatch(updateCredits(newBalance));
   };
 
   const handleDownload = async (resourceId) => {
     await downloadResource(resourceId);
-    const updatedResources = await getResources(); // Refresh to get new download count
+    const updatedResources = await getResources();
     setResources(updatedResources);
+    const newBalance = await getCreditBalance();
+    dispatch(updateCredits(newBalance));
   };
+
+  const filteredResources = resources.filter(
+    (r) =>
+      (filter.category ? r.category.id === parseInt(filter.category) : true) &&
+      r.title.toLowerCase().includes(filter.search.toLowerCase())
+  );
 
   return (
     <>
       <Navbar />
       <div className="container mt-4">
         <h2>Resource Hub</h2>
-        <div className="mb-3">
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Search resources..."
-          />
-        </div>
-        {resources.map((resource) => (
-          <div key={resource.id} className="card p-3 mb-3">
-            <h5>{resource.title}</h5>
-            <p>{resource.description}</p>
-            <p>
-              By: @{resource.uploaded_by_username} | Downloads:{" "}
-              {resource.download_count}
-            </p>
-            {user && (
-              <div>
-                <button
-                  onClick={() => handleVote(resource.id)}
-                  className={`btn btn-sm ${
-                    resource.has_upvoted ? "btn-primary" : "btn-outline-primary"
-                  } me-2`}
-                >
-                  ⬆ {resource.upvotes}
-                </button>
-                <button
-                  onClick={() => handleDownload(resource.id)}
-                  className="btn btn-sm btn-success"
-                >
-                  Download
-                </button>
-              </div>
-            )}
+        <div className="row mb-3">
+          <div className="col-md-6">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Search resources..."
+              value={filter.search}
+              onChange={(e) => setFilter({ ...filter, search: e.target.value })}
+            />
           </div>
-        ))}
+          <div className="col-md-4">
+            <select
+              className="form-control"
+              value={filter.category}
+              onChange={(e) =>
+                setFilter({ ...filter, category: e.target.value })
+              }
+            >
+              <option value="">All Categories</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="col-md-2">
+            <Link to="/resources/upload" className="btn btn-primary w-100">
+              Upload Resource
+            </Link>
+          </div>
+        </div>
+        <div className="row">
+          {filteredResources.map((resource) => (
+            <div key={resource.id} className="col-md-4 mb-3">
+              <div className="card h-100">
+                {resource.file.endsWith(".jpg") ||
+                resource.file.endsWith(".png") ? (
+                  <img
+                    src={resource.file}
+                    className="card-img-top"
+                    alt={resource.title}
+                    style={{ maxHeight: "150px", objectFit: "cover" }}
+                  />
+                ) : resource.file.endsWith(".mp4") ? (
+                  <video
+                    className="card-img-top"
+                    style={{ maxHeight: "150px" }}
+                    muted
+                  >
+                    <source src={resource.file} type="video/mp4" />
+                  </video>
+                ) : (
+                  <div
+                    className="card-img-top bg-light text-center p-3"
+                    style={{ maxHeight: "150px" }}
+                  >
+                    <i className="bi bi-file-earmark-text fs-3"></i>
+                  </div>
+                )}
+                <div className="card-body">
+                  <h5 className="card-title">
+                    <Link to={`/resources/${resource.id}`}>
+                      {resource.title}
+                    </Link>
+                  </h5>
+                  <p className="card-text">
+                    By: @{resource.uploaded_by.username}
+                  </p>
+                  <p className="card-text">
+                    Category: {resource.category.name}
+                  </p>
+                  {user && (
+                    <div>
+                      <button
+                        onClick={() => handleVote(resource.id)}
+                        className={`btn btn-sm ${
+                          resource.has_upvoted
+                            ? "btn-primary"
+                            : "btn-outline-primary"
+                        } me-2`}
+                      >
+                        ⬆ {resource.upvotes}
+                      </button>
+                      <button
+                        onClick={() => handleDownload(resource.id)}
+                        className="btn btn-sm btn-success"
+                      >
+                        Download ({resource.download_count})
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </>
   );

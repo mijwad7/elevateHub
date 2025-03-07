@@ -20,7 +20,7 @@ class Resource(models.Model):
 
 
 class ResourceVote(models.Model):
-    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='votes')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     class Meta:
