@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from credits.models import CreditTransaction
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -46,6 +47,19 @@ class DiscussionPostUpvote(models.Model):
 def award_credit_on_upvote(sender, instance, created, **kwargs):
     if created:  # Only on new upvotes
         post = instance.post
+        user = post.user
         post.upvotes += 1
         post.save()
-        post.user.get_credits().add_credits(1)  # +1 credit for upvote
+
+        has_earned_credits = CreditTransaction.objects.filter(
+            user=user,
+            description=f"Earned 1 credits for upvote on post {post.id}"
+        ).exists()
+
+        if not has_earned_credits:
+            user.get_credits().add_credits(1)
+            CreditTransaction.objects.create(
+                user=user,
+                amount=1,
+                description=f"Earned 1 credits for upvote on post {post.id}"
+            )
