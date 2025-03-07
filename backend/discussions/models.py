@@ -3,16 +3,7 @@ from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from credits.models import CreditTransaction
-
-class Category(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-
-    class Meta:
-        verbose_name = "Category"
-        verbose_name_plural = "Categories"
-
-    def __str__(self):
-        return self.name
+from api.models import Category
 
 class Discussion(models.Model):
     title = models.CharField(max_length=255)

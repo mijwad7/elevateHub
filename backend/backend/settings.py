@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'admin_panel',
     'discussions',
     'credits',
+    'resources',
 ]
 
 MEDIA_URL = "/media/"

@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="Discussion",
+            name="Resource",
             fields=[
                 (
                     "id",
@@ -28,29 +28,28 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("title", models.CharField(max_length=255)),
-                ("description", models.TextField(default="description")),
+                ("description", models.TextField()),
+                ("file", models.FileField(upload_to="resources/")),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("upvotes", models.IntegerField(default=0)),
+                ("download_count", models.IntegerField(default=0)),
                 (
                     "category",
                     models.ForeignKey(
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="discussions",
-                        to="api.category",
+                        on_delete=django.db.models.deletion.CASCADE, to="api.category"
                     ),
                 ),
                 (
-                    "created_by",
+                    "uploaded_by",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="discussions",
                         to=settings.AUTH_USER_MODEL,
                     ),
                 ),
             ],
         ),
         migrations.CreateModel(
-            name="DiscussionPost",
+            name="ResourceDownload",
             fields=[
                 (
                     "id",
@@ -61,45 +60,13 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("content", models.TextField()),
-                ("upvotes", models.IntegerField(default=0)),
-                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("timestamp", models.DateTimeField(auto_now_add=True)),
                 (
-                    "discussion",
+                    "resource",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="posts",
-                        to="discussions.discussion",
-                    ),
-                ),
-                (
-                    "user",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="discussion_posts",
-                        to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
-            ],
-        ),
-        migrations.CreateModel(
-            name="DiscussionPostUpvote",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "post",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="post_upvotes",
-                        to="discussions.discussionpost",
+                        related_name="downloads",
+                        to="resources.resource",
                     ),
                 ),
                 (
@@ -113,7 +80,42 @@ class Migration(migrations.Migration):
             options={
                 "constraints": [
                     models.UniqueConstraint(
-                        fields=("user", "post"), name="unique_upvote"
+                        fields=("user", "resource"), name="unique_download"
+                    )
+                ],
+            },
+        ),
+        migrations.CreateModel(
+            name="ResourceVote",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "resource",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="resources.resource",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+            ],
+            options={
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("user", "resource"), name="unique_resource_upvote"
                     )
                 ],
             },

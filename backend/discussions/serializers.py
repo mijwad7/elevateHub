@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Discussion, DiscussionPost, Category
+from api.models import Category
+from .models import Discussion, DiscussionPost
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:

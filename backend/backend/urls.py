@@ -31,6 +31,7 @@ urlpatterns = [
     path("api/", include("api.urls")),
     path("api/", include("discussions.urls")),  # Include discussions URLs
     path('api/', include('credits.urls')),
+    path('api/', include('resources.urls')),
 
     # path("api/user/register/", CreateUserView.as_view(), name="register"),
     # path("api/token/", CustomTokenObtainPairView.as_view(), name="get_token"),
