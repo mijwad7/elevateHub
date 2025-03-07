@@ -6,4 +6,5 @@ urlpatterns = [
     path('resources/<int:id>/', ResourceDetailView.as_view(), name='resource-detail'),
     path('resources/<int:resource_id>/vote/', toggle_vote, name='toggle-vote'),
     path('resources/<int:resource_id>/download/', download_resource, name='download-resource'),
+    
 ]

@@ -43,8 +43,7 @@ body {
   border-color: #122b4a !important;
 }
 
-.card-header,
-.form-select {
+.card-header {
   background-color: var(--bs-primary) !important;
   color: white !important;
 }

@@ -6,22 +6,31 @@ import {
   downloadResource,
   getCategories,
   getCreditBalance,
+  getResourcesByCategory
 } from "../../apiRequests";
 import { Link } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import { updateCredits } from "../../redux/authSlice";
+import CategoryFilter from "../../components/CategoryFilter";
 
 function Resources() {
   const [resources, setResources] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [filter, setFilter] = useState({ category: "", search: "" });
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
 
   useEffect(() => {
     getResources().then(setResources);
-    getCategories().then(setCategories);
   }, []);
+
+  useEffect(() => {
+    if (selectedCategory) {
+      getResourcesByCategory(selectedCategory).then(setResources);
+    } else {
+      getResources().then(setResources);
+    }
+  }, [selectedCategory]);
 
   const handleVote = async (resourceId) => {
     const updated = await toggleVote(resourceId);
@@ -56,7 +65,7 @@ function Resources() {
       <div className="container mt-4">
         <h2>Resource Hub</h2>
         <div className="row mb-3">
-          <div className="col-md-6">
+          <div className="col-md-10">
             <input
               type="text"
               className="form-control"
@@ -65,26 +74,18 @@ function Resources() {
               onChange={(e) => setFilter({ ...filter, search: e.target.value })}
             />
           </div>
-          <div className="col-md-4">
-            <select
-              className="form-control"
-              value={filter.category}
-              onChange={(e) =>
-                setFilter({ ...filter, category: e.target.value })
-              }
-            >
-              <option value="">All Categories</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-          </div>
           <div className="col-md-2">
             <Link to="/resources/upload" className="btn btn-primary w-100">
               Upload Resource
             </Link>
+          </div>
+          <br />
+          <br />
+          <div className="col-md-12">
+            <CategoryFilter
+              selectedCategory={selectedCategory}
+              onSelectCategory={setSelectedCategory}
+            />
           </div>
         </div>
         <div className="row">
@@ -107,6 +108,13 @@ function Resources() {
                   >
                     <source src={resource.file} type="video/mp4" />
                   </video>
+                ) : resource.file.endsWith(".pdf") ? (
+                  <iframe
+                    src={`${resource.file}#toolbar=0&navpanes=0`}
+                    className="card-img-top"
+                    style={{ maxHeight: "150px", border: "none" }}
+                    title={resource.title}
+                  />
                 ) : (
                   <div
                     className="card-img-top bg-light text-center p-3"
