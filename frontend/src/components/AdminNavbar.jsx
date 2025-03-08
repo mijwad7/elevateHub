@@ -42,6 +42,11 @@ function AdminNavbar() {
                                 <i className="fas fa-comments me-2"></i> Discussions
                             </Link>
                         </li>
+                        <li className="nav-item">
+                            <Link className="nav-link" to="/admin/resources">
+                                <i className="fas fa-file me-2"></i> Resources
+                            </Link>
+                        </li>
                     </ul>
 
                     {/* Logout Button */}

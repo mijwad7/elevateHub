@@ -18,6 +18,7 @@ import "./App.css";
 import { Provider } from "react-redux";
 import store from "./redux/store";
 import AdminDiscussions from "./pages/admin/AdminDiscussions";
+import AdminResources from "./pages/admin/AdminResources";
 import Profile from "./pages/user/Profile";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
@@ -104,6 +105,14 @@ function App() {
             element={
               <AdminProtectedRoute>
                 <AdminDiscussions />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/resources"
+            element={
+              <AdminProtectedRoute>
+                <AdminResources />
               </AdminProtectedRoute>
             }
           />
