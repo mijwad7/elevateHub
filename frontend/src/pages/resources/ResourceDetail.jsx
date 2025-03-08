@@ -105,7 +105,8 @@ function ResourceDetail() {
                   onClick={handleDownload}
                   className="btn btn-success"
                 >
-                  Download ({resource.download_count})
+                  <i className="bi bi-download me-1"></i>{" "}
+                  {resource.download_count}
                 </a>
               </div>
             )}

@@ -142,12 +142,12 @@ function Resources() {
                     src={resource.file}
                     className="card-img-top"
                     alt={resource.title}
-                    style={{ height: "150px", objectFit: "cover" }}
+                    style={{ height: "250px", objectFit: "cover" }}
                   />
                 ) : resource.file.endsWith(".mp4") ? (
                   <video
                     className="card-img-top"
-                    style={{ height: "150px", objectFit: "cover" }}
+                    style={{ height: "250px", objectFit: "cover" }}
                     muted
                   >
                     <source src={resource.file} type="video/mp4" />
@@ -155,14 +155,14 @@ function Resources() {
                 ) : resource.file.endsWith(".pdf") ? (
                   <div
                     className="card-img-top bg-light text-center d-flex align-items-center justify-content-center"
-                    style={{ height: "150px" }}
+                    style={{ height: "250px" }}
                   >
                     <i className="bi bi-file-earmark-pdf fs-1 text-danger"></i>
                   </div>
                 ) : (
                   <div
                     className="card-img-top bg-light text-center d-flex align-items-center justify-content-center"
-                    style={{ height: "150px" }}
+                    style={{ height: "250px" }}
                   >
                     <i className="bi bi-file-earmark-text fs-1 text-muted"></i>
                   </div>
@@ -202,13 +202,15 @@ function Resources() {
                         <i className="bi bi-arrow-up me-1"></i>{" "}
                         {resource.upvotes}
                       </button>
-                      <button
-                        onClick={() => handleDownload(resource.id)}
-                        className="btn btn-sm btn-success"
+                      <a
+                        href={resource.file}
+                        download
+                        onClick={handleDownload}
+                        className="btn btn-success"
                       >
                         <i className="bi bi-download me-1"></i>{" "}
                         {resource.download_count}
-                      </button>
+                      </a>
                     </div>
                   )}
                 </div>

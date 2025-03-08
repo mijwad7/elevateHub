@@ -17,6 +17,7 @@ class ResourceSerializer(serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
     category_detail = ResourceCategorySerializer(source="category", read_only=True)
     has_upvoted = serializers.SerializerMethodField()
+    uploaded_by = serializers.PrimaryKeyRelatedField(read_only=True)  # Make read-only
 
     def get_has_upvoted(self, obj):
         user = self.context["request"].user
