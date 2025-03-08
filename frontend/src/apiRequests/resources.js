@@ -1,10 +1,10 @@
 import api from "./api";
 
 // Resources API calls (aligned with discussions)
-export const getResources = async () => {
+export const getResources = async (url = "/api/resources/") => {
   try {
-    console.log("Fetching resources...");
-    const response = await api.get("/api/resources/");
+    console.log("Fetching resources from:", url);
+    const response = await api.get(url);
     console.log("Response received:", response.data);
     return response.data.map((resource) => ({
       ...resource,
@@ -31,7 +31,9 @@ export const getResourceDetails = async (resourceId) => {
       uploaded_by: {
         username: response.data.uploaded_by_username,
         profile: response.data.uploaded_by_profile
-          ? `${import.meta.env.VITE_API_URL}${response.data.uploaded_by_profile}`
+          ? `${import.meta.env.VITE_API_URL}${
+              response.data.uploaded_by_profile
+            }`
           : "/default-avatar.png",
       },
     };
@@ -41,25 +43,6 @@ export const getResourceDetails = async (resourceId) => {
   }
 };
 
-export const getResourcesByCategory = async (categoryId) => {
-  try {
-    console.log(`Fetching resources for category ${categoryId}...`);
-    const response = await api.get(`/api/resources/?category=${categoryId}`);
-    console.log("Response received:", response.data);
-    return response.data.map((resource) => ({
-      ...resource,
-      uploaded_by: {
-        username: resource.uploaded_by_username,
-        profile: resource.uploaded_by_profile
-          ? `${import.meta.env.VITE_API_URL}${resource.uploaded_by_profile}`
-          : "/default-avatar.png",
-      },
-    }));
-  } catch (error) {
-    console.error(`Error fetching resources by category ${categoryId}:`, error);
-    return [];
-  }
-};
 
 export const uploadResource = async (formData) => {
   try {

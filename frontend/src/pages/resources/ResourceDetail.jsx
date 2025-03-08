@@ -75,8 +75,17 @@ function ResourceDetail() {
           </div>
           <div className="col-md-4">
             <h2>{resource.title}</h2>
-            <p>By: @{resource.uploaded_by.username}</p>
-            <p>Category: {resource.category.name}</p>
+            <p>
+              <img
+                alt="User Avatar"
+                className="rounded-circle me-2"
+                width="40"
+                height="40"
+                src={resource.uploaded_by_profile}
+              />
+              {resource.uploaded_by.username}
+            </p>
+            <p>Category: {resource.category_detail.name}</p>
             <p>
               Uploaded: {new Date(resource.created_at).toLocaleDateString()}
             </p>
@@ -90,7 +99,12 @@ function ResourceDetail() {
                 >
                   ⬆ {resource.upvotes}
                 </button>
-                <a href={resource.file} download onClick={handleDownload} className="btn btn-success">
+                <a
+                  href={resource.file}
+                  download
+                  onClick={handleDownload}
+                  className="btn btn-success"
+                >
                   Download ({resource.download_count})
                 </a>
               </div>

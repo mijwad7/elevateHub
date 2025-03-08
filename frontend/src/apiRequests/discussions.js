@@ -12,39 +12,27 @@ export const createDiscussion = async (title, description, categoryId) => {
   }
 };
 
-export const getDiscussions = async () => {
+export const getDiscussions = async (url = "/api/discussions/") => {
   try {
-    console.log("Fetching discussions...");
-    const response = await api.get("/api/discussions/");
+    console.log("Fetching discussions from:", url);
+    const response = await api.get(url);
     console.log("Response received:", response.data);
     return response.data.map((discussion) => ({
       ...discussion,
       posts_count: discussion.posts_count,
       created_by: {
         username: discussion.created_by_username,
-        profile: `${import.meta.env.VITE_API_URL}${discussion.created_by_profile}`,
+        profile: discussion.created_by_profile
+          ? `${import.meta.env.VITE_API_URL}${discussion.created_by_profile}`
+          : "/default-avatar.png",
       },
     }));
   } catch (error) {
     console.error("Error fetching discussions:", error);
-  }
-};
-
-export const getDiscussionsByCategory = async (categoryId) => {
-  try {
-    const response = await api.get(`/api/discussions/?category=${categoryId}`);
-    return response.data.map((discussion) => ({
-      ...discussion,
-      created_by: {
-        username: discussion.created_by_username,
-        profile: `${import.meta.env.VITE_API_URL}${discussion.created_by_profile}`,
-      },
-    }));
-  } catch (error) {
-    console.error("Error fetching discussions by category:", error);
     return [];
   }
 };
+
 
 export const getDiscussionDetails = async (discussionId) => {
   try {

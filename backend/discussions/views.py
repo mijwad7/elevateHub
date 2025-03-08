@@ -6,7 +6,7 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from .models import Discussion, DiscussionPost, DiscussionPostUpvote, Category
 from .serializers import DiscussionSerializer, DiscussionPostSerializer, CategorySerializer
-from rest_framework.filters import SearchFilter
+from rest_framework.filters import SearchFilter, OrderingFilter
 
 class CategoryListView(generics.ListAPIView):
     queryset = Category.objects.all()
@@ -15,8 +15,10 @@ class CategoryListView(generics.ListAPIView):
 
 class DiscussionListCreateView(generics.ListCreateAPIView):
     serializer_class = DiscussionSerializer
-    filter_backends = [SearchFilter]
+    filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['title', 'description']
+    ordering_fields = ['created_at', 'upvotes', 'posts']
+    ordering = ['-created_at']
 
     def get_queryset(self):
         queryset = Discussion.objects.all()
