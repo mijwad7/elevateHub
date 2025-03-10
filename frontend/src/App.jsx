@@ -28,7 +28,16 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./App.css";
 
 function Logout() {
-  localStorage.clear();
+  const dispatch = useDispatch();
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/api/logout/", {
+      method: "POST",
+      credentials: "include",
+    }).then(() => {
+      localStorage.clear();
+      dispatch(setAuthStatus(false));
+    });
+  }, [dispatch]);
   return <Navigate to="/login" />;
 }
 
@@ -44,13 +53,17 @@ function AuthWrapper({ children }) {
 
   useEffect(() => {
     fetch("http://127.0.0.1:8000/auth/status/", {
-      credentials: "include",  // Send cookies
+      credentials: "include",
+      headers: { "Accept": "application/json" },
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
         console.log("AuthWrapper status:", data);
         if (data.is_authenticated) {
-          dispatch(googleLoginSuccess({ user: { email: data.email } })); // Match backend response
+          dispatch(googleLoginSuccess({ user: { email: data.email } }));
         } else {
           dispatch(setAuthStatus(false));
         }
@@ -59,7 +72,13 @@ function AuthWrapper({ children }) {
         console.error("Auth fetch error:", err);
         dispatch(setAuthStatus(false));
       });
-  }, [dispatch, location.pathname]);
+  }, [dispatch]); // Only run on mount, not on path change
+
+  // Redirect logic
+  if (isAuthenticated && (location.pathname === "/login" || location.pathname === "/register")) {
+    return <Navigate to="/" />;
+  }
+ 
 
   return children;
 }
