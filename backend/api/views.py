@@ -11,6 +11,8 @@ from .serializers import UserSerializer, PasswordResetRequestSerializer
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth import get_user_model
+from django.http import JsonResponse
+
 
 User = get_user_model()
 
@@ -101,3 +103,30 @@ class PasswordResetConfirmView(APIView):
         user.set_password(new_password)
         user.save()
         return Response({"message": "Password reset successful."}, status=200)
+
+
+from django.middleware.csrf import get_token
+
+def get_csrf(request):
+    return JsonResponse({"csrfToken": get_token(request)})
+
+def auth_status(request):
+    print("Cookies:", request.COOKIES)
+    if request.user.is_authenticated:
+        return JsonResponse({
+            "is_authenticated": True,
+            "email": request.user.email  # Keep this to match your current output
+        })
+    return JsonResponse({"is_authenticated": False, "email": None})
+
+
+from django.contrib.auth import logout
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def direct_logout(request):
+    if request.method == "POST" or request.method == "GET":
+        logout(request)
+        return JsonResponse({"status": "logged out"})
+    return JsonResponse({"error": "Method not allowed"}, status=405)

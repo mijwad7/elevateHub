@@ -30,7 +30,7 @@ SECRET_KEY = "django-insecure-tv*13d11w5kw%^uvkfv$1n6x(v9t4=7#=*x-u9i^92%%-^+(zt
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["127.0.0.1", "localhost"]  # Avoid wildcard for clarity
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -46,7 +46,37 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }
 
+AUTHENTICATION_BACKENDS = (
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+)
 
+SITE_ID = 1  # Required for django.contrib.sites
+ACCOUNT_AUTHENTICATION_METHOD = "username_email"
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = "none"  # Set to "mandatory" if you want email verification
+ACCOUNT_USERNAME_REQUIRED = True
+LOGIN_REDIRECT_URL = "http://localhost:5173/"  # Redirect to React route after login
+LOGOUT_REDIRECT_URL = "http://localhost:5173/login"    # Redirect to login page after logout
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+SOCIALACCOUNT_ADAPTER = "api.adapters.CustomSocialAccountAdapter"
+
+
+
+
+# Google OAuth settings (from your .env)
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {"access_type": "online"},
+        "CLIENT_ID": os.getenv("GOOGLE_CLIENT_ID"),
+        "SECRET": os.getenv("GOOGLE_SECRET"),
+    }
+}
+
+CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8000", "http://localhost:5173"]
 
 # Application definition
 
@@ -64,6 +94,11 @@ INSTALLED_APPS = [
     'discussions',
     'credits',
     'resources',
+    "django.contrib.sites",  # Required by allauth
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
 ]
 
 MEDIA_URL = "/media/"
@@ -72,6 +107,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -157,15 +193,32 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # Your frontend URL
-    "http://127.0.0.1:5173",  # Add if needed
-]
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOWS_CREDENTIALS = True
-CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
-CORS_ALLOW_HEADERS = ['*']
 
+# CORS settings
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:8000",  # Optional for dev
+]
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "content-type",  # Explicitly allow Content-Type
+    "authorization",
+    "x-csrftoken",
+]  # Remove wildcard, list specific headers
+# Remove CORS_ALLOW_ALL_ORIGINS = True to avoid conflicts
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:8000",
+    "http://localhost:5173",
+]
+
+# Session settings
+SESSION_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SECURE = True  # False for local dev
+SESSION_COOKIE_DOMAIN = None
+SESSION_COOKIE_HTTPONLY = False
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")  # Default to Gmail
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))  # Convert string to int

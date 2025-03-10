@@ -2,7 +2,7 @@ from django.urls import path, include
 from .views import (
     CreateUserView, CustomTokenObtainPairView, UserListView, UserDeleteView,
     ProfileImageUploadView, UserListCreateView, UserRetrieveUpdateDestroyView,
-    PasswordResetRequestView, PasswordResetConfirmView,
+    PasswordResetRequestView, PasswordResetConfirmView, auth_status
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.conf import settings

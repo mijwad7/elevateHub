@@ -17,14 +17,15 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
-from api.views import CreateUserView, CustomTokenObtainPairView, UserListView, UserDeleteView, ProfileImageUploadView, UserListCreateView, UserRetrieveUpdateDestroyView
+from api.views import CreateUserView, CustomTokenObtainPairView, UserListView, UserDeleteView, ProfileImageUploadView, UserListCreateView, get_csrf, UserRetrieveUpdateDestroyView, auth_status, direct_logout
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
 from django.conf import settings
 from django.conf.urls.static import static
-
+from allauth.account.views import LogoutView
+from django.views.decorators.csrf import csrf_exempt
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("admin-panel/", include("admin_panel.urls")),
@@ -32,6 +33,10 @@ urlpatterns = [
     path("api/", include("discussions.urls")),  # Include discussions URLs
     path('api/', include('credits.urls')),
     path('api/', include('resources.urls')),
+    path("accounts/", include("allauth.urls")),
+    path("accounts/logout/", csrf_exempt(LogoutView.as_view()), name="account_logout"),  # Override with CSRF exemption
+    path("csrf/", get_csrf, name="get_csrf"),
+    path("api/logout/", direct_logout, name="direct_logout"),
 
     # path("api/user/register/", CreateUserView.as_view(), name="register"),
     # path("api/token/", CustomTokenObtainPairView.as_view(), name="get_token"),
@@ -41,5 +46,5 @@ urlpatterns = [
     # path("api/users/<int:pk>/", UserRetrieveUpdateDestroyView.as_view(), name="user_detail"),
     # path("api/users/<int:user_id>/upload-profile/", ProfileImageUploadView.as_view(), name="upload-profile"),
 ]
-
+urlpatterns += [path("auth/status/", auth_status)]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

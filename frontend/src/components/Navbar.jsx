@@ -1,7 +1,7 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { logOut } from "../redux/authSlice"; // Import the logout action
+import { logOut } from "../redux/authSlice";
 import {
   FaHome,
   FaUser,
@@ -13,10 +13,22 @@ import {
 
 const Navbar = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
 
   const handleLogout = () => {
-    dispatch(logOut());
+    fetch("http://127.0.0.1:8000/api/logout/", {
+      method: "POST", // or GET, both work with direct_logout
+      credentials: "include",
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Logout failed: ${response.status}`);
+        dispatch(logOut());
+      })
+      .catch((err) => {
+        console.error("Logout error:", err);
+        dispatch(logOut());
+      });
   };
 
   return (
