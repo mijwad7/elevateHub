@@ -203,6 +203,7 @@ function Resources() {
                         {resource.upvotes}
                       </button>
                       <a
+                        target="_blank"
                         href={resource.file}
                         download
                         onClick={handleDownload}

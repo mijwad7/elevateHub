@@ -63,22 +63,25 @@ function AuthWrapper({ children }) {
       .then((data) => {
         console.log("AuthWrapper status:", data);
         if (data.is_authenticated) {
-          dispatch(googleLoginSuccess({ user: { email: data.email } }));
-        } else {
+          if (!localStorage.getItem("user")) { // Only set if not already in localStorage
+            dispatch(googleLoginSuccess({ user: { email: data.email } }));
+          }
+        } else if (!localStorage.getItem("access_token")) { // Only clear if no JWT
           dispatch(setAuthStatus(false));
         }
       })
       .catch((err) => {
         console.error("Auth fetch error:", err);
-        dispatch(setAuthStatus(false));
+        if (!localStorage.getItem("access_token")) {
+          dispatch(setAuthStatus(false));
+        }
       });
-  }, [dispatch]); // Only run on mount, not on path change
+  }, [dispatch]);
 
-  // Redirect logic
   if (isAuthenticated && (location.pathname === "/login" || location.pathname === "/register")) {
     return <Navigate to="/" />;
   }
- 
+
 
   return children;
 }

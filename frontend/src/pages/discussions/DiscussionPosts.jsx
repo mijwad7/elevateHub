@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getDiscussionPosts, getDiscussionDetails, toggleUpvote, getCreditBalance } from "../../apiRequests";
 import Navbar from "../../components/Navbar";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { updateCredits } from "../../redux/authSlice";
 
 function DiscussionPosts() {
   const { discussionId } = useParams(); 
   const [discussion, setDiscussion] = useState(null);
   const [posts, setPosts] = useState([]);
+  const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
 
   useEffect(() => {

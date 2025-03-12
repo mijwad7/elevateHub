@@ -2,24 +2,24 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   user: JSON.parse(localStorage.getItem("user")) || null,
-  token: localStorage.getItem("access_token") || null,  // For JWT
-  isAuthenticated: false,  // True if either token or session is valid
+  token: localStorage.getItem("access_token") || null,
+  isAuthenticated: !!localStorage.getItem("user") || !!localStorage.getItem("access_token"), // Trust localStorage
 };
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    loginSuccess: (state, action) => {  // For JWT login
+    loginSuccess: (state, action) => {
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.isAuthenticated = true;
       localStorage.setItem("access_token", action.payload.token);
       localStorage.setItem("user", JSON.stringify(action.payload.user));
     },
-    googleLoginSuccess: (state, action) => {  // For Google session login
+    googleLoginSuccess: (state, action) => {
       state.user = action.payload.user;
-      state.token = null;  // No token for Google auth
+      state.token = null;
       state.isAuthenticated = true;
       localStorage.setItem("user", JSON.stringify(action.payload.user));
     },
