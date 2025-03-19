@@ -15,4 +15,4 @@ class CreditTransactionListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return CreditTransaction.objects.filter(user=self.request.user)
+        return CreditTransaction.objects.filter(user=self.request.user).order_by('-timestamp')

@@ -50,7 +50,8 @@ function ResourceDetail() {
         <div className="row">
           <div className="col-md-8">
             {resource.file.endsWith(".jpg") ||
-            resource.file.endsWith(".png") ? (
+            resource.file.endsWith(".png") ||
+            resource.file.endsWith(".jpeg") ? (
               <img
                 src={resource.file}
                 className="img-fluid"

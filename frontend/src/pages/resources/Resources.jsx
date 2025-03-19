@@ -137,7 +137,8 @@ function Resources() {
             <div key={resource.id} className="col">
               <div className="card h-100 shadow-sm border-0">
                 {resource.file.endsWith(".jpg") ||
-                resource.file.endsWith(".png") ? (
+                resource.file.endsWith(".png") ||
+                resource.file.endsWith(".jpeg") ? (
                   <img
                     src={resource.file}
                     className="card-img-top"

@@ -92,6 +92,21 @@ const Profile = () => {
                 )}
                 <p><strong>Credits:</strong> {user.credits !== undefined ? user.credits : "Loading..."}</p>
               </div>
+              {/* File Upload */}
+              <div className="mt-4">
+                <h5>Upload Profile Image</h5>
+                <div className="input-group">
+                  <input
+                    type="file"
+                    className="form-control"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                  />
+                  <button className="btn btn-primary" onClick={handleUpload}>
+                    Upload
+                  </button>
+                </div>
+              </div>
 
               {/* Transaction History */}
               <div className="mt-4">
@@ -112,21 +127,6 @@ const Profile = () => {
                 )}
               </div>
 
-              {/* File Upload */}
-              <div className="mt-4">
-                <h5>Upload Profile Image</h5>
-                <div className="input-group">
-                  <input
-                    type="file"
-                    className="form-control"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                  />
-                  <button className="btn btn-primary" onClick={handleUpload}>
-                    Upload
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
