@@ -12,12 +12,11 @@ class Resource(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
-    upvotes = models.IntegerField(default=0)  # Only upvotes now
+    upvotes = models.IntegerField(default=0)
     download_count = models.IntegerField(default=0)
 
     def __str__(self):
         return self.title
-
 
 class ResourceVote(models.Model):
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='votes')
@@ -31,19 +30,15 @@ class ResourceVote(models.Model):
     def __str__(self):
         return f"{self.user.username} voted on {self.resource.title}"
 
-
 class ResourceDownload(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    resource = models.ForeignKey(
-        Resource, on_delete=models.CASCADE, related_name="downloads"
-    )
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name="downloads")
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=["user", "resource"], name="unique_download"),
         ]
-
 
 @receiver(post_save, sender=ResourceDownload)
 def award_credits_on_download(sender, instance, created, **kwargs):
@@ -60,14 +55,9 @@ def award_credits_on_download(sender, instance, created, **kwargs):
         if not has_earned_credits:
             resource.download_count += 1
             resource.save()
-            user.get_credits().add_credits(5)  # +5 for first download
-            CreditTransaction.objects.create(
-                user=user,
-                amount=5,
-                description=f"Earned 5 credits for first download of {resource.title}",
-            )
+            user.get_credits().add_credits(5, f"Earned 5 credits for first download of {resource.title}")
         else:
-            resource.download_count += 1  # Still increment count, but no credits
+            resource.download_count += 1
             resource.save()
 
 @receiver(post_save, sender=ResourceVote)
@@ -85,12 +75,7 @@ def award_credits_on_upvote(sender, instance, created, **kwargs):
         if not has_earned_credits:
             resource.upvotes += 1
             resource.save()
-            user.get_credits().add_credits(1)  # +1 for first upvote
-            CreditTransaction.objects.create(
-                user=user,
-                amount=1,
-                description=f"Earned 1 credit for first upvote on {resource.title}"
-            )
+            user.get_credits().add_credits(1, f"Earned 1 credit for first upvote on {resource.title}")
         else:
-            resource.upvotes += 1  # Still increment upvotes, but no credits
+            resource.upvotes += 1
             resource.save()

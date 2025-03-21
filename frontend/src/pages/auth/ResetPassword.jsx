@@ -36,28 +36,44 @@ const ResetPassword = () => {
   };
 
   return (
-    <div>
-      <h2>Reset Password</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <input
-          type="password"
-          name="new_password"
-          placeholder="New Password"
-          value={formData.new_password}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="password"
-          name="confirm_password"
-          placeholder="Confirm Password"
-          value={formData.confirm_password}
-          onChange={handleChange}
-          required
-        />
-        <button type="submit">Reset Password</button>
-      </form>
+    <div className="container mt-5">
+      <div className="row justify-content-center">
+        <div className="col-md-6">
+          <div className="card shadow-sm p-4">
+            <h2 className="text-center mb-4">Reset Password</h2>
+            {error && (
+              <p className="text-danger text-center">{error}</p>
+            )}
+            <form onSubmit={handleSubmit}>
+              <div className="mb-3">
+                <input
+                  type="password"
+                  name="new_password"
+                  placeholder="New Password"
+                  value={formData.new_password}
+                  onChange={handleChange}
+                  className="form-control"
+                  required
+                />
+              </div>
+              <div className="mb-3">
+                <input
+                  type="password"
+                  name="confirm_password"
+                  placeholder="Confirm Password"
+                  value={formData.confirm_password}
+                  onChange={handleChange}
+                  className="form-control"
+                  required
+                />
+              </div>
+              <button type="submit" className="btn btn-primary w-100">
+                Reset Password
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
