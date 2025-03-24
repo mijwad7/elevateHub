@@ -54,7 +54,6 @@ class DiscussionPostDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
 def toggle_upvote(request, post_id):
     try:
         post = DiscussionPost.objects.get(id=post_id)

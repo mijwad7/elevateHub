@@ -43,7 +43,6 @@ class ResourceDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'id'
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
 def toggle_vote(request, resource_id):
     """
     Toggle upvote for a resource.

@@ -5,6 +5,7 @@ from rest_framework import generics, permissions
 from rest_framework.permissions import AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
+from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.views import APIView
 from .models import CustomUser
 from .serializers import UserSerializer, PasswordResetRequestSerializer
@@ -12,6 +13,10 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse
+from credits.models import Credit
+from rest_framework.decorators import api_view
+from rest_framework import status
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 
 User = get_user_model()
@@ -53,15 +58,36 @@ class UserDeleteView(generics.DestroyAPIView):
 class ProfileImageUploadView(APIView):
     parser_classes = [MultiPartParser, FormParser]
     permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [SessionAuthentication, TokenAuthentication]  # Explicitly support both
 
     def put(self, request, user_id):
+        # Ensure the user can only update their own profile
+        # if request.user.id != int(user_id):
+        #     return Response(
+        #         {"error": "You can only update your own profile"},
+        #         status=status.HTTP_403_FORBIDDEN
+        #     )
+
         try:
             user = CustomUser.objects.get(id=user_id)
-            user.profile_image = request.FILES.get('profile_image')
-            user.save()
-            return Response(UserSerializer(user).data)
         except CustomUser.DoesNotExist:
-            return Response({"error": "User not found"}, status=404)
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check if a file was provided
+        profile_image = request.FILES.get('profile_image')
+        if not profile_image:
+            return Response(
+                {"error": "No profile image provided"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Update profile image
+        user.profile_image = profile_image
+        user.save()
+
+        # Return updated user data
+        serializer = UserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class UserListCreateView(generics.ListCreateAPIView):
     queryset = CustomUser.objects.all()
@@ -107,18 +133,29 @@ class PasswordResetConfirmView(APIView):
 
 from django.middleware.csrf import get_token
 
+@api_view(['GET'])
+@ensure_csrf_cookie
 def get_csrf(request):
-    return JsonResponse({"csrfToken": get_token(request)})
+    csrf_token = get_token(request)  # Generates or retrieves CSRF token
+    response = JsonResponse({'csrftoken': csrf_token})
+    response.set_cookie('csrftoken', csrf_token, samesite='Lax')  # Ensure cookie is set
+    return response
 
+
+@api_view(['GET'])
+@ensure_csrf_cookie
 def auth_status(request):
-    print("Cookies:", request.COOKIES)
     if request.user.is_authenticated:
-        return JsonResponse({
-            "is_authenticated": True,
-            "email": request.user.email  # Keep this to match your current output
-        })
-    return JsonResponse({"is_authenticated": False, "email": None})
-
+        credit = request.user.get_credits()
+        user_data = {
+            'id': request.user.id,
+            'username': request.user.username,
+            'email': request.user.email,
+            'profile_image': request.user.profile_image.url if request.user.profile_image else None,
+            'credits': credit.balance,
+        }
+        return Response({'is_authenticated': True, 'user': user_data})
+    return Response({'is_authenticated': False})
 
 from django.contrib.auth import logout
 from django.http import JsonResponse

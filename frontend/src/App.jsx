@@ -27,6 +27,8 @@ import NotAuthorized from "./pages/NotAuthorized";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./App.css";
 
+
+
 function Logout() {
   const dispatch = useDispatch();
   useEffect(() => {
