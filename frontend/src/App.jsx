@@ -1,5 +1,11 @@
 import React, { useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { googleLoginSuccess, setAuthStatus } from "./redux/authSlice";
 import Login from "./pages/auth/Login";
@@ -12,6 +18,8 @@ import CreateDiscussionPost from "./pages/discussions/CreateDiscussionPost";
 import Resources from "./pages/resources/Resources";
 import ResourceDetail from "./pages/resources/ResourceDetail";
 import UploadResource from "./pages/resources/UploadResource";
+import HelpRequests from "./pages/projects/HelpRequests";
+import HelpRequestDetail from "./pages/projects/HelpRequestDetail";
 import ResetPassword from "./pages/auth/ResetPassword";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import NotFound from "./pages/NotFound";
@@ -26,8 +34,6 @@ import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import NotAuthorized from "./pages/NotAuthorized";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./App.css";
-
-
 
 function Logout() {
   const dispatch = useDispatch();
@@ -56,7 +62,7 @@ function AuthWrapper({ children }) {
   useEffect(() => {
     fetch("http://localhost:8000/auth/status/", {
       credentials: "include",
-      headers: { "Accept": "application/json" },
+      headers: { Accept: "application/json" },
     })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -65,10 +71,12 @@ function AuthWrapper({ children }) {
       .then((data) => {
         console.log("AuthWrapper status:", data);
         if (data.is_authenticated) {
-          if (!localStorage.getItem("user")) { // Only set if not already in localStorage
+          if (!localStorage.getItem("user")) {
+            // Only set if not already in localStorage
             dispatch(googleLoginSuccess({ user: { email: data.email } }));
           }
-        } else if (!localStorage.getItem("access_token")) { // Only clear if no JWT
+        } else if (!localStorage.getItem("access_token")) {
+          // Only clear if no JWT
           dispatch(setAuthStatus(false));
         }
       })
@@ -80,10 +88,12 @@ function AuthWrapper({ children }) {
       });
   }, [dispatch]);
 
-  if (isAuthenticated && (location.pathname === "/login" || location.pathname === "/register")) {
+  if (
+    isAuthenticated &&
+    (location.pathname === "/login" || location.pathname === "/register")
+  ) {
     return <Navigate to="/" />;
   }
-
 
   return children;
 }
@@ -96,21 +106,78 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password/:uid/:token" element={<ResetPassword />} />
+            <Route
+              path="/reset-password/:uid/:token"
+              element={<ResetPassword />}
+            />
             <Route path="/register" element={<RegisterAndLogout />} />
             <Route path="/logout" element={<Logout />} />
             <Route path="/" element={<Home />} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/discussions" element={<Discussions />} />
-            <Route path="/create-discussion" element={<ProtectedRoute><CreateDiscussion /></ProtectedRoute>} />
-            <Route path="/resources/upload" element={<ProtectedRoute><UploadResource /></ProtectedRoute>} />
-            <Route path="/discussions/:discussionId" element={<DiscussionPosts />} />
-            <Route path="/discussions/:discussionId/create-discussion-post" element={<ProtectedRoute><CreateDiscussionPost /></ProtectedRoute>} />
+            <Route
+              path="/create-discussion"
+              element={
+                <ProtectedRoute>
+                  <CreateDiscussion />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/resources/upload"
+              element={
+                <ProtectedRoute>
+                  <UploadResource />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/discussions/:discussionId"
+              element={<DiscussionPosts />}
+            />
+            <Route
+              path="/discussions/:discussionId/create-discussion-post"
+              element={
+                <ProtectedRoute>
+                  <CreateDiscussionPost />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/help-requests" element={<HelpRequests />} />
+            <Route path="/help-requests/:id" element={<HelpRequestDetail />} />
             <Route path="/resources" element={<Resources />} />
             <Route path="/resources/:id" element={<ResourceDetail />} />
-            <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
-            <Route path="/admin/discussions" element={<AdminProtectedRoute><AdminDiscussions /></AdminProtectedRoute>} />
-            <Route path="/admin/resources" element={<AdminProtectedRoute><AdminResources /></AdminProtectedRoute>} />
+            <Route
+              path="/admin"
+              element={
+                <AdminProtectedRoute>
+                  <AdminDashboard />
+                </AdminProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/discussions"
+              element={
+                <AdminProtectedRoute>
+                  <AdminDiscussions />
+                </AdminProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/resources"
+              element={
+                <AdminProtectedRoute>
+                  <AdminResources />
+                </AdminProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
             <Route path="/not-authorized" element={<NotAuthorized />} />
           </Routes>

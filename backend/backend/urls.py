@@ -33,6 +33,7 @@ urlpatterns = [
     path("api/", include("discussions.urls")),  # Include discussions URLs
     path('api/', include('credits.urls')),
     path('api/', include('resources.urls')),
+    path('api/', include('projects.urls')),
     path("accounts/", include("allauth.urls")),
     path("accounts/logout/", csrf_exempt(LogoutView.as_view()), name="account_logout"),  # Override with CSRF exemption
     path("csrf/", get_csrf, name="get_csrf"),
