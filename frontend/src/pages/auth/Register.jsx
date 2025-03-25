@@ -18,7 +18,7 @@ const Register = () => {
 
   // Handle Google login/registration redirect
   const handleGoogleLogin = () => {
-    window.location.href = "http://127.0.0.1:8000/accounts/google/login/";
+    window.location.href = "http://localhost:8000/accounts/google/login/";
   };
 
   // Handle normal registration

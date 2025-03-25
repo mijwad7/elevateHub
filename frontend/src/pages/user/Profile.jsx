@@ -80,7 +80,7 @@ const Profile = () => {
     };
 
     const profileImageUrl = user?.profile_image
-        ? `http://127.0.0.1:8000/${user.profile_image}`
+        ? `http://localhost:8000/${user.profile_image}`
         : "default_image.jpg";
 
     if (!isAuthenticated || !user) {

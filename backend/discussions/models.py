@@ -39,18 +39,18 @@ def award_credit_on_upvote(sender, instance, created, **kwargs):
     if created:  # Only on new upvotes
         post = instance.post
         user = post.user
+        
+        # Increment upvotes
         post.upvotes += 1
-        post.save()
+        post.save(update_fields=['upvotes'])  # Optimize by only updating upvotes
 
+        # Check if this post has already earned credits
         has_earned_credits = CreditTransaction.objects.filter(
             user=user,
-            description=f"Earned 1 credits for upvote on post {post.id}"
+            amount=1,  # Specific to upvote credits
+            description__contains=f"upvote on post {post.id}"
         ).exists()
 
-        if not has_earned_credits:
-            user.get_credits().add_credits(1)
-            CreditTransaction.objects.create(
-                user=user,
-                amount=1,
-                description=f"Earned 1 credits for upvote on post {post.id}"
-            )
+        if not has_earned_credits and post.upvotes == 1:  # Only award on first upvote
+            credits = user.get_credits()  # Assuming this returns Credit instance
+            credits.add_credits(1, description=f"Earned 1 credit for first upvote on post {post.id}")

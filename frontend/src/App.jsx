@@ -32,7 +32,7 @@ import "./App.css";
 function Logout() {
   const dispatch = useDispatch();
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/logout/", {
+    fetch("http://localhost:8000/api/logout/", {
       method: "POST",
       credentials: "include",
     }).then(() => {
@@ -54,7 +54,7 @@ function AuthWrapper({ children }) {
   const location = useLocation();
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/auth/status/", {
+    fetch("http://localhost:8000/auth/status/", {
       credentials: "include",
       headers: { "Accept": "application/json" },
     })

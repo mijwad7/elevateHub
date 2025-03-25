@@ -17,7 +17,7 @@ const Navbar = () => {
   const user = useSelector((state) => state.auth.user);
 
   const handleLogout = () => {
-    fetch("http://127.0.0.1:8000/api/logout/", {
+    fetch("http://localhost:8000/api/logout/", {
       method: "POST", // or GET, both work with direct_logout
       credentials: "include",
     })
