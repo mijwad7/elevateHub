@@ -11,17 +11,23 @@ class CategorySerializer(serializers.ModelSerializer):
 class HelpCommentSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     help_request = serializers.PrimaryKeyRelatedField(read_only=True)
+    has_upvoted = serializers.SerializerMethodField()
+
+    def get_has_upvoted(self, obj):
+        user = self.context["request"].user
+        return user.is_authenticated and obj.comment_upvotes.filter(user=user).exists()
+
     class Meta:
         model = HelpComment
-        fields = ['id', 'help_request', 'user', 'content', 'upvotes', 'created_at']
+        fields = ['id', 'help_request', 'user', 'content', 'upvotes', 'created_at', 'has_upvoted']
 
 class HelpRequestSerializer(serializers.ModelSerializer):
     created_by = UserSerializer(read_only=True)
-    category = CategorySerializer(read_only=True)  # For response (read)
+    category = CategorySerializer(read_only=True)
     category_id = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(),
         source='category',
-        write_only=True  # For request (write)
+        write_only=True
     )
     comments = HelpCommentSerializer(many=True, read_only=True)
 

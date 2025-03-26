@@ -58,8 +58,8 @@ class HelpCommentDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def toggle_upvote(request, comment_id):
-    comment = get_object_or_404(HelpComment, id=comment_id)
+def toggle_upvote(request, request_id, comment_id):
+    comment = get_object_or_404(HelpComment, help_request_id=request_id, id=comment_id)
     upvote, created = HelpCommentUpvote.objects.get_or_create(user=request.user, comment=comment)
     if not created:
         upvote.delete()

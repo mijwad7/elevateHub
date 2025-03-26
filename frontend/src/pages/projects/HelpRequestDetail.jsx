@@ -34,15 +34,21 @@ const HelpRequestDetail = () => {
         }
     };
 
-    const handleUpvote = async (commentId) => {
+    const handleUpvote = async (requestId, commentId) => {
         if (!isAuthenticated) {
             alert("Please log in to upvote.");
             return;
         }
-        const result = await toggleCommentUpvote(commentId);
-        if (result && result.detail === "Upvote added") {
+        const result = await toggleCommentUpvote(requestId, commentId); // Assumes requestId is in URL
+        if (result) {
             const updatedComments = request.comments.map(c =>
-                c.id === commentId ? { ...c, upvotes: c.upvotes + 1 } : c
+                c.id === commentId
+                    ? {
+                          ...c,
+                          upvotes: result.detail === "Upvote added" ? c.upvotes + 1 : c.upvotes - 1,
+                          has_upvoted: result.detail === "Upvote added" // Toggle has_upvoted
+                      }
+                    : c
             );
             setRequest({ ...request, comments: updatedComments });
         }
@@ -68,13 +74,14 @@ const HelpRequestDetail = () => {
                         <div key={c.id} className="card mb-2">
                             <div className="card-body">
                                 <p>{c.content}</p>
-                                <p><strong>By:</strong> {c.user.username} | <strong>Upvotes:</strong> {c.upvotes}</p>
+                                <p><strong>By:</strong> {c.user.username}</p>
                                 {isAuthenticated && (
                                     <button
-                                        onClick={() => handleUpvote(c.id)}
-                                        className="btn btn-sm btn-outline-primary"
+                                        onClick={() => handleUpvote(id, c.id)}
+                                        className={`btn btn-sm ${c.has_upvoted ? 'btn-primary' : 'btn-outline-primary'}`}
                                     >
-                                        Upvote
+                                        <i className="bi-arrow-up me-1"></i>
+                                        {c.upvotes}
                                     </button>
                                 )}
                             </div>

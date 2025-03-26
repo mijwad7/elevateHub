@@ -70,10 +70,10 @@ export const createHelpComment = async (requestId, content) => {
     }
 };
 
-export const toggleCommentUpvote = async (commentId) => {
+export const toggleCommentUpvote = async (requestId, commentId) => {
     try {
         console.log("Toggling upvote for comment:", commentId);
-        const response = await api.post(`/api/help-requests/comments/${commentId}/toggle-upvote/`);
+        const response = await api.post(`/api/help-requests/${requestId}/comments/${commentId}/toggle-upvote/`);
         console.log("Upvote response:", response.data);
         return response.data;
     } catch (error) {
