@@ -28,8 +28,6 @@ export const getHelpRequests = async (url = "/api/help-requests/") => {
             created_by: {
                 username: request.created_by.username,
                 profile: request.created_by.profile_image
-                    ? `${import.meta.env.VITE_API_URL}${request.created_by.profile_image}`
-                    : "/default-avatar.png",
             },
         }));
     } catch (error) {
@@ -48,8 +46,6 @@ export const getHelpRequestDetails = async (requestId) => {
             created_by: {
                 username: response.data.created_by.username,
                 profile: response.data.created_by.profile_image
-                    ? `${import.meta.env.VITE_API_URL}${response.data.created_by.profile_image}`
-                    : "/default-avatar.png",
             },
         };
     } catch (error) {
