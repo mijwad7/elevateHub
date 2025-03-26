@@ -6,7 +6,7 @@ export const createHelpRequest = async (title, description, categoryId, creditOf
         const response = await api.post("/api/help-requests/", {
             title,
             description,
-            category: categoryId,  // Matches backend field name
+            category_id: categoryId,  // Matches backend field name
             credit_offer_chat: creditOfferChat,
             credit_offer_video: creditOfferVideo,
         });
