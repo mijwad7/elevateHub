@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     HelpRequestListCreateView, HelpRequestDetailView,
     HelpCommentListCreateView, HelpCommentDetailView,
-    toggle_upvote, CategoryListView
+    toggle_upvote, CategoryListView, start_chat, end_chat
 )
 
 urlpatterns = [
@@ -12,4 +12,6 @@ urlpatterns = [
     path('help-requests/<int:request_id>/comments/', HelpCommentListCreateView.as_view(), name='help-comment-list'),
     path('help-requests/<int:request_id>/comments/<int:pk>/', HelpCommentDetailView.as_view(), name='help-comment-detail'),
     path('help-requests/<int:request_id>/comments/<int:comment_id>/toggle-upvote/', toggle_upvote, name='toggle-upvote'),
+    path('help-requests/<int:request_id>/start-chat/', start_chat, name='start-chat'),
+    path('chat/<int:chat_id>/end/', end_chat, name='end-chat'),
 ]

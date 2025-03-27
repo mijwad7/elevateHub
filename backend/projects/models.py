@@ -46,3 +46,23 @@ def award_credit_on_comment_upvote(sender, instance, created, **kwargs):
         comment.save(update_fields=['upvotes'])
         credits = user.get_credits()  # Assuming Credit model has this method
         credits.add_credits(1, description=f"Earned 1 credit for upvote on comment {comment.id}")
+
+
+class ChatSession(models.Model):
+    help_request = models.ForeignKey('HelpRequest', on_delete=models.CASCADE, related_name="chat_sessions")
+    requester = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="chat_requests")
+    helper = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="chat_helps")
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"Chat for {self.help_request.title} between {self.requester.username} and {self.helper.username}"
+
+class ChatMessage(models.Model):
+    chat_session = models.ForeignKey(ChatSession, on_delete=models.CASCADE, related_name="messages")
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    content = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.sender.username}: {self.content[:50]}"

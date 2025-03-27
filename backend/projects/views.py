@@ -4,11 +4,13 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
-from .models import HelpRequest, HelpComment, HelpCommentUpvote
-from .serializers import HelpRequestSerializer, HelpCommentSerializer
+from .models import HelpRequest, HelpComment, HelpCommentUpvote, ChatSession
+from .serializers import HelpRequestSerializer, HelpCommentSerializer, ChatSessionSerializer
 from rest_framework.filters import SearchFilter, OrderingFilter
 from api.models import Category
 from .serializers import CategorySerializer
+from credits.models import CreditTransaction  # Adjust if path differs
+
 
 class CategoryListView(generics.ListAPIView):
     queryset = Category.objects.all()
@@ -67,3 +69,41 @@ def toggle_upvote(request, request_id, comment_id):
         comment.save(update_fields=['upvotes'])
         return Response({"detail": "Upvote removed"}, status=status.HTTP_200_OK)
     return Response({"detail": "Upvote added"}, status=status.HTTP_201_CREATED)
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def start_chat(request, request_id):
+    help_request = get_object_or_404(HelpRequest, id=request_id)
+    if help_request.credit_offer_chat <= 0 or request.user == help_request.created_by:
+        return Response({"detail": "Cannot start chat"}, status=status.HTTP_400_BAD_REQUEST)
+    chat_session, created = ChatSession.objects.get_or_create(
+        help_request=help_request,
+        requester=help_request.created_by,
+        helper=request.user,
+        is_active=True
+    )
+    return Response(ChatSessionSerializer(chat_session).data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def end_chat(request, chat_id):
+    chat_session = get_object_or_404(ChatSession, id=chat_id, is_active=True)
+    if request.user not in [chat_session.requester, chat_session.helper]:
+        return Response({"detail": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+    chat_session.is_active = False
+    chat_session.save()
+
+    credits = chat_session.help_request.credit_offer_chat  # Use help_request field
+    CreditTransaction.objects.create(
+        user=chat_session.requester,
+        amount=-credits,
+        description=f"Chat help for {chat_session.help_request.title}"
+    )
+    CreditTransaction.objects.create(
+        user=chat_session.helper,
+        amount=credits,
+        description=f"Earned from chat help on {chat_session.help_request.title}"
+    )
+    return Response({"detail": "Chat ended"}, status=status.HTTP_200_OK)
