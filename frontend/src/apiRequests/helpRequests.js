@@ -77,3 +77,24 @@ export const toggleCommentUpvote = async (requestId, commentId) => {
         return null;
     }
 };
+
+// src/apiRequests/helpRequestsApi.js
+export const startChat = async (requestId) => {
+    try {
+        const response = await api.post(`api/help-requests/${requestId}/start-chat/`);
+        return response.data;
+    } catch (error) {
+        console.error("Error starting chat:", error.response?.data || error.message);
+        return null;
+    }
+};
+
+export const endChat = async (chatId) => {
+    try {
+        const response = await api.post(`api/chat/${chatId}/end/`);
+        return response.data;
+    } catch (error) {
+        console.error("Error ending chat:", error.response?.data || error.message);
+        return null;
+    }
+};

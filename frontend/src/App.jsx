@@ -19,6 +19,7 @@ import Resources from "./pages/resources/Resources";
 import ResourceDetail from "./pages/resources/ResourceDetail";
 import UploadResource from "./pages/resources/UploadResource";
 import HelpRequests from "./pages/projects/HelpRequests";
+import ChatHelp from "./pages/projects/ChatHelp";
 import HelpRequestDetail from "./pages/projects/HelpRequestDetail";
 import ResetPassword from "./pages/auth/ResetPassword";
 import ForgotPassword from "./pages/auth/ForgotPassword";
@@ -152,6 +153,7 @@ function App() {
             />
             <Route path="/help-requests" element={<HelpRequests />} />
             <Route path="/help-requests/:id" element={<HelpRequestDetail />} />
+            <Route path="/help-requests/:requestId/chat/:chatId" element={<ChatHelp />} />
             <Route path="/resources" element={<Resources />} />
             <Route path="/resources/:id" element={<ResourceDetail />} />
             <Route
