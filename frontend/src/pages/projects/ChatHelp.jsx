@@ -7,25 +7,35 @@ import Navbar from '../../components/Navbar';
 
 const ChatHelp = () => {
     const { requestId, chatId } = useParams();
-    const { user, isAuthenticated } = useSelector((state) => state.auth);
+    const { user, isAuthenticated, token } = useSelector((state) => state.auth);
     const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState('');
     const [ws, setWs] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (!isAuthenticated) return;
+        console.log("Auth state on mount:", { user, isAuthenticated, token, localToken: localStorage.getItem('access') });
+        if (!isAuthenticated) {
+            console.log("Not authenticated, redirecting...");
+            navigate('/login');
+            return;
+        }
 
         const connectWebSocket = () => {
-            const token = localStorage.getItem('access_token');
+            const accessToken = token || localStorage.getItem('access');
+            console.log("Connecting WebSocket with token:", accessToken);
+            if (!accessToken || accessToken === 'undefined') {
+                console.error("Invalid or missing token, redirecting to login...");
+                navigate('/login');
+                return;
+            }
             const websocket = new WebSocket(
-                `ws://127.0.0.1:8000/api/ws/chat/${chatId}/?token=${token}`
+                `ws://127.0.0.1:8000/api/ws/chat/${chatId}/?token=${accessToken}`
             );
             websocket.onopen = () => console.log("WebSocket connected");
             websocket.onmessage = (e) => {
                 const data = JSON.parse(e.data);
                 console.log("Received:", data);
-                // Only add if it's a chat message with content
                 if (data.content && data.sender) {
                     setMessages((prev) => {
                         if (prev.some((msg) => msg.id === data.id)) return prev;
@@ -36,7 +46,12 @@ const ChatHelp = () => {
             websocket.onerror = (e) => console.error("WebSocket error:", e);
             websocket.onclose = (e) => {
                 console.log("WebSocket closed:", e.code, e.reason);
-                if (e.code !== 1000) setTimeout(connectWebSocket, 1000);
+                if (e.code === 4001) {
+                    console.error("Authentication failed, redirecting...");
+                    navigate('/login');
+                } else if (e.code !== 1000) {
+                    setTimeout(connectWebSocket, 1000);
+                }
             };
             setWs(websocket);
             return websocket;
@@ -44,10 +59,12 @@ const ChatHelp = () => {
 
         const websocket = connectWebSocket();
         return () => {
-            console.log("Cleaning up WebSocket");
-            websocket.close(1000, "Component unmounted");
+            if (websocket) {
+                console.log("Cleaning up WebSocket");
+                websocket.close(1000, "Component unmounted");
+            }
         };
-    }, [chatId, isAuthenticated]);
+    }, [chatId, isAuthenticated, token, navigate]);  // Add token to dependencies
 
     const sendMessage = () => {
         if (ws && ws.readyState === WebSocket.OPEN && message.trim()) {
