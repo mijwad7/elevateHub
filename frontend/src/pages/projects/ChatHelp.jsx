@@ -17,7 +17,10 @@ const ChatHelp = () => {
         if (!isAuthenticated) return;
 
         const connectWebSocket = () => {
-            const websocket = new WebSocket(`ws://127.0.0.1:8000/api/ws/chat/${chatId}/`);
+            const token = localStorage.getItem('access_token');
+            const websocket = new WebSocket(
+                `ws://127.0.0.1:8000/api/ws/chat/${chatId}/?token=${token}`
+            );
             websocket.onopen = () => console.log("WebSocket connected");
             websocket.onmessage = (e) => {
                 const data = JSON.parse(e.data);
