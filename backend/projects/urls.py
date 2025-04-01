@@ -2,10 +2,11 @@ from django.urls import path
 from .views import (
     HelpRequestListCreateView, HelpRequestDetailView,
     HelpCommentListCreateView, HelpCommentDetailView,
-    toggle_upvote, CategoryListView, start_chat, end_chat
+    toggle_upvote, CategoryListView, start_chat, end_chat, active_chats
 )
 
 urlpatterns = [
+    path('active-chats/', active_chats, name='active-chats'),
     path('categories/', CategoryListView.as_view(), name='category_list'),
     path('help-requests/', HelpRequestListCreateView.as_view(), name='help-request-list'),
     path('help-requests/<int:pk>/', HelpRequestDetailView.as_view(), name='help-request-detail'),
