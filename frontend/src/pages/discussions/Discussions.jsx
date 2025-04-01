@@ -88,7 +88,7 @@ function Discussions() {
                 <div className="d-flex align-items-center justify-content-between">
                   <div className="d-flex align-items-center">
                     <img
-                      src={discussion.created_by.profile || "/default-avatar.png"}
+                      src={`${import.meta.env.VITE_API_URL}${discussion.created_by_profile}`}
                       alt={discussion.created_by.username}
                       className="rounded-circle me-3"
                       width="40"
@@ -97,7 +97,7 @@ function Discussions() {
                     <div>
                       <strong className="fw-medium">{discussion.created_by.username}</strong>
                       <p className="text-muted small mb-0">
-                        {new Date(discussion.created_at).toLocaleDateString()}
+                        {discussion.created_at_formatted}
                       </p>
                     </div>
                   </div>
