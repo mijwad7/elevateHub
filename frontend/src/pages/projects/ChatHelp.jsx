@@ -7,14 +7,14 @@ import Navbar from '../../components/Navbar';
 
 const ChatHelp = () => {
     const { requestId, chatId } = useParams();
-    const { user, isAuthenticated, token } = useSelector((state) => state.auth);
+    const { user, isAuthenticated } = useSelector((state) => state.auth);
     const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState('');
     const [ws, setWs] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
-        console.log("Auth state on mount:", { user, isAuthenticated, token, localToken: localStorage.getItem('access') });
+        console.log("Auth state on mount:", { user, isAuthenticated, localAccess: localStorage.getItem('access') });
         if (!isAuthenticated) {
             console.log("Not authenticated, redirecting...");
             navigate('/login');
@@ -22,16 +22,12 @@ const ChatHelp = () => {
         }
 
         const connectWebSocket = () => {
-            const accessToken = token || localStorage.getItem('access');
-            console.log("Connecting WebSocket with token:", accessToken);
-            if (!accessToken || accessToken === 'undefined') {
-                console.error("Invalid or missing token, redirecting to login...");
-                navigate('/login');
-                return;
+            const accessToken = localStorage.getItem('access');
+            let wsUrl = `ws://127.0.0.1:8000/api/ws/chat/${chatId}/`;
+            if (accessToken && accessToken !== 'undefined') {
+                wsUrl += `?token=${accessToken}`;
             }
-            const websocket = new WebSocket(
-                `ws://127.0.0.1:8000/api/ws/chat/${chatId}/?token=${accessToken}`
-            );
+            const websocket = new WebSocket(wsUrl);
             websocket.onopen = () => console.log("WebSocket connected");
             websocket.onmessage = (e) => {
                 const data = JSON.parse(e.data);
@@ -64,7 +60,7 @@ const ChatHelp = () => {
                 websocket.close(1000, "Component unmounted");
             }
         };
-    }, [chatId, isAuthenticated, token, navigate]);  // Add token to dependencies
+    }, [chatId, isAuthenticated, navigate]);
 
     const sendMessage = () => {
         if (ws && ws.readyState === WebSocket.OPEN && message.trim()) {

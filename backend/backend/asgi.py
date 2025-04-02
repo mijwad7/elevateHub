@@ -20,6 +20,7 @@ class JWTWebsocketMiddleware(BaseMiddleware):
     """
     Custom middleware that handles JWT authentication for WebSocket connections.
     The database operations are properly wrapped in database_sync_to_async.
+    Allows token-less connections if user is already authenticated in scope.
     """
     async def __call__(self, scope, receive, send):
         # Delay JWT imports until they're actually needed
@@ -43,8 +44,12 @@ class JWTWebsocketMiddleware(BaseMiddleware):
                 logger.warning(f"JWT authentication failed: {str(e)}")
                 scope["user"] = AnonymousUser()
         else:
-            logger.warning("No token provided in WebSocket connection")
-            scope["user"] = AnonymousUser()
+            # Check if user is already authenticated in scope (e.g., from session)
+            if "user" in scope and scope["user"].is_authenticated:
+                logger.info(f"Using existing authenticated user: {scope['user'].id}")
+            else:
+                logger.warning("No token or authenticated user provided in WebSocket connection")
+                scope["user"] = AnonymousUser()
 
         return await super().__call__(scope, receive, send)
 

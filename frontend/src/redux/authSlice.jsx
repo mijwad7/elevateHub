@@ -4,7 +4,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
     user: JSON.parse(localStorage.getItem("user")) || null,
     token: localStorage.getItem("access_token") || null,
-    isAuthenticated: !!(localStorage.getItem("user") && localStorage.getItem("access_token") && localStorage.getItem("access_token") !== "undefined"),
+    isAuthenticated: !!(localStorage.getItem("user"))
 };
 
 const authSlice = createSlice({
@@ -20,11 +20,12 @@ const authSlice = createSlice({
         },
         googleLoginSuccess: (state, action) => {
             state.user = action.payload.user;
-            state.token = action.payload.token || localStorage.getItem("access_token");  // Ensure token if provided
-            state.isAuthenticated = !!state.token;  // Only true if token exists
+            state.token = action.payload.token || null;  // Token optional
+            state.isAuthenticated = true;  // Always true if user exists
             localStorage.setItem("user", JSON.stringify(action.payload.user));
-            if (state.token) localStorage.setItem("access_token", state.token);
-            else localStorage.removeItem("access_token");
+            if (action.payload.token) {
+                localStorage.setItem("access", action.payload.token);
+            }
         },
         logOut: (state) => {
             state.user = null;
