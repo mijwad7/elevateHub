@@ -74,7 +74,7 @@ const ChatHelp = () => {
     const handleEndChat = async () => {
         if (ws) ws.close(1000, "Chat ended");
         const result = await endChat(chatId);
-        if (result) navigate(`/project-help/${requestId}`);
+        if (result) navigate(`/help-requests/${requestId}`);
     };
 
     if (!isAuthenticated) return <p>Please log in.</p>;

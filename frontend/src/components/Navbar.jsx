@@ -9,6 +9,8 @@ import {
   FaUserPlus,
   FaSignOutAlt,
   FaComments,
+  FaHandsHelping,
+  FaFolderOpen
 } from "react-icons/fa";
 
 const Navbar = () => {
@@ -60,12 +62,12 @@ const Navbar = () => {
             </li>
             <li className="nav-item">
               <Link className="nav-link" to="/resources">
-                <FaComments /> Resources
+                <FaFolderOpen /> Resources
               </Link>
             </li>
             <li className="nav-item">
               <Link className="nav-link" to="/help-requests">
-                <FaComments /> Project Help
+                <FaHandsHelping /> Project Help
               </Link>
             </li>
 
