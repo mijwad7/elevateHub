@@ -31,6 +31,7 @@ import AdminDiscussions from "./pages/admin/AdminDiscussions";
 import AdminResources from "./pages/admin/AdminResources";
 import Profile from "./pages/user/Profile";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminHelpRequests from "./pages/admin/AdminHelpRequests";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import NotAuthorized from "./pages/NotAuthorized";
 import "@fortawesome/fontawesome-free/css/all.min.css";
@@ -153,7 +154,10 @@ function App() {
             />
             <Route path="/help-requests" element={<HelpRequests />} />
             <Route path="/help-requests/:id" element={<HelpRequestDetail />} />
-            <Route path="/help-requests/:requestId/chat/:chatId" element={<ChatHelp />} />
+            <Route
+              path="/help-requests/:requestId/chat/:chatId"
+              element={<ChatHelp />}
+            />
             <Route path="/resources" element={<Resources />} />
             <Route path="/resources/:id" element={<ResourceDetail />} />
             <Route
@@ -177,6 +181,14 @@ function App() {
               element={
                 <AdminProtectedRoute>
                   <AdminResources />
+                </AdminProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/help-requests"
+              element={
+                <AdminProtectedRoute>
+                  <AdminHelpRequests />
                 </AdminProtectedRoute>
               }
             />

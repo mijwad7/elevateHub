@@ -3,7 +3,8 @@ import authReducer from "./authSlice";
 import adminReducer from "./adminSlice";
 import discussionReducer from "./discussionSlice";
 import resourceReducer from "./resourceSlice";
-import notificationReducer from "./notificationSlice"
+import notificationReducer from "./notificationSlice";
+import helpRequestReducer from './helpRequestSlice';
 
 
 const store = configureStore({
@@ -12,7 +13,8 @@ const store = configureStore({
         admin: adminReducer,
         discussions: discussionReducer,
         resources: resourceReducer,
-        notifications: notificationReducer
+        notifications: notificationReducer,
+        helpRequests: helpRequestReducer
     }
 })
 
