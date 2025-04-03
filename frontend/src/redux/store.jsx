@@ -3,6 +3,7 @@ import authReducer from "./authSlice";
 import adminReducer from "./adminSlice";
 import discussionReducer from "./discussionSlice";
 import resourceReducer from "./resourceSlice";
+import notificationReducer from "./notificationSlice"
 
 
 const store = configureStore({
@@ -10,7 +11,8 @@ const store = configureStore({
         auth: authReducer,
         admin: adminReducer,
         discussions: discussionReducer,
-        resources: resourceReducer
+        resources: resourceReducer,
+        notifications: notificationReducer
     }
 })
 
