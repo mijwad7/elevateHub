@@ -46,8 +46,7 @@ class Credit(models.Model):
                     }
                 }
             )
-        if not skip_signal:
-            transaction_created(None, self.user.credit_transactions.latest('timestamp'), True)
+
 
 class CreditTransaction(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='credit_transactions')

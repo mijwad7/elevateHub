@@ -48,9 +48,14 @@ const Navbar = () => {
       navigate('/login');
   };
 
-  // **Remove Duplicate Notifications**
+  // Remove Duplicate Notifications
   const uniqueNotifications = Array.from(
       new Map(notifications.map(n => [`${n.amount}-${n.description}-${n.timestamp}`, n])).values()
+  );
+
+  // Sort by timestamp, newest first
+  const sortedNotifications = [...uniqueNotifications].sort((a, b) => 
+      new Date(b.timestamp) - new Date(a.timestamp)
   );
 
   return (
@@ -78,11 +83,11 @@ const Navbar = () => {
                   <ul className="navbar-nav ms-auto">
                       <li className="nav-item dropdown">
                           <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                              <FaBell /> {uniqueNotifications.length}
+                              <FaBell /> {sortedNotifications.length}
                           </span>
                           <ul className="dropdown-menu dropdown-menu-end">
-                              {uniqueNotifications.length > 0 ? (
-                                  uniqueNotifications.map((n, i) => (
+                              {sortedNotifications.length > 0 ? (
+                                  sortedNotifications.map((n, i) => (
                                       <li key={i} className="dropdown-item">
                                           {n.amount > 0 ? `+${n.amount} credits added` : `${n.amount} credits spent`} - {n.description}
                                       </li>
