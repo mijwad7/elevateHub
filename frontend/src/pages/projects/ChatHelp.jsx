@@ -1,5 +1,4 @@
-// src/pages/project_help/ChatHelp.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { endChat } from '../../apiRequests/helpRequests';
@@ -11,7 +10,9 @@ const ChatHelp = () => {
     const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState('');
     const [ws, setWs] = useState(null);
+    const [isConnecting, setIsConnecting] = useState(true);
     const navigate = useNavigate();
+    const messagesEndRef = useRef(null);
 
     useEffect(() => {
         console.log("Auth state on mount:", { user, isAuthenticated, localAccess: localStorage.getItem('access') });
@@ -28,7 +29,10 @@ const ChatHelp = () => {
                 wsUrl += `?token=${accessToken}`;
             }
             const websocket = new WebSocket(wsUrl);
-            websocket.onopen = () => console.log("WebSocket connected");
+            websocket.onopen = () => {
+                console.log("WebSocket connected");
+                setIsConnecting(false);
+            };
             websocket.onmessage = (e) => {
                 const data = JSON.parse(e.data);
                 console.log("Received:", data);
@@ -42,6 +46,7 @@ const ChatHelp = () => {
             websocket.onerror = (e) => console.error("WebSocket error:", e);
             websocket.onclose = (e) => {
                 console.log("WebSocket closed:", e.code, e.reason);
+                setIsConnecting(false);
                 if (e.code === 4001) {
                     console.error("Authentication failed, redirecting...");
                     navigate('/login');
@@ -62,12 +67,17 @@ const ChatHelp = () => {
         };
     }, [chatId, isAuthenticated, navigate]);
 
+    useEffect(() => {
+        // Auto-scroll to bottom
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
     const sendMessage = () => {
         if (ws && ws.readyState === WebSocket.OPEN && message.trim()) {
             ws.send(JSON.stringify({ message }));
             setMessage('');
         } else {
-            console.warn("WebSocket not open:", ws?.readyState);
+            console.warn("WebSocket not open or message empty:", ws?.readyState);
         }
     };
 
@@ -77,31 +87,70 @@ const ChatHelp = () => {
         if (result) navigate(`/help-requests/${requestId}`);
     };
 
-    if (!isAuthenticated) return <p>Please log in.</p>;
+    if (!isAuthenticated) return <p className="text-center mt-5">Please log in.</p>;
 
     return (
         <>
             <Navbar />
             <div className="container mt-5">
-                <h2>Chat Help</h2>
-                <div className="card mb-3" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                    <div className="card-body">
-                        {messages.map((msg) => (
-                            <p key={msg.id}><strong>{msg.sender.username}:</strong> {msg.content}</p>
-                        ))}
+                <h2 className="mb-4 text-center">Chat Help</h2>
+                <div className="card shadow-sm" style={{ height: '500px', overflowY: 'auto' }}>
+                    <div className="card-body p-3">
+                        {isConnecting ? (
+                            <p className="text-muted text-center">Connecting to chat...</p>
+                        ) : messages.length === 0 ? (
+                            <p className="text-muted text-center">No messages yet.</p>
+                        ) : (
+                            messages.map((msg) => (
+                                <div
+                                    key={msg.id}
+                                    className={`d-flex mb-3 ${
+                                        msg.sender.username === user.username ? 'justify-content-end' : 'justify-content-start'
+                                    }`}
+                                >
+                                    <div
+                                        className={`p-2 rounded ${
+                                            msg.sender.username === user.username
+                                                ? 'bg-primary text-white'
+                                                : 'bg-light border'
+                                        }`}
+                                        style={{ maxWidth: '70%' }}
+                                    >
+                                        <strong>{msg.sender.username}</strong>
+                                        <p className="mb-1">{msg.content}</p>
+                                        <small className="text-muted">
+                                            {new Date(msg.timestamp).toLocaleTimeString([], {
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                            })}
+                                        </small>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                        <div ref={messagesEndRef} />
                     </div>
                 </div>
-                <div className="input-group mb-3">
+                <div className="input-group mt-3">
                     <input
                         type="text"
                         className="form-control"
+                        placeholder="Type your message..."
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
                     />
-                    <button className="btn btn-primary" onClick={sendMessage}>Send</button>
+                    <button
+                        className="btn btn-primary"
+                        onClick={sendMessage}
+                        disabled={!ws || ws.readyState !== WebSocket.OPEN || !message.trim()}
+                    >
+                        Send
+                    </button>
                 </div>
-                <button className="btn btn-danger" onClick={handleEndChat}>End Chat</button>
+                <button className="btn btn-danger mt-3 w-100" onClick={handleEndChat}>
+                    End Chat
+                </button>
             </div>
         </>
     );
