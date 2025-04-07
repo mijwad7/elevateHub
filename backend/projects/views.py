@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
-from .models import HelpRequest, HelpComment, HelpCommentUpvote, ChatSession
+from .models import HelpRequest, HelpComment, HelpCommentUpvote, ChatSession, VideoCall
 from .serializers import (
     HelpRequestSerializer,
     HelpCommentSerializer,
@@ -13,7 +13,11 @@ from .serializers import (
 from rest_framework.filters import SearchFilter, OrderingFilter
 from api.models import Category
 from .serializers import CategorySerializer
-from credits.models import CreditTransaction  # Adjust if path differs
+from credits.models import CreditTransaction
+from rest_framework.views import APIView
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
 
 
 class CategoryListView(generics.ListAPIView):
@@ -165,3 +169,51 @@ def active_chats(request):
     ]
 
     return Response(data)
+
+
+
+class StartVideoCall(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, request_id):
+        try:
+            help_request = HelpRequest.objects.get(id=request_id)
+            if request.user == help_request.created_by:
+                return Response({'error': 'Only helpers can start video calls'}, status=403)
+            video_call = VideoCall.objects.create(
+                help_request=help_request,
+                requester=help_request.created_by,
+                helper=request.user
+            )
+            # Notify requester
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                'notifications',
+                {
+                    'type': 'notification',
+                    'notification': {
+                        'amount': 0,  # No credit change yet
+                        'description': f"{request.user.username} started a video call for {help_request.title}. Join at call ID {video_call.id}",
+                        'timestamp': video_call.started_at.isoformat()
+                    }
+                }
+            )
+            return Response({'call_id': video_call.id, 'status': 'Video call started'})
+        except HelpRequest.DoesNotExist:
+            return Response({'error': 'Help request not found'}, status=404)
+
+
+class EndVideoCall(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, call_id):
+        try:
+            video_call = VideoCall.objects.get(id=call_id)
+            if request.user not in [video_call.requester, video_call.helper]:
+                return Response({'error': 'Unauthorized'}, status=403)
+            if not video_call.is_active:
+                return Response({'error': 'Call already ended'}, status=400)
+            video_call.end_call()
+            return Response({'status': 'Video call ended'})
+        except VideoCall.DoesNotExist:
+            return Response({'error': 'Video call not found'}, status=404)

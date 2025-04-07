@@ -5,8 +5,12 @@ import {
   getHelpRequestDetails,
   createHelpComment,
   toggleCommentUpvote,
-  startChat
+  startChat,
 } from "../../apiRequests/helpRequests";
+import { Button } from 'react-bootstrap';
+import { FaVideo } from 'react-icons/fa';
+import axios from 'axios';
+import VideoCall from '../../components/VideoCall';
 import Navbar from "../../components/Navbar";
 
 const HelpRequestDetail = () => {
@@ -15,6 +19,7 @@ const HelpRequestDetail = () => {
   const [request, setRequest] = useState(null);
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(true);
+  const [callId, setCallId] = useState(null);
 
   const navigate = useNavigate();
 
@@ -71,6 +76,25 @@ const HelpRequestDetail = () => {
     }
   };
 
+  const handleStartVideoCall = async () => {
+    try {
+      const response = await axios.post(
+        `http://127.0.0.1:8000/api/start-video/${id}/`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access")}`,
+          },
+        }
+      );
+      setCallId(response.data.call_id);
+    } catch (error) {
+      console.error("Error starting video call:", error);
+    }
+  };
+
+  const handleEndCall = () => setCallId(null);
+
   if (loading) return <p>Loading...</p>;
   if (!request) return <p>Request not found.</p>;
 
@@ -100,6 +124,13 @@ const HelpRequestDetail = () => {
               Start Chat
             </button>
           )}
+
+        {user.id !== request.created_by.id && (
+          <Button variant="primary" onClick={handleStartVideoCall}>
+            <FaVideo /> Start Video Call
+          </Button>
+        )}
+        {callId && <VideoCall callId={callId} onEndCall={handleEndCall} />}
 
         <h3>Comments</h3>
         {request.comments.length > 0 ? (

@@ -4,6 +4,8 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from credits.models import CreditTransaction
 from api.models import Category
+from django.utils import timezone
+
 
 class HelpRequest(models.Model):
     title = models.CharField(max_length=255)
@@ -66,3 +68,64 @@ class ChatMessage(models.Model):
 
     def __str__(self):
         return f"{self.sender.username}: {self.content[:50]}"
+
+
+
+class VideoCall(models.Model):
+    help_request = models.ForeignKey('HelpRequest', on_delete=models.CASCADE, related_name="video_calls")
+    requester = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="video_requests")
+    helper = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="video_helps")
+    started_at = models.DateTimeField(auto_now_add=True)
+    ended_at = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    def end_call(self):
+        self.is_active = False
+        self.ended_at = timezone.now()
+        self.save(update_fields=['is_active', 'ended_at'])
+
+    def __str__(self):
+        return f"Video call for {self.help_request.title} between {self.requester.username} and {self.helper.username}"
+
+
+
+# projects/models.py (append to existing file)
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from credits.models import Credit  # Adjust import based on your structure
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
+@receiver(post_save, sender=VideoCall)
+def handle_video_call_completion(sender, instance, created, update_fields, **kwargs):
+    if not created and update_fields and 'is_active' in update_fields and not instance.is_active:
+        # Call has ended
+        requester_credits = instance.requester.get_credits()
+        helper_credits = instance.helper.get_credits()
+        amount = instance.help_request.credit_offer_video
+        requester_credits.spend_credits(amount, f"Video call completed for {instance.help_request.title}")
+        helper_credits.add_credits(amount, f"Helped via video for {instance.help_request.title}")
+        # Notify both users
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            'notifications',
+            {
+                'type': 'notification',
+                'notification': {
+                    'amount': -amount,
+                    'description': f"Video call for {instance.help_request.title} completed",
+                    'timestamp': instance.ended_at.isoformat()
+                }
+            }
+        )
+        async_to_sync(channel_layer.group_send)(
+            'notifications',
+            {
+                'type': 'notification',
+                'notification': {
+                    'amount': amount,
+                    'description': f"Earned {amount} credits for video help on {instance.help_request.title}",
+                    'timestamp': instance.ended_at.isoformat()
+                }
+            }
+        )

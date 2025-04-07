@@ -5,6 +5,8 @@ import json
 from .models import ChatSession, ChatMessage
 from api.serializers import UserSerializer
 import logging
+from rest_framework_simplejwt.tokens import AccessToken
+from django.contrib.auth import get_user_model
 
 logger = logging.getLogger(__name__)
 
@@ -100,3 +102,46 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
     async def notification(self, event):
         await self.send(text_data=json.dumps(event))
+
+
+
+class VideoCallConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        # Authenticate user
+        token = self.scope['query_string'].decode().split('token=')[1] if 'token=' in self.scope['query_string'].decode() else None
+        if not token or not await self.get_user_from_token(token):
+            await self.close(code=4001, reason="Invalid token")
+            return
+
+        # Get video call ID from URL
+        self.call_id = self.scope['url_route']['kwargs']['call_id']
+        self.group_name = f"video_call_{self.call_id}"
+
+        # Add to group
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+        print(f"Connected to video call {self.call_id}: {self.channel_name}")
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.group_name, self.channel_name)
+        print(f"Disconnected from video call {self.call_id}: {self.channel_name}")
+
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        message_type = data.get('type')
+        if message_type in ['offer', 'answer', 'candidate']:
+            await self.channel_layer.group_send(
+                self.group_name,
+                {'type': 'video_message', 'message': data}
+            )
+
+    async def video_message(self, event):
+        await self.send(text_data=json.dumps(event['message']))
+
+    @database_sync_to_async
+    def get_user_from_token(self, token):
+        try:
+            access_token = AccessToken(token)
+            return get_user_model().objects.get(id=access_token['user_id'])
+        except Exception:
+            return None
