@@ -130,7 +130,7 @@ const HelpRequestDetail = () => {
             <FaVideo /> Start Video Call
           </Button>
         )}
-        {callId && <VideoCall callId={callId} onEndCall={handleEndCall} />}
+        {callId && <VideoCall callId={callId} isHelper={true} onEndCall={handleEndCall} />}
 
         <h3>Comments</h3>
         {request.comments.length > 0 ? (

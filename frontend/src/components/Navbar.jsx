@@ -152,7 +152,7 @@ const Navbar = () => {
           </Link>
         )}
       </div>
-      {callId && <VideoCall callId={callId} onEndCall={handleEndCall} />}
+      {callId && <VideoCall callId={callId} isHelper={false} onEndCall={handleEndCall} />}
     </nav>
   );
 };
