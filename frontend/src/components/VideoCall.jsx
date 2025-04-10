@@ -13,7 +13,8 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
     const pcRef = useRef(null);
     const wsRef = useRef(null);
     const [isCallActive, setIsCallActive] = useState(true);
-    const candidateQueue = useRef([]); // Queue for ICE candidates
+    const [connectionState, setConnectionState] = useState('initial');
+    const candidateQueue = useRef([]);
     const isRemoteDescriptionSet = useRef(false);
 
     useEffect(() => {
@@ -23,7 +24,7 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
             pcRef.current = new RTCPeerConnection({
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' } // Add more STUN servers
+                    { urls: 'stun:stun1.l.google.com:19302' }
                 ]
             });
 
@@ -41,9 +42,8 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
 
             pcRef.current.ontrack = (event) => {
                 console.log("Remote track received:", event.streams[0], "Track:", event.track);
-                if (!remoteVideoRef.current.srcObject) { // Ensure not overwriting unnecessarily
-                    remoteVideoRef.current.srcObject = event.streams[0];
-                }
+                remoteVideoRef.current.srcObject = event.streams[0];
+                setConnectionState('connected');
             };
 
             pcRef.current.onicecandidate = (event) => {
@@ -61,15 +61,13 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
 
             pcRef.current.oniceconnectionstatechange = () => {
                 console.log("ICE connection state:", pcRef.current.iceConnectionState);
-                if (pcRef.current.iceConnectionState === 'failed') {
-                    console.error("ICE connection failed");
-                }
+                setConnectionState(pcRef.current.iceConnectionState);
             };
 
             const token = localStorage.getItem(ACCESS_TOKEN);
             wsRef.current = new WebSocket(`ws://127.0.0.1:8000/api/ws/video-call/${callId}/?token=${token}`);
             wsRef.current.onopen = () => {
-                console.log(`Video WebSocket connected for call ${callId}`);
+                console.log(`Video WebSocket connected for call ${callId}, isHelper: ${isHelper}`);
                 if (isHelper) {
                     sendOffer();
                 }
@@ -77,33 +75,42 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
 
             wsRef.current.onmessage = async (e) => {
                 const data = JSON.parse(e.data);
-                console.log("Received WebSocket message:", data);
+                console.log(`Received WebSocket message (isHelper: ${isHelper}):`, data);
 
                 if (data.type === 'offer' && !isHelper) {
+                    console.log("Processing offer...");
                     await pcRef.current.setRemoteDescription(new RTCSessionDescription({ type: data.type_sdp, sdp: data.sdp }));
                     isRemoteDescriptionSet.current = true;
                     const answer = await pcRef.current.createAnswer();
                     await pcRef.current.setLocalDescription(answer);
                     wsRef.current.send(JSON.stringify({ type: 'answer', sdp: answer.sdp, type_sdp: answer.type }));
                     flushCandidateQueue();
+                    setConnectionState('answered');
                 } else if (data.type === 'answer' && isHelper) {
+                    console.log("Processing answer...");
                     await pcRef.current.setRemoteDescription(new RTCSessionDescription({ type: data.type_sdp, sdp: data.sdp }));
                     isRemoteDescriptionSet.current = true;
                     flushCandidateQueue();
+                    setConnectionState('answer_received');
                 } else if (data.type === 'candidate' && isRemoteDescriptionSet.current) {
                     try {
                         await pcRef.current.addIceCandidate(new RTCIceCandidate(data.candidate));
                         console.log("Added ICE candidate:", data.candidate);
+                        setConnectionState('candidate_added');
                     } catch (error) {
                         console.error("Error adding ICE candidate:", error);
                     }
                 } else if (data.type === 'candidate') {
+                    console.log("Queuing candidate (remote description not set):", data.candidate);
                     candidateQueue.current.push(data.candidate);
                 }
             };
 
             wsRef.current.onerror = (e) => console.error("WebSocket error:", e);
-            wsRef.current.onclose = () => console.log(`Video WebSocket closed for call ${callId}`);
+            wsRef.current.onclose = (e) => {
+                console.log(`Video WebSocket closed for call ${callId}, code: ${e.code}`);
+                setConnectionState('closed');
+            };
 
             const sendOffer = async () => {
                 const offer = await pcRef.current.createOffer();
@@ -112,14 +119,10 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
                 wsRef.current.send(JSON.stringify({ type: 'offer', sdp: offer.sdp, type_sdp: offer.type }));
                 flushCandidateQueue();
             };
-
-            if (isHelper && wsRef.current.readyState === WebSocket.OPEN) {
-                sendOffer();
-            }
         };
 
         const flushCandidateQueue = () => {
-            while (candidateQueue.current.length > 0) {
+            while (candidateQueue.current.length > 0 && wsRef.current.readyState === WebSocket.OPEN) {
                 const candidate = candidateQueue.current.shift();
                 console.log("Sending queued ICE candidate:", candidate);
                 wsRef.current.send(JSON.stringify({ type: 'candidate', candidate }));

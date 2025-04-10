@@ -126,9 +126,9 @@ const HelpRequestDetail = () => {
           )}
 
         {user.id !== request.created_by.id && (
-          <Button variant="primary" onClick={handleStartVideoCall}>
+          <button className="btn btn-primary mt-3 ms-2" onClick={handleStartVideoCall}>
             <FaVideo /> Start Video Call
-          </Button>
+          </button>
         )}
         {callId && <VideoCall callId={callId} isHelper={true} onEndCall={handleEndCall} />}
 
