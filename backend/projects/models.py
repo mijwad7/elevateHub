@@ -64,6 +64,7 @@ class ChatMessage(models.Model):
     chat_session = models.ForeignKey(ChatSession, on_delete=models.CASCADE, related_name="messages")
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     content = models.TextField()
+    image = models.ImageField(upload_to='chat_images/', blank=True, null=True)  # New field
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

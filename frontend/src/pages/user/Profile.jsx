@@ -5,6 +5,7 @@ import { loginSuccess, updateCredits } from "../../redux/authSlice";
 import Navbar from "../../components/Navbar";
 import { Link, useNavigate } from "react-router-dom";
 import { getCreditBalance, getCreditTransactions } from "../../apiRequests";
+import { ACCESS_TOKEN } from "../../constants";
 
 const Profile = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth);
@@ -26,7 +27,7 @@ const Profile = () => {
       try {
         const response = await api.get("api/active-chats/", {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN)}`,
           },
         });
         setActiveChats(response.data);
@@ -53,7 +54,9 @@ const Profile = () => {
           });
           if (statusResponse.data.is_authenticated) {
             updatedUser = { ...user, ...statusResponse.data.user };
-            dispatch(loginSuccess({ user: updatedUser }));
+            // Preserve the existing access token
+            const currentToken = localStorage.getItem(ACCESS_TOKEN);
+            dispatch(loginSuccess({ user: updatedUser, token: currentToken }));
           }
         }
 
@@ -73,7 +76,7 @@ const Profile = () => {
     };
 
     fetchUserData();
-  }, [isAuthenticated, dispatch]); // Removed 'user' from dependencies
+  }, [isAuthenticated, dispatch, user]);
 
   const handleFileChange = (event) => {
     setSelectedFile(event.target.files[0]);

@@ -6,6 +6,7 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom";
+import { ACCESS_TOKEN } from "./constants";
 import { useSelector, useDispatch } from "react-redux";
 import { googleLoginSuccess, setAuthStatus } from "./redux/authSlice";
 import Login from "./pages/auth/Login";
@@ -77,14 +78,14 @@ function AuthWrapper({ children }) {
             // Only set if not already in localStorage
             dispatch(googleLoginSuccess({ user: { email: data.email } }));
           }
-        } else if (!localStorage.getItem("access_token")) {
+        } else if (!localStorage.getItem(ACCESS_TOKEN)) {
           // Only clear if no JWT
           dispatch(setAuthStatus(false));
         }
       })
       .catch((err) => {
         console.error("Auth fetch error:", err);
-        if (!localStorage.getItem("access_token")) {
+        if (!localStorage.getItem(ACCESS_TOKEN)) {
           dispatch(setAuthStatus(false));
         }
       });
