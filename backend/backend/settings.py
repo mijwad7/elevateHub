@@ -27,6 +27,29 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-tv*13d11w5kw%^uvkfv$1n6x(v9t4=7#=*x-u9i^92%%-^+(zt"
 
+INSTALLED_APPS = [
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "api",
+    "rest_framework",
+    'rest_framework_simplejwt.token_blacklist',
+    "corsheaders",
+    "channels",
+    'admin_panel',
+    'discussions',
+    'credits',
+    'resources',
+    'projects',
+    "django.contrib.sites",  # Required by allauth
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -45,6 +68,7 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "BLACKLIST_AFTER_ROTATION": True,
 }
 
 AUTHENTICATION_BACKENDS = (
@@ -80,28 +104,6 @@ CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8000", "http://localhost:5173"]
 
 # Application definition
 
-INSTALLED_APPS = [
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
-    "api",
-    "rest_framework",
-    "corsheaders",
-    "channels",
-    'admin_panel',
-    'discussions',
-    'credits',
-    'resources',
-    'projects',
-    "django.contrib.sites",  # Required by allauth
-    "allauth",
-    "allauth.account",
-    "allauth.socialaccount",
-    "allauth.socialaccount.providers.google",
-]
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")

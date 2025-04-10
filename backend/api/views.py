@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import generics, permissions
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
@@ -11,12 +11,13 @@ from .models import CustomUser
 from .serializers import UserSerializer, PasswordResetRequestSerializer
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, logout
 from django.http import JsonResponse
 from credits.models import Credit
 from rest_framework.decorators import api_view
 from rest_framework import status
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 User = get_user_model()
@@ -157,13 +158,25 @@ def auth_status(request):
         return Response({'is_authenticated': True, 'user': user_data})
     return Response({'is_authenticated': False})
 
-from django.contrib.auth import logout
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-
 @csrf_exempt
 def direct_logout(request):
     if request.method == "POST" or request.method == "GET":
         logout(request)
         return JsonResponse({"status": "logged out"})
     return JsonResponse({"error": "Method not allowed"}, status=405)
+
+
+
+class LogoutView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        try:
+            refresh_token = request.data.get("refresh")
+            if not refresh_token:
+                return Response({"error": "Refresh token is required"}, status=status.HTTP_400_BAD_REQUEST)
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({"status": "Successfully logged out"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)

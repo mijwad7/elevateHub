@@ -4,7 +4,7 @@ import { useDispatch } from "react-redux";
 import Navbar from "../../components/Navbar";
 import { loginSuccess } from "../../redux/authSlice";
 import api from "../../apiRequests/api";
-import { ACCESS_TOKEN, REFRESH_TOKEN } from "../../constants";
+import { ACCESS_TOKEN, REFRESH_TOKEN } from "../../constants"; // Already correct
 import LoadingIndicator from "../../components/LoadingIndicator";
 import "../../styles/Form.css";
 
@@ -15,27 +15,25 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Handle Google login redirect
   const handleGoogleLogin = () => {
     window.location.href = "http://localhost:8000/accounts/google/login/";
   };
 
-  // Handle normal login
   const handleNormalLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     const payload = { username, password };
     try {
       const res = await api.post("api/token/", payload);
-      const user = res.data.user || { username }; // Fallback if no user object
+      const user = res.data.user || { username };
       dispatch(loginSuccess({
         user,
         token: res.data.access,
       }));
-      localStorage.setItem(ACCESS_TOKEN, res.data.access);
-      localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
+      localStorage.setItem(ACCESS_TOKEN, res.data.access); // Updated to use ACCESS_TOKEN
+      localStorage.setItem(REFRESH_TOKEN, res.data.refresh); // Updated to use REFRESH_TOKEN
       localStorage.setItem("user", JSON.stringify(user));
-      navigate("/"); // Will be overridden by AuthWrapper if needed
+      navigate("/");
     } catch (error) {
       console.error("Login error:", error.response?.data || error.message);
       alert(error.response?.data?.detail || "Login failed");

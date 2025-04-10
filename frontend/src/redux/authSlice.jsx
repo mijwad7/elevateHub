@@ -1,10 +1,32 @@
-// redux/authSlice.js
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import api from "../apiRequests/api";
+import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants";
+
+export const logoutUser = createAsyncThunk(
+    "auth/logoutUser",
+    async (_, { rejectWithValue }) => {
+        try {
+            const refreshToken = localStorage.getItem(REFRESH_TOKEN);
+            console.log("Sending refresh token:", refreshToken); // Debug log
+            if (refreshToken) {
+                await api.post("/api/logout/", { refresh: refreshToken });
+                console.log("Logout API call successful"); // Confirm success
+            } else {
+                console.log("No refresh token found in localStorage");
+            }
+            return true;
+        } catch (error) {
+            console.error("Logout error:", error.response?.data);
+            return rejectWithValue(error.response?.data || "Logout failed");
+        }
+    }
+);
 
 const initialState = {
     user: JSON.parse(localStorage.getItem("user")) || null,
-    token: localStorage.getItem("access_token") || null,
-    isAuthenticated: !!(localStorage.getItem("user"))
+    token: localStorage.getItem(ACCESS_TOKEN) || null, // Updated
+    isAuthenticated: !!(localStorage.getItem("user")),
+    logoutError: null,
 };
 
 const authSlice = createSlice({
@@ -15,23 +37,24 @@ const authSlice = createSlice({
             state.user = action.payload.user;
             state.token = action.payload.token;
             state.isAuthenticated = true;
-            localStorage.setItem("access_token", action.payload.token);
+            localStorage.setItem(ACCESS_TOKEN, action.payload.token); // Updated
             localStorage.setItem("user", JSON.stringify(action.payload.user));
         },
         googleLoginSuccess: (state, action) => {
             state.user = action.payload.user;
-            state.token = action.payload.token || null;  // Token optional
-            state.isAuthenticated = true;  // Always true if user exists
+            state.token = action.payload.token || null;
+            state.isAuthenticated = true;
             localStorage.setItem("user", JSON.stringify(action.payload.user));
             if (action.payload.token) {
-                localStorage.setItem("access", action.payload.token);
+                localStorage.setItem(ACCESS_TOKEN, action.payload.token); // Updated
             }
         },
         logOut: (state) => {
             state.user = null;
             state.token = null;
             state.isAuthenticated = false;
-            localStorage.removeItem("access_token");
+            localStorage.removeItem(ACCESS_TOKEN); // Updated
+            localStorage.removeItem(REFRESH_TOKEN); // Updated
             localStorage.removeItem("user");
         },
         updateCredits: (state, action) => {
@@ -41,14 +64,35 @@ const authSlice = createSlice({
             }
         },
         setAuthStatus: (state, action) => {
-            state.isAuthenticated = action.payload && !!state.token;  // Require token
+            state.isAuthenticated = action.payload && !!state.token;
             if (!action.payload) {
                 state.user = null;
                 state.token = null;
-                localStorage.removeItem("access_token");
+                localStorage.removeItem(ACCESS_TOKEN); // Updated
                 localStorage.removeItem("user");
             }
         },
+    },
+    extraReducers: (builder) => {
+        builder
+            .addCase(logoutUser.fulfilled, (state) => {
+                state.user = null;
+                state.token = null;
+                state.isAuthenticated = false;
+                state.logoutError = null;
+                localStorage.removeItem(ACCESS_TOKEN); // Updated
+                localStorage.removeItem(REFRESH_TOKEN); // Updated
+                localStorage.removeItem("user");
+            })
+            .addCase(logoutUser.rejected, (state, action) => {
+                state.logoutError = action.payload;
+                state.user = null;
+                state.token = null;
+                state.isAuthenticated = false;
+                localStorage.removeItem(ACCESS_TOKEN); // Updated
+                localStorage.removeItem(REFRESH_TOKEN); // Updated
+                localStorage.removeItem("user");
+            });
     },
 });
 

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { FaComments, FaFolderOpen, FaHandsHelping, FaBell } from 'react-icons/fa';
-import { logOut } from '../redux/authSlice';
+import { logoutUser } from '../redux/authSlice';
 import { addNotification } from '../redux/notificationSlice';
 import { Button } from 'react-bootstrap';
 import VideoCall from './VideoCall';
@@ -53,7 +53,7 @@ const Navbar = () => {
     }, [isAuthenticated, dispatch]);
 
     const handleLogout = () => {
-        dispatch(logOut());
+        dispatch(logoutUser());
         navigate('/login');
     };
 

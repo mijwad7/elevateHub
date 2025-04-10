@@ -17,7 +17,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
-from api.views import CreateUserView, CustomTokenObtainPairView, UserListView, UserDeleteView, ProfileImageUploadView, UserListCreateView, get_csrf, UserRetrieveUpdateDestroyView, auth_status, direct_logout
+from api.views import CreateUserView, CustomTokenObtainPairView, UserListView, UserDeleteView, ProfileImageUploadView, UserListCreateView, get_csrf, UserRetrieveUpdateDestroyView, auth_status, direct_logout, LogoutView
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -37,7 +37,6 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     path("accounts/logout/", csrf_exempt(LogoutView.as_view()), name="account_logout"),  # Override with CSRF exemption
     path("csrf/", get_csrf, name="get_csrf"),
-    path("api/logout/", direct_logout, name="direct_logout"),
 
     # path("api/user/register/", CreateUserView.as_view(), name="register"),
     # path("api/token/", CustomTokenObtainPairView.as_view(), name="get_token"),
