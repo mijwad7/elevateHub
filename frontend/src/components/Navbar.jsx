@@ -106,7 +106,14 @@ const Navbar = () => {
                         <li className="nav-item"><button className="nav-link btn" onClick={handleLogout}>Logout</button></li>
                     </ul>
                 ) : (
-                    <Link className="nav-link" to="/login">Login</Link>
+                    <ul className="navbar-nav ms-auto">
+                        <li className="nav-item">
+                            <Link className="nav-link btn btn-outline-primary me-2" to="/login">Login</Link>
+                        </li>
+                        <li className="nav-item">
+                            <Link className="nav-link btn btn-outline-primary" to="/register">Register</Link>
+                        </li>
+                    </ul>
                 )}
             </div>
             {activeCallId && <VideoCall callId={activeCallId} isHelper={false} onEndCall={handleEndCall} />}
