@@ -18,6 +18,8 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.core.mail import send_mail
+from django.conf import settings
 
 
 User = get_user_model()
@@ -180,3 +182,50 @@ class LogoutView(APIView):
             return Response({"status": "Successfully logged out"}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
+
+class GenerateOTPView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+            otp_code = user.generate_otp()
+            
+            # Send OTP via email
+            send_mail(
+                'Your OTP Code',
+                f'Your OTP code is: {otp_code}',
+                settings.EMAIL_HOST_USER,
+                [email],
+                fail_silently=False,
+            )
+            
+            return Response({'message': 'OTP sent successfully'}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+class VerifyOTPView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        otp_code = request.data.get('otp_code')
+        
+        if not email or not otp_code:
+            return Response({'error': 'Email and OTP code are required'}, 
+                          status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+            if user.verify_otp(otp_code):
+                return Response({'message': 'OTP verified successfully'}, 
+                              status=status.HTTP_200_OK)
+            return Response({'error': 'Invalid or expired OTP'}, 
+                          status=status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, 
+                          status=status.HTTP_404_NOT_FOUND)
