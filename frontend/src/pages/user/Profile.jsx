@@ -13,7 +13,6 @@ const Profile = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
-
   const [activeChats, setActiveChats] = useState([]);
   const navigate = useNavigate();
 
@@ -25,11 +24,11 @@ const Profile = () => {
 
     const fetchActiveChats = async () => {
       try {
-        const response = await api.get("api/active-chats/", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN)}`,
-          },
-        });
+        const accessToken = localStorage.getItem(ACCESS_TOKEN);
+        const config = accessToken
+          ? { headers: { Authorization: `Bearer ${accessToken}` } }
+          : { withCredentials: true }; // Fallback to session auth
+        const response = await api.get("api/active-chats/", config);
         setActiveChats(response.data);
       } catch (error) {
         console.error("Error fetching active chats:", error);
@@ -46,27 +45,28 @@ const Profile = () => {
       try {
         setLoading(true);
 
-        // Fetch auth status only if user data is incomplete
+        // Use existing user data if complete, otherwise fetch
         let updatedUser = user;
+        const accessToken = localStorage.getItem(ACCESS_TOKEN);
+        const config = accessToken
+          ? { headers: { Authorization: `Bearer ${accessToken}` } }
+          : { withCredentials: true }; // Fallback to session auth
+
         if (!user.credits || !user.profile_image) {
-          const statusResponse = await api.get("/auth/status/", {
-            withCredentials: true,
-          });
+          const statusResponse = await api.get("/auth/status/", config);
           if (statusResponse.data.is_authenticated) {
             updatedUser = { ...user, ...statusResponse.data.user };
-            // Preserve the existing access token
-            const currentToken = localStorage.getItem(ACCESS_TOKEN);
-            dispatch(loginSuccess({ user: updatedUser, token: currentToken }));
+            dispatch(loginSuccess({ user: updatedUser, token: accessToken }));
           }
         }
 
         // Fetch credits and transactions
-        const balance = await getCreditBalance();
+        const balance = await getCreditBalance(config); // Pass config
         if (balance !== updatedUser.credits) {
           dispatch(updateCredits(balance));
         }
 
-        const txs = await getCreditTransactions();
+        const txs = await getCreditTransactions(config); // Pass config
         setTransactions(txs);
       } catch (error) {
         console.error("Error fetching profile data:", error);
@@ -82,6 +82,12 @@ const Profile = () => {
     setSelectedFile(event.target.files[0]);
   };
 
+  // Add this helper function at the top of the file if not already present
+  const getCsrfToken = () => {
+    const match = document.cookie.match(/csrftoken=([^;]+)/);
+    return match ? match[1] : null;
+  };
+
   const handleUpload = async () => {
     if (!selectedFile) {
       alert("Please select a file");
@@ -89,23 +95,42 @@ const Profile = () => {
     }
     const formData = new FormData();
     formData.append("profile_image", selectedFile);
-
+  
     try {
-      const response = await api.put(
-        `/api/users/${user.id}/upload-profile/`,
-        formData,
-        {
+      const accessToken = localStorage.getItem(ACCESS_TOKEN);
+      let config;
+      if (accessToken && accessToken !== "null") {
+        config = {
           headers: {
             "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${accessToken}`,
           },
+        };
+      } else {
+        // Fetch CSRF token for session auth
+        const csrfToken = document.cookie.match(/csrftoken=([^;]+)/)?.[1];
+        if (!csrfToken) {
+          await api.get("/auth/status/"); // Trigger CSRF fetch if needed
         }
-      );
-      dispatch(loginSuccess({ user: response.data }));
+        config = {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            "X-CSRFToken": csrfToken || getCsrfToken(), // Use fetched token
+          },
+          withCredentials: true,
+        };
+      }
+      const response = await api.put(`/api/users/${user.id}/upload-profile/`, formData, config);
+      dispatch(loginSuccess({ user: response.data, token: accessToken }));
       alert("Profile image updated successfully");
     } catch (error) {
       console.error("Error updating profile image:", error);
       alert("Error updating profile image. Please try again.");
     }
+  };
+
+  const handleLogout = () => {
+    dispatch(logoutUser());
   };
 
   const profileImageUrl = user?.profile_image
@@ -152,7 +177,7 @@ const Profile = () => {
                     )}
                     <p>
                       <strong>Credits:</strong>{" "}
-                      {user.credits !== undefined ? user.credits : "Loading..."}
+                      {user.credits !== undefined ? user.credits : 0}
                     </p>
                   </div>
 

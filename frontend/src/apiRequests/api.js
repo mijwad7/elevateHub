@@ -11,7 +11,6 @@ const getCsrfToken = () => {
     return match ? match[1] : null;
 };
 
-// Fetch CSRF token if missing
 const ensureCsrfToken = async () => {
     if (!getCsrfToken()) {
         console.log("Fetching CSRF token...");
@@ -23,7 +22,7 @@ const ensureCsrfToken = async () => {
 api.interceptors.request.use(
     async (config) => {
         const token = localStorage.getItem(ACCESS_TOKEN);
-        if (token) {
+        if (token && token !== "null") {  // Only add header if token is valid
             config.headers.Authorization = `Bearer ${token}`;
         } else if (['post', 'put', 'delete'].includes(config.method.toLowerCase())) {
             const csrfToken = await ensureCsrfToken();
@@ -33,7 +32,7 @@ api.interceptors.request.use(
                 console.error("CSRF token unavailable after fetch");
             }
         }
-        console.log("Request headers:", config.headers); // Debug
+        console.log("Request config:", config); // Debug
         return config;
     },
     (error) => Promise.reject(error)

@@ -1,8 +1,8 @@
 import api from "./api";
 
-export const getCreditBalance = async () => {
+export const getCreditBalance = async (config = {}) => {
     try {
-        const response = await api.get("/api/credits/balance/");
+        const response = await api.get("/api/credits/balance/", config);
         return response.data.balance;
     } catch (error) {
         console.error("Error fetching credit balance:", error);
@@ -10,9 +10,9 @@ export const getCreditBalance = async () => {
     }
 };
 
-export const getCreditTransactions = async () => {
+export const getCreditTransactions = async (config = {}) => {
     try {
-        const response = await api.get("/api/credits/transactions/");
+        const response = await api.get("/api/credits/transactions/", config);
         return response.data;
     } catch (error) {
         console.error("Error fetching credit transactions:", error);

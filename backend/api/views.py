@@ -58,8 +58,8 @@ class UserDeleteView(generics.DestroyAPIView):
 
 class ProfileImageUploadView(APIView):
     parser_classes = [MultiPartParser, FormParser]
-    # permission_classes = [permissions.IsAuthenticated]
-    # authentication_classes = [SessionAuthentication, TokenAuthentication]  # Explicitly support both
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [SessionAuthentication, TokenAuthentication]  # Explicitly support both
 
     def put(self, request, user_id):
         # Ensure the user can only update their own profile
