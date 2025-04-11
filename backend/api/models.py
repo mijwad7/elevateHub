@@ -1,8 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
 import pyotp
 import time
-from django.utils import timezone
 
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
@@ -10,6 +10,7 @@ class CustomUser(AbstractUser):
     otp_secret = models.CharField(max_length=32, blank=True, null=True)
     otp_verified = models.BooleanField(default=False)
     otp_created_at = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=False)  # Override the default to False
 
     def get_credits(self):
         from credits.models import Credit
@@ -21,7 +22,7 @@ class CustomUser(AbstractUser):
         self.otp_secret = pyotp.random_base32()
         self.otp_created_at = timezone.now()
         self.save()
-        totp = pyotp.TOTP(self.otp_secret)
+        totp = pyotp.TOTP(self.otp_secret, interval=300)  # 5 minutes interval
         return totp.now()
 
     def verify_otp(self, otp_code):
@@ -33,10 +34,11 @@ class CustomUser(AbstractUser):
         if (timezone.now() - self.otp_created_at).total_seconds() > 300:
             return False
             
-        totp = pyotp.TOTP(self.otp_secret)
-        is_valid = totp.verify(otp_code)
+        totp = pyotp.TOTP(self.otp_secret, interval=300)  # 5 minutes interval
+        is_valid = totp.verify(otp_code, valid_window=1)  # Allow 1 window before/after
         if is_valid:
             self.otp_verified = True
+            self.is_active = True  # Activate the user
             self.save()
         return is_valid
 

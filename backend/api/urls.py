@@ -2,7 +2,8 @@ from django.urls import path, include
 from .views import (
     CreateUserView, CustomTokenObtainPairView, UserListView, UserDeleteView,
     ProfileImageUploadView, UserListCreateView, UserRetrieveUpdateDestroyView,
-    PasswordResetRequestView, PasswordResetConfirmView, auth_status, LogoutView
+    PasswordResetRequestView, PasswordResetConfirmView, auth_status, LogoutView,
+    GenerateOTPView, VerifyOTPView
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.conf import settings
@@ -19,6 +20,8 @@ urlpatterns = [
     path("reset-password/", PasswordResetRequestView.as_view(), name="password_reset_request"),
     path("reset-password/<uidb64>/<token>/", PasswordResetConfirmView.as_view(), name="password_reset_confirm"),
     path("logout/", LogoutView.as_view(), name="logout"),
+    path("generate-otp/", GenerateOTPView.as_view(), name="generate_otp"),
+    path("verify-otp/", VerifyOTPView.as_view(), name="verify_otp"),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

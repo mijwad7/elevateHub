@@ -15,31 +15,61 @@ const Register = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [error, setError] = useState("");
 
   // Handle Google login/registration redirect
   const handleGoogleLogin = () => {
     window.location.href = "http://localhost:8000/accounts/google/login/";
   };
 
-  // Handle normal registration
-  const handleNormalRegister = async (e) => {
+  // Handle OTP generation
+  const handleGenerateOTP = async (e) => {
     e.preventDefault();
     setLoading(true);
-    const payload = { username, email, password };
+    setError("");
+    
     try {
-      const res = await api.post("api/user/register/", payload);
-      const user = res.data.user || { username, email }; // Fallback if no user object
+      const res = await api.post("api/generate-otp/", { 
+        email,
+        username,
+        password 
+      });
+      setOtpSent(true);
+    } catch (error) {
+      setError(error.response?.data?.error || "Failed to send OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle OTP verification and registration
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    
+    try {
+      // Verify OTP and get tokens
+      const res = await api.post("api/verify-otp/", { 
+        email, 
+        otp_code: otpCode 
+      });
+      
+      const { user, access, refresh } = res.data;
+      
       dispatch(loginSuccess({
         user,
-        token: res.data.access,
+        token: access,
       }));
-      localStorage.setItem(ACCESS_TOKEN, res.data.access);
-      localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
+      
+      localStorage.setItem(ACCESS_TOKEN, access);
+      localStorage.setItem(REFRESH_TOKEN, refresh);
       localStorage.setItem("user", JSON.stringify(user));
-      navigate("/"); // Will be overridden by AuthWrapper if needed
+      navigate("/");
     } catch (error) {
-      console.error("Register error:", error.response?.data || error.message);
-      alert(error.response?.data?.detail || "Registration failed");
+      setError(error.response?.data?.error || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -52,7 +82,7 @@ const Register = () => {
         <div className="row justify-content-center">
           <div className="col-md-6">
             <div className="card p-4 shadow-sm">
-              <form onSubmit={handleNormalRegister} className="form-container">
+              <form onSubmit={otpSent ? handleVerifyOTP : handleGenerateOTP} className="form-container">
                 <h1>Register</h1>
                 <input
                   className="form-input"
@@ -60,7 +90,7 @@ const Register = () => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Username"
-                  disabled={loading}
+                  disabled={loading || otpSent}
                 />
                 <input
                   className="form-input"
@@ -68,7 +98,7 @@ const Register = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email"
-                  disabled={loading}
+                  disabled={loading || otpSent}
                 />
                 <input
                   className="form-input"
@@ -76,18 +106,34 @@ const Register = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Password"
-                  disabled={loading}
+                  disabled={loading || otpSent}
                 />
+                
+                {otpSent && (
+                  <input
+                    className="form-input"
+                    type="text"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value)}
+                    placeholder="Enter OTP"
+                    disabled={loading}
+                  />
+                )}
+                
+                {error && <div className="alert alert-danger">{error}</div>}
                 {loading && <LoadingIndicator />}
+                
                 <button className="form-button" type="submit" disabled={loading}>
-                  Register
+                  {otpSent ? "Verify OTP & Register" : "Send OTP"}
                 </button>
               </form>
+              
               <div className="d-flex align-items-center my-3">
                 <hr className="flex-grow-1" />
                 <span className="px-2 text-muted">or</span>
                 <hr className="flex-grow-1" />
               </div>
+              
               <button
                 className="btn btn-primary w-100 d-flex align-items-center justify-content-center"
                 onClick={handleGoogleLogin}

@@ -188,11 +188,29 @@ class GenerateOTPView(APIView):
 
     def post(self, request):
         email = request.data.get('email')
-        if not email:
-            return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+        username = request.data.get('username')
+        password = request.data.get('password')
+        
+        if not email or not username or not password:
+            return Response({'error': 'Email, username and password are required'}, 
+                          status=status.HTTP_400_BAD_REQUEST)
 
         try:
+            # Check if user already exists
             user = User.objects.get(email=email)
+            if user.is_active:
+                return Response({'error': 'User already exists'}, 
+                              status=status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            # Create inactive user
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                is_active=False
+            )
+
+        try:
             otp_code = user.generate_otp()
             
             # Send OTP via email
@@ -204,9 +222,11 @@ class GenerateOTPView(APIView):
                 fail_silently=False,
             )
             
-            return Response({'message': 'OTP sent successfully'}, status=status.HTTP_200_OK)
-        except User.DoesNotExist:
-            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'message': 'OTP sent successfully'}, 
+                          status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, 
+                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class VerifyOTPView(APIView):
     permission_classes = [AllowAny]
@@ -222,8 +242,20 @@ class VerifyOTPView(APIView):
         try:
             user = User.objects.get(email=email)
             if user.verify_otp(otp_code):
-                return Response({'message': 'OTP verified successfully'}, 
-                              status=status.HTTP_200_OK)
+                # Generate tokens for the now active user
+                refresh = RefreshToken.for_user(user)
+                return Response({
+                    'message': 'OTP verified successfully',
+                    'access': str(refresh.access_token),
+                    'refresh': str(refresh),
+                    'user': {
+                        'id': user.id,
+                        'username': user.username,
+                        'email': user.email,
+                        'profile_image': user.profile_image.url if user.profile_image else None,
+                        'is_staff': user.is_staff
+                    }
+                }, status=status.HTTP_200_OK)
             return Response({'error': 'Invalid or expired OTP'}, 
                           status=status.HTTP_400_BAD_REQUEST)
         except User.DoesNotExist:
