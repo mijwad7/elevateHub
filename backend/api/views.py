@@ -20,6 +20,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import send_mail
 from django.conf import settings
+import os
 
 
 User = get_user_model()
@@ -61,36 +62,72 @@ class UserDeleteView(generics.DestroyAPIView):
 class ProfileImageUploadView(APIView):
     parser_classes = [MultiPartParser, FormParser]
     permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [SessionAuthentication, TokenAuthentication]  # Explicitly support both
+    authentication_classes = [SessionAuthentication, TokenAuthentication]
 
     def put(self, request, user_id):
-        # Ensure the user can only update their own profile
-        # if request.user.id != int(user_id):
-        #     return Response(
-        #         {"error": "You can only update your own profile"},
-        #         status=status.HTTP_403_FORBIDDEN
-        #     )
-
         try:
-            user = CustomUser.objects.get(id=user_id)
-        except CustomUser.DoesNotExist:
-            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+            # Ensure the user can only update their own profile
+            if request.user.id != int(user_id):
+                return Response(
+                    {"error": "You can only update your own profile"},
+                    status=status.HTTP_403_FORBIDDEN
+                )
 
-        # Check if a file was provided
-        profile_image = request.FILES.get('profile_image')
-        if not profile_image:
+            try:
+                user = CustomUser.objects.get(id=user_id)
+            except CustomUser.DoesNotExist:
+                return Response(
+                    {"error": "User not found"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            # Check if a file was provided
+            profile_image = request.FILES.get('profile_image')
+            if not profile_image:
+                return Response(
+                    {"error": "No profile image provided"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Validate file type
+            if not profile_image.content_type.startswith('image/'):
+                return Response(
+                    {"error": "File must be an image"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Validate file size (5MB max)
+            if profile_image.size > 5 * 1024 * 1024:
+                return Response(
+                    {"error": "File size must be less than 5MB"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Delete old profile image if exists
+            if user.profile_image:
+                try:
+                    if os.path.isfile(user.profile_image.path):
+                        os.remove(user.profile_image.path)
+                except Exception as e:
+                    print(f"Error deleting old profile image: {e}")
+
+            # Update profile image
+            user.profile_image = profile_image
+            user.save()
+
+            # Return updated user data
+            serializer = UserSerializer(user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Exception as e:
             return Response(
-                {"error": "No profile image provided"},
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-        # Update profile image
-        user.profile_image = profile_image
-        user.save()
-
-        # Return updated user data
-        serializer = UserSerializer(user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get(self, request, user_id):
+        # This method is added to handle CSRF token generation
+        return Response({"detail": "CSRF token will be set in cookie"}, status=status.HTTP_200_OK)
 
 class UserListCreateView(generics.ListCreateAPIView):
     queryset = CustomUser.objects.all()

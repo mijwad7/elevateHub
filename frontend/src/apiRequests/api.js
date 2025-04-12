@@ -22,16 +22,23 @@ const ensureCsrfToken = async () => {
 api.interceptors.request.use(
     async (config) => {
         const token = localStorage.getItem(ACCESS_TOKEN);
-        if (token && token !== "null") {  // Only add header if token is valid
+        if (token && token !== "null") {
             config.headers.Authorization = `Bearer ${token}`;
-        } else if (['post', 'put', 'delete'].includes(config.method.toLowerCase())) {
+        }
+        
+        // Always add CSRF token for POST, PUT, DELETE requests
+        if (['post', 'put', 'delete'].includes(config.method.toLowerCase())) {
             const csrfToken = await ensureCsrfToken();
             if (csrfToken) {
                 config.headers['X-CSRFToken'] = csrfToken;
-            } else {
-                console.error("CSRF token unavailable after fetch");
             }
         }
+        
+        // For multipart/form-data requests, let the browser set the content type
+        if (config.headers['Content-Type'] === 'multipart/form-data') {
+            delete config.headers['Content-Type'];
+        }
+        
         console.log("Request config:", config); // Debug
         return config;
     },
