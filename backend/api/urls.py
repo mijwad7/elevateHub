@@ -3,7 +3,7 @@ from .views import (
     CreateUserView, CustomTokenObtainPairView, UserListView, UserDeleteView,
     ProfileImageUploadView, UserListCreateView, UserRetrieveUpdateDestroyView,
     PasswordResetRequestView, PasswordResetConfirmView, auth_status, LogoutView,
-    GenerateOTPView, VerifyOTPView, UserUpdateView
+    GenerateOTPView, VerifyOTPView, UserUpdateView, create_session
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.conf import settings
@@ -23,6 +23,7 @@ urlpatterns = [
     path("generate-otp/", GenerateOTPView.as_view(), name="generate_otp"),
     path("verify-otp/", VerifyOTPView.as_view(), name="verify_otp"),
     path("users/<int:user_id>/update/", UserUpdateView.as_view(), name="user_update"),
+    path("create-session/", create_session, name="create_session"),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

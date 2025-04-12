@@ -24,16 +24,34 @@ const Login = () => {
     setLoading(true);
     const payload = { username, password };
     try {
-      const res = await api.post("api/token/", payload);
-      const user = res.data.user || { username };
-      dispatch(loginSuccess({
-        user,
-        token: res.data.access,
-      }));
-      localStorage.setItem(ACCESS_TOKEN, res.data.access); // Updated to use ACCESS_TOKEN
-      localStorage.setItem(REFRESH_TOKEN, res.data.refresh); // Updated to use REFRESH_TOKEN
-      localStorage.setItem("user", JSON.stringify(user));
-      navigate("/");
+      // Perform login
+      const res = await api.post("api/token/", payload, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+
+      if (res.data.access && res.data.user) {
+        dispatch(loginSuccess({
+          user: res.data.user,
+          token: res.data.access,
+        }));
+        localStorage.setItem(ACCESS_TOKEN, res.data.access);
+        localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+
+        // Verify session is set
+        const authStatus = await api.get("auth/status/", {
+          withCredentials: true,
+        });
+        if (authStatus.data.is_authenticated) {
+          navigate("/");
+        } else {
+          throw new Error("Session not properly set");
+        }
+      }
     } catch (error) {
       console.error("Login error:", error.response?.data || error.message);
       alert(error.response?.data?.detail || "Login failed");

@@ -7,6 +7,10 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.views import APIView
+from rest_framework.decorators import api_view
+from rest_framework import status
+from django.contrib.auth import login
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import CustomUser
 from .serializers import UserSerializer, PasswordResetRequestSerializer
 from django.contrib.auth.tokens import default_token_generator
@@ -14,14 +18,10 @@ from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth import get_user_model, logout
 from django.http import JsonResponse
 from credits.models import Credit
-from rest_framework.decorators import api_view
-from rest_framework import status
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import send_mail
 from django.conf import settings
 import os
-
 
 User = get_user_model()
 
@@ -33,12 +33,34 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             "username": self.user.username,
             "email": self.user.email,
             "profile_image": self.user.profile_image.url if self.user.profile_image else None,
-            "is_staff": self.user.is_staff
+            "is_staff": self.user.is_staff,
+            "credits": self.user.get_credits().balance,
         }
         return data
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.user
+        login(request, user)  # Create session before response
+        response = Response(serializer.validated_data, status=200)
+        return response
+
+@api_view(['POST'])
+def create_session(request):
+    # Authenticate using JWT
+    jwt_auth = JWTAuthentication()
+    try:
+        user, _ = jwt_auth.authenticate(request)
+        if user:
+            login(request, user)  # Create session
+            return Response({"message": "Session created"}, status=200)
+        return Response({"error": "Invalid token"}, status=401)
+    except Exception as e:
+        return Response({"error": str(e)}, status=401)
 
 class CreateUserView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
@@ -170,7 +192,6 @@ class PasswordResetConfirmView(APIView):
         user.save()
         return Response({"message": "Password reset successful."}, status=200)
 
-
 from django.middleware.csrf import get_token
 
 @api_view(['GET'])
@@ -180,7 +201,6 @@ def get_csrf(request):
     response = JsonResponse({'csrftoken': csrf_token})
     response.set_cookie('csrftoken', csrf_token, samesite='Lax')  # Ensure cookie is set
     return response
-
 
 @api_view(['GET'])
 @ensure_csrf_cookie
@@ -203,8 +223,6 @@ def direct_logout(request):
         logout(request)
         return JsonResponse({"status": "logged out"})
     return JsonResponse({"error": "Method not allowed"}, status=405)
-
-
 
 class LogoutView(APIView):
     permission_classes = (IsAuthenticated,)

@@ -4,6 +4,10 @@ import { ACCESS_TOKEN } from '../constants';
 const api = axios.create({
     baseURL: 'http://localhost:8000',
     withCredentials: true,
+    headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
 });
 
 const getCsrfToken = () => {
@@ -14,7 +18,7 @@ const getCsrfToken = () => {
 const ensureCsrfToken = async () => {
     if (!getCsrfToken()) {
         console.log("Fetching CSRF token...");
-        await api.get('/auth/status/');
+        await api.get('/csrf/');
     }
     return getCsrfToken();
 };
