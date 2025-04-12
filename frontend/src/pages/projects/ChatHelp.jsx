@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { endChat } from "../../apiRequests/helpRequests";
 import Navbar from "../../components/Navbar";
+import { Alert, Button } from "react-bootstrap";
 
 const ChatHelp = () => {
   const { requestId, chatId } = useParams();
@@ -12,6 +13,7 @@ const ChatHelp = () => {
   const [image, setImage] = useState(null); // New state for image file
   const [ws, setWs] = useState(null);
   const [isConnecting, setIsConnecting] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
 
@@ -28,9 +30,12 @@ const ChatHelp = () => {
         wsUrl += `?token=${accessToken}`;
       }
       const websocket = new WebSocket(wsUrl);
+      
       websocket.onopen = () => {
         setIsConnecting(false);
+        setError(null);
       };
+
       websocket.onmessage = (e) => {
         const data = JSON.parse(e.data);
         if (data.content || data.image_url) {
@@ -41,12 +46,19 @@ const ChatHelp = () => {
           });
         }
       };
-      websocket.onerror = (e) => console.error("WebSocket error:", e);
-      websocket.onclose = (e) => {
+
+      websocket.onerror = (e) => {
+        console.error("WebSocket error:", e);
         setIsConnecting(false);
-        if (e.code === 4001) navigate("/login");
-        else if (e.code !== 1000) setTimeout(connectWebSocket, 1000);
+        setError("Connection error occurred. Please try again later.");
       };
+
+      websocket.onclose = (e) => {
+        console.log("WebSocket closed with code:", e.code);
+        setIsConnecting(false);
+        setError("Unable to connect to chat. You may not have permission to access this chat or the chat may have ended.");
+      };
+
       setWs(websocket);
       return websocket;
     };
@@ -94,14 +106,33 @@ const ChatHelp = () => {
       <Navbar />
       <div className="container mt-5">
         <h2 className="mb-4 text-center">Chat Help</h2>
-        <div
-          className="card shadow-sm"
-          style={{ height: "500px", overflowY: "auto" }}
-        >
-          <div className="card-body p-3">
-            {isConnecting ? (
-              <p className="text-muted text-center">Connecting to chat...</p>
-            ) : messages.length === 0 ? (
+        
+        {error && (
+          <div className="text-center">
+            <Alert variant="danger" className="mb-4">
+              {error}
+            </Alert>
+            <Button 
+              variant="primary" 
+              onClick={() => navigate("/help-requests")}
+            >
+              Go Back to Help Requests
+            </Button>
+          </div>
+        )}
+
+        {isConnecting && !error && (
+          <Alert variant="info" className="mb-4">
+            Connecting to chat...
+          </Alert>
+        )}
+
+        {!error && (
+          <div
+            className="card shadow-sm"
+            style={{ height: "500px", overflowY: "auto" }}
+          >
+            {messages.length === 0 ? (
               <p className="text-muted text-center">No messages yet.</p>
             ) : (
               messages.map((msg) => (
@@ -143,7 +174,7 @@ const ChatHelp = () => {
             )}
             <div ref={messagesEndRef} />
           </div>
-        </div>
+        )}
         <div className="input-group mt-3">
           <input
             type="text"
