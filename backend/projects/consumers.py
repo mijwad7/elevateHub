@@ -18,12 +18,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.chat_id = self.scope['url_route']['kwargs']['chat_id']
         self.chat_group_name = f'chat_{self.chat_id}'
         try:
+            # Get chat session and user info in async context
             self.chat_session = await database_sync_to_async(ChatSession.objects.get)(id=self.chat_id, is_active=True)
             user = self.scope['user']
+            
             if user.is_anonymous:
                 logger.warning("Anonymous user rejected")
                 await self.close(code=4001, reason="Authentication required")
                 return
+
+            # Get helper and requester IDs in async context
+            helper_id = await database_sync_to_async(lambda: self.chat_session.helper.id)()
+            requester_id = await database_sync_to_async(lambda: self.chat_session.requester.id)()
+
+            if user.id != helper_id and user.id != requester_id:
+                logger.warning(f"Unauthorized user {user.id} ({user.username}) attempted to join chat {self.chat_id}")
+                await self.close(code=4003, reason="Unauthorized access")
+                return
+
             await self.channel_layer.group_add(self.chat_group_name, self.channel_name)
             await self.accept()
             await self.send(text_data=json.dumps({"message": "Connected to chat"}))
