@@ -20,6 +20,12 @@ const Profile = () => {
   const [error, setError] = useState(null);
   const [activeChats, setActiveChats] = useState([]);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedUser, setEditedUser] = useState({
+    username: user?.username || '',
+    email: user?.email || ''
+  });
+  const [editError, setEditError] = useState(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -216,6 +222,49 @@ const Profile = () => {
     }
   };
 
+  // Handle edit form changes
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditedUser(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handle edit form submission
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    setEditError(null);
+
+    try {
+      const config = await getAuthConfig();
+      const response = await api.put(
+        `/api/users/${user?.id}/update/`,
+        {
+          username: editedUser.username,
+          email: editedUser.email
+        },
+        {
+          ...config,
+          headers: {
+            ...config.headers,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.data) {
+        dispatch(loginSuccess({ user: response.data, token: localStorage.getItem(ACCESS_TOKEN) }));
+        setIsEditing(false);
+        toast.success('Profile updated successfully!');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setEditError(error.response?.data?.error || 'Failed to update profile');
+      toast.error(error.response?.data?.error || 'Failed to update profile');
+    }
+  };
+
   const handleLogout = () => {
     dispatch(logoutUser());
     toast.info("Logged out successfully");
@@ -276,20 +325,82 @@ const Profile = () => {
                   </div>
 
                   <div className="text-center text-md-start flex-grow-1">
-                    <h1 className="h2 mb-2">{user.username}</h1>
-                    <p className="text-muted mb-3">{user.email}</p>
-                    <div className="d-flex align-items-center justify-content-center justify-content-md-start gap-3">
-                      <div className="badge bg-primary bg-opacity-10 text-primary px-3 py-2">
-                        <span className="fw-semibold">{user.credits || 0}</span> credits
-                      </div>
-                      <button
-                        onClick={handleLogout}
-                        className="btn btn-link text-danger p-0 d-flex align-items-center"
-                      >
-                        <FaSignOutAlt className="me-2" />
-                        Logout
-                      </button>
-                    </div>
+                    {isEditing ? (
+                      <form onSubmit={handleEditSubmit} className="mb-3">
+                        <div className="mb-3">
+                          <label htmlFor="username" className="form-label">Username</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            id="username"
+                            name="username"
+                            value={editedUser.username}
+                            onChange={handleEditChange}
+                            required
+                          />
+                        </div>
+                        <div className="mb-3">
+                          <label htmlFor="email" className="form-label">Email</label>
+                          <input
+                            type="email"
+                            className="form-control"
+                            id="email"
+                            name="email"
+                            value={editedUser.email}
+                            onChange={handleEditChange}
+                            required
+                          />
+                        </div>
+                        {editError && (
+                          <div className="alert alert-danger" role="alert">
+                            {editError}
+                          </div>
+                        )}
+                        <div className="d-flex gap-2">
+                          <button type="submit" className="btn btn-primary">
+                            Save Changes
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-outline-secondary"
+                            onClick={() => {
+                              setIsEditing(false);
+                              setEditedUser({
+                                username: user?.username || '',
+                                email: user?.email || ''
+                              });
+                              setEditError(null);
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      <>
+                        <h1 className="h2 mb-2">{user.username}</h1>
+                        <p className="text-muted mb-3">{user.email}</p>
+                        <div className="d-flex align-items-center justify-content-center justify-content-md-start gap-3">
+                          <div className="badge bg-primary bg-opacity-10 text-primary px-3 py-2">
+                            <span className="fw-semibold">{user.credits || 0}</span> credits
+                          </div>
+                          <button
+                            onClick={() => setIsEditing(true)}
+                            className="btn btn-outline-primary"
+                          >
+                            <i className="bi bi-pencil-square me-2"></i>
+                            Edit Profile
+                          </button>
+                          <button
+                            onClick={handleLogout}
+                            className="btn btn-link text-danger p-0 d-flex align-items-center"
+                          >
+                            <FaSignOutAlt className="me-2" />
+                            Logout
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 

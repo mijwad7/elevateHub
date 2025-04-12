@@ -16,10 +16,32 @@ class UserSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ["id", "username", "email", "password", "profile_image", "is_staff"]
         extra_kwargs = {
-            "password": {"write_only": True},
+            "password": {"write_only": True, "required": False},
             "profile_image": {"required": False, "allow_null": True},
-            "is_staff": {"required": False, "default": False}
+            "is_staff": {"required": False, "default": False},
+            "username": {"required": False},
+            "email": {"required": False}
         }
+
+    def validate_username(self, value):
+        if self.instance and self.instance.username == value:
+            return value
+        if CustomUser.objects.filter(username=value).exists():
+            raise serializers.ValidationError("A user with that username already exists.")
+        return value
+
+    def validate_email(self, value):
+        if self.instance and self.instance.email == value:
+            return value
+        if CustomUser.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with that email already exists.")
+        return value
+
+    def update(self, instance, validated_data):
+        # Remove password from validated_data if not provided
+        if 'password' not in validated_data:
+            validated_data.pop('password', None)
+        return super().update(instance, validated_data)
 
     def create(self, validated_data):
         user = CustomUser.objects.create_user(**validated_data)
