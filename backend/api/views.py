@@ -22,6 +22,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import send_mail
 from django.conf import settings
 import os
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 
 User = get_user_model()
 

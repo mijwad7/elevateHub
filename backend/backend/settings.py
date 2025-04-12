@@ -100,7 +100,28 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8000", "http://localhost:5173"]
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:8000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:8000",
+]
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SECURE = False  # Set to False for development
+
+# Session settings
+SESSION_COOKIE_SAMESITE = "Lax"  # Changed from "None" for development
+SESSION_COOKIE_SECURE = False  # False for local dev
+SESSION_COOKIE_DOMAIN = None
+SESSION_COOKIE_HTTPONLY = False
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")  # Default to Gmail
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))  # Convert string to int
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"  # Convert to boolean
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 
 # Application definition
 
@@ -213,7 +234,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "http://127.0.0.1:8000",  # Optional for dev
+    "http://127.0.0.1:5173",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
 ]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
@@ -224,23 +247,3 @@ CORS_ALLOW_HEADERS = [
     "x-csrftoken",
 ]  # Remove wildcard, list specific headers
 # Remove CORS_ALLOW_ALL_ORIGINS = True to avoid conflicts
-
-CSRF_TRUSTED_ORIGINS = [
-    "http://127.0.0.1:8000",
-    "http://localhost:5173",
-]
-CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_HTTPONLY = False
-
-# Session settings
-SESSION_COOKIE_SAMESITE = "None"
-SESSION_COOKIE_SECURE = True  # False for local dev
-SESSION_COOKIE_DOMAIN = None
-SESSION_COOKIE_HTTPONLY = False
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")  # Default to Gmail
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))  # Convert string to int
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"  # Convert to boolean
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)

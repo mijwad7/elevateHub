@@ -18,7 +18,7 @@ const getCsrfToken = () => {
 const ensureCsrfToken = async () => {
     if (!getCsrfToken()) {
         console.log("Fetching CSRF token...");
-        await api.get('/csrf/');
+        await api.get('/api/get-csrf/');
     }
     return getCsrfToken();
 };

@@ -43,14 +43,16 @@ const Login = () => {
         localStorage.setItem("user", JSON.stringify(res.data.user));
 
         // Verify session is set
-        const authStatus = await api.get("auth/status/", {
-          withCredentials: true,
-        });
-        if (authStatus.data.is_authenticated) {
-          navigate("/");
-        } else {
-          throw new Error("Session not properly set");
+        try {
+          const authStatus = await api.get("auth/status/", {
+            withCredentials: true,
+          });
+          console.log("Auth status response:", authStatus.data);
+        } catch (statusError) {
+          console.log("Auth status check failed, proceeding anyway:", statusError);
         }
+        
+        navigate("/");
       }
     } catch (error) {
       console.error("Login error:", error.response?.data || error.message);

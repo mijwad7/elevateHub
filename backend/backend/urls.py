@@ -36,7 +36,8 @@ urlpatterns = [
     path('api/', include('projects.urls')),
     path("accounts/", include("allauth.urls")),
     path("accounts/logout/", csrf_exempt(LogoutView.as_view()), name="account_logout"),  # Override with CSRF exemption
-    path("csrf/", get_csrf, name="get_csrf"),
+    path("api/get-csrf/", get_csrf, name="get_csrf"),
+    path("csrf/", get_csrf, name="csrf_fallback"),  # Fallback for old URLs
 
     # path("api/user/register/", CreateUserView.as_view(), name="register"),
     # path("api/token/", CustomTokenObtainPairView.as_view(), name="get_token"),
