@@ -6,9 +6,9 @@ import "react-toastify/dist/ReactToastify.css";
 import api from "../../apiRequests/api";
 import { loginSuccess, updateCredits } from "../../redux/authSlice";
 import Navbar from "../../components/Navbar";
-import { getCreditBalance, getCreditTransactions } from "../../apiRequests";
+import { getCreditBalance, getCreditTransactions, editContribution, deleteContribution } from "../../apiRequests";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../../constants";
-import { FaUser, FaImage, FaHistory, FaComments, FaSignOutAlt, FaFileAlt, FaCommentDots, FaUserEdit } from "react-icons/fa";
+import { FaUser, FaImage, FaHistory, FaComments, FaSignOutAlt, FaFileAlt, FaCommentDots, FaUserEdit, FaEdit, FaTrash } from "react-icons/fa";
 import { formatDistanceToNow } from "date-fns";
 
 const Profile = () => {
@@ -32,6 +32,9 @@ const Profile = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
+  const [editingContribution, setEditingContribution] = useState(null);
+  const [deleteContributionId, setDeleteContributionId] = useState(null);
+  const [deleteContributionType, setDeleteContributionType] = useState(null);
 
   // Validate authentication and redirect if needed
   useEffect(() => {
@@ -293,6 +296,66 @@ const Profile = () => {
   const handleLogout = () => {
     dispatch(logoutUser());
     toast.info("Logged out successfully");
+  };
+
+  // Handle contribution edit
+  const handleEditContribution = async (e) => {
+    e.preventDefault();
+    if (!editingContribution) return;
+
+    try {
+      const data = {
+        content: editingContribution.content,
+        title: editingContribution.title,
+        description: editingContribution.description
+      };
+      
+      // For discussion posts, use post_id instead of id
+      const contributionId = editingContribution.type === 'discussion' 
+        ? editingContribution.post_id 
+        : editingContribution.id;
+      
+      const updatedContribution = await editContribution(
+        editingContribution.type,
+        contributionId,
+        data
+      );
+
+      setContributions(contributions.map(contribution => 
+        contribution.id === editingContribution.id && 
+        contribution.type === editingContribution.type ? updatedContribution : contribution
+      ));
+      setEditingContribution(null);
+      toast.success('Contribution updated successfully!');
+    } catch (error) {
+      console.error('Error updating contribution:', error);
+      toast.error(error.response?.data?.error || 'Failed to update contribution');
+    }
+  };
+
+  // Handle contribution delete
+  const handleDeleteContribution = async () => {
+    if (!deleteContributionId || !deleteContributionType) return;
+
+    try {
+      // For discussion posts, use post_id instead of id
+      const contributionId = deleteContributionType === 'discussion'
+        ? contributions.find(c => c.id === deleteContributionId)?.post_id
+        : deleteContributionId;
+
+      await deleteContribution(deleteContributionType, contributionId);
+
+      setContributions(contributions.filter(contribution => 
+        !(contribution.id === deleteContributionId && 
+          contribution.type === deleteContributionType)
+      ));
+      setDeleteContributionId(null);
+      setDeleteContributionType(null);
+      toast.success('Contribution deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting contribution:', error);
+      toast.error(error.response?.data?.error || 'Failed to delete contribution');
+    }
   };
 
   if (!isAuthenticated || !user) {
@@ -594,39 +657,53 @@ const Profile = () => {
                           ) : (
                             <div className="d-flex flex-column gap-3">
                               {contributions.map((contribution) => (
-                                <a
-                                  href={`/${contribution.type === 'resource' ? 'resources' : 'discussions'}/${contribution.id}`}
+                                <div
                                   key={`${contribution.type}-${contribution.id}`}
-                                  className="text-decoration-none text-dark"
+                                  className="border rounded p-3 hover-bg-light"
                                 >
-                                  <div className="border rounded p-3 hover-bg-light">
-                                    <div className="d-flex align-items-center mb-2">
-                                      {contribution.type === 'resource' ? (
-                                        <FaFileAlt className="me-2 text-primary" />
-                                      ) : (
-                                        <FaCommentDots className="me-2 text-primary" />
-                                      )}
-                                      <h3 className="h6 mb-0">{contribution.title}</h3>
-                                    </div>
-                                    <p className="small text-muted mb-2">
-                                      {contribution.type === 'resource' 
-                                        ? `Downloads: ${contribution.download_count} | Upvotes: ${contribution.upvotes}`
-                                        : `Upvotes: ${contribution.upvotes}`}
-                                    </p>
-                                    <p className="small text-muted mb-0">
-                                      {formatDistanceToNow(new Date(contribution.created_at), {
-                                        addSuffix: true,
-                                      })}
-                                    </p>
-                                    {contribution.type === 'discussion' && (
-                                      <p className="mt-2 mb-0 small">
-                                        {contribution.content.length > 150
-                                          ? `${contribution.content.substring(0, 150)}...`
-                                          : contribution.content}
-                                      </p>
+                                  <div className="d-flex align-items-center mb-2">
+                                    {contribution.type === 'resource' ? (
+                                      <FaFileAlt className="me-2 text-primary" />
+                                    ) : (
+                                      <FaCommentDots className="me-2 text-primary" />
                                     )}
+                                    <h3 className="h6 mb-0">{contribution.title}</h3>
+                                    <div className="ms-auto">
+                                      <button
+                                        className="btn btn-sm btn-outline-primary me-2"
+                                        onClick={() => setEditingContribution(contribution)}
+                                      >
+                                        <FaEdit />
+                                      </button>
+                                      <button
+                                        className="btn btn-sm btn-outline-danger"
+                                        onClick={() => {
+                                          setDeleteContributionId(contribution.id);
+                                          setDeleteContributionType(contribution.type);
+                                        }}
+                                      >
+                                        <FaTrash />
+                                      </button>
+                                    </div>
                                   </div>
-                                </a>
+                                  <p className="small text-muted mb-2">
+                                    {contribution.type === 'resource' 
+                                      ? `Downloads: ${contribution.download_count} | Upvotes: ${contribution.upvotes}`
+                                      : `Upvotes: ${contribution.upvotes}`}
+                                  </p>
+                                  <p className="small text-muted mb-0">
+                                    {formatDistanceToNow(new Date(contribution.created_at), {
+                                      addSuffix: true,
+                                    })}
+                                  </p>
+                                  {contribution.type === 'discussion' && (
+                                    <p className="mt-2 mb-0 small">
+                                      {contribution.content.length > 150
+                                        ? `${contribution.content.substring(0, 150)}...`
+                                        : contribution.content}
+                                    </p>
+                                  )}
+                                </div>
                               ))}
                             </div>
                           )}
@@ -640,6 +717,122 @@ const Profile = () => {
           </div>
         </div>
       </div>
+
+      {/* Edit Contribution Modal */}
+      {editingContribution && (
+        <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1">
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Edit Contribution</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setEditingContribution(null)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <form onSubmit={handleEditContribution}>
+                  {editingContribution.type === 'resource' ? (
+                    <>
+                      <div className="mb-3">
+                        <label className="form-label">Title</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={editingContribution.title}
+                          onChange={(e) => setEditingContribution({
+                            ...editingContribution,
+                            title: e.target.value
+                          })}
+                        />
+                      </div>
+                      <div className="mb-3">
+                        <label className="form-label">Description</label>
+                        <textarea
+                          className="form-control"
+                          value={editingContribution.description}
+                          onChange={(e) => setEditingContribution({
+                            ...editingContribution,
+                            description: e.target.value
+                          })}
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="mb-3">
+                      <label className="form-label">Content</label>
+                      <textarea
+                        className="form-control"
+                        value={editingContribution.content}
+                        onChange={(e) => setEditingContribution({
+                          ...editingContribution,
+                          content: e.target.value
+                        })}
+                      />
+                    </div>
+                  )}
+                  <div className="d-flex gap-2">
+                    <button type="submit" className="btn btn-primary">
+                      Save Changes
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setEditingContribution(null)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteContributionId && deleteContributionType && (
+        <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1">
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirm Deletion</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => {
+                    setDeleteContributionId(null);
+                    setDeleteContributionType(null);
+                  }}
+                ></button>
+              </div>
+              <div className="modal-body">
+                Are you sure you want to delete this contribution? This action cannot be undone.
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setDeleteContributionId(null);
+                    setDeleteContributionType(null);
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={handleDeleteContribution}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

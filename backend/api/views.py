@@ -389,3 +389,69 @@ def user_contributions(request):
     contributions.sort(key=lambda x: x['created_at'], reverse=True)
     
     return Response(contributions)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def edit_contribution(request, contribution_type, contribution_id):
+    user = request.user
+    
+    try:
+        if contribution_type == 'discussion':
+            # For discussions, contribution_id is actually the post_id
+            post = DiscussionPost.objects.get(id=contribution_id)
+            if post.user != user:
+                return Response({"error": "You can only edit your own contributions"}, status=status.HTTP_403_FORBIDDEN)
+            post.content = request.data.get('content', post.content)
+            post.save()
+            return Response({
+                'id': post.discussion.id,
+                'post_id': post.id,
+                'type': 'discussion',
+                'title': post.discussion.title,
+                'content': post.content,
+                'upvotes': post.upvotes,
+                'created_at': post.created_at.isoformat()
+            })
+        elif contribution_type == 'resource':
+            resource = Resource.objects.get(id=contribution_id)
+            if resource.uploaded_by != user:
+                return Response({"error": "You can only edit your own contributions"}, status=status.HTTP_403_FORBIDDEN)
+            resource.title = request.data.get('title', resource.title)
+            resource.description = request.data.get('description', resource.description)
+            resource.save()
+            return Response({
+                'id': resource.id,
+                'type': 'resource',
+                'title': resource.title,
+                'description': resource.description,
+                'upvotes': resource.upvotes,
+                'download_count': resource.download_count,
+                'created_at': resource.created_at.isoformat()
+            })
+        else:
+            return Response({"error": "Invalid contribution type"}, status=status.HTTP_400_BAD_REQUEST)
+    except (DiscussionPost.DoesNotExist, Resource.DoesNotExist):
+        return Response({"error": "Contribution not found"}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_contribution(request, contribution_type, contribution_id):
+    user = request.user
+    
+    try:
+        if contribution_type == 'discussion':
+            post = DiscussionPost.objects.get(id=contribution_id)
+            if post.user != user:
+                return Response({"error": "You can only delete your own contributions"}, status=status.HTTP_403_FORBIDDEN)
+            post.delete()
+            return Response({"message": "Discussion post deleted successfully"})
+        elif contribution_type == 'resource':
+            resource = Resource.objects.get(id=contribution_id)
+            if resource.uploaded_by != user:
+                return Response({"error": "You can only delete your own contributions"}, status=status.HTTP_403_FORBIDDEN)
+            resource.delete()
+            return Response({"message": "Resource deleted successfully"})
+        else:
+            return Response({"error": "Invalid contribution type"}, status=status.HTTP_400_BAD_REQUEST)
+    except (DiscussionPost.DoesNotExist, Resource.DoesNotExist):
+        return Response({"error": "Contribution not found"}, status=status.HTTP_404_NOT_FOUND)

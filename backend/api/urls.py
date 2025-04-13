@@ -4,7 +4,7 @@ from .views import (
     ProfileImageUploadView, UserListCreateView, UserRetrieveUpdateDestroyView,
     PasswordResetRequestView, PasswordResetConfirmView, auth_status, LogoutView,
     GenerateOTPView, VerifyOTPView, UserUpdateView, create_session, get_csrf,
-    user_contributions
+    user_contributions, edit_contribution, delete_contribution
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.conf import settings
@@ -30,6 +30,8 @@ urlpatterns = [
     path('users/<int:pk>/update/', UserUpdateView.as_view(), name='user-update'),
     path('users/<int:user_id>/upload-profile/', ProfileImageUploadView.as_view(), name='upload-profile'),
     path('user/contributions/', user_contributions, name='user-contributions'),
+    path('contributions/<str:contribution_type>/<int:contribution_id>/edit/', edit_contribution, name='edit-contribution'),
+    path('contributions/<str:contribution_type>/<int:contribution_id>/delete/', delete_contribution, name='delete-contribution'),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
