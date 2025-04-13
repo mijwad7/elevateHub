@@ -8,7 +8,7 @@ import { loginSuccess, updateCredits } from "../../redux/authSlice";
 import Navbar from "../../components/Navbar";
 import { getCreditBalance, getCreditTransactions } from "../../apiRequests";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../../constants";
-import { FaUser, FaImage, FaHistory, FaComments, FaSignOutAlt, FaFileAlt, FaCommentDots } from "react-icons/fa";
+import { FaUser, FaImage, FaHistory, FaComments, FaSignOutAlt, FaFileAlt, FaCommentDots, FaUserEdit } from "react-icons/fa";
 import { formatDistanceToNow } from "date-fns";
 
 const Profile = () => {
@@ -31,6 +31,7 @@ const Profile = () => {
   const [contributionsError, setContributionsError] = useState(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('profile');
 
   // Validate authentication and redirect if needed
   useEffect(() => {
@@ -313,293 +314,324 @@ const Profile = () => {
       <Navbar />
       <div className="container py-5">
         <div className="row justify-content-center">
-          <div className="col-lg-8">
-            {/* Profile Header */}
+          <div className="col-lg-10">
+            {/* Profile Header with Tabs */}
             <div className="card shadow-sm mb-4">
-              <div className="card-body">
-                <div className="d-flex flex-column flex-md-row align-items-center">
-                  <div className="position-relative mb-4 mb-md-0 me-md-4">
-                    <div className="rounded-circle overflow-hidden border border-4 border-white shadow" style={{ width: '128px', height: '128px' }}>
-                      {previewUrl ? (
-                        <img
-                          src={previewUrl}
-                          alt="Preview"
-                          className="w-100 h-100 object-fit-cover"
-                        />
-                      ) : profileImageUrl ? (
-                        <img
-                          src={profileImageUrl}
-                          alt="Profile"
-                          className="w-100 h-100 object-fit-cover"
-                        />
-                      ) : (
-                        <div className="w-100 h-100 bg-secondary d-flex align-items-center justify-content-center">
-                          <FaUser className="text-white fs-1" />
+              <div className="card-body p-0">
+                <div className="d-flex flex-column flex-md-row">
+                  {/* Profile Image Section */}
+                  <div className="p-4 text-center bg-primary bg-opacity-10">
+                    <div className="position-relative d-inline-block mb-3">
+                      <div className="rounded-circle overflow-hidden border border-4 border-white shadow" style={{ width: '150px', height: '150px' }}>
+                        {previewUrl ? (
+                          <img
+                            src={previewUrl}
+                            alt="Preview"
+                            className="w-100 h-100 object-fit-cover"
+                          />
+                        ) : profileImageUrl ? (
+                          <img
+                            src={profileImageUrl}
+                            alt="Profile"
+                            className="w-100 h-100 object-fit-cover"
+                          />
+                        ) : (
+                          <div className="w-100 h-100 bg-secondary d-flex align-items-center justify-content-center">
+                            <FaUser className="text-white fs-1" />
+                          </div>
+                        )}
+                      </div>
+                      {uploadProgress > 0 && (
+                        <div className="position-absolute bottom-0 start-0 end-0 bg-light">
+                          <div
+                            className="bg-primary h-1"
+                            style={{ width: `${uploadProgress}%`, transition: 'width 0.3s' }}
+                          />
                         </div>
                       )}
                     </div>
-                    {uploadProgress > 0 && (
-                      <div className="position-absolute bottom-0 start-0 end-0 bg-light">
-                        <div
-                          className="bg-primary h-1"
-                          style={{ width: `${uploadProgress}%`, transition: 'width 0.3s' }}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="text-center text-md-start flex-grow-1">
-                    {isEditing ? (
-                      <form onSubmit={handleEditSubmit} className="mb-3">
-                        <div className="mb-3">
-                          <label htmlFor="username" className="form-label">Username</label>
-                          <input
-                            type="text"
-                            className="form-control"
-                            id="username"
-                            name="username"
-                            value={editedUser.username}
-                            onChange={handleEditChange}
-                            required
-                          />
-                        </div>
-                        <div className="mb-3">
-                          <label htmlFor="email" className="form-label">Email</label>
-                          <input
-                            type="email"
-                            className="form-control"
-                            id="email"
-                            name="email"
-                            value={editedUser.email}
-                            onChange={handleEditChange}
-                            required
-                          />
-                        </div>
-                        {editError && (
-                          <div className="alert alert-danger" role="alert">
-                            {editError}
-                          </div>
-                        )}
-                        <div className="d-flex gap-2">
-                          <button type="submit" className="btn btn-primary">
-                            Save Changes
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-outline-secondary"
-                            onClick={() => {
-                              setIsEditing(false);
-                              setEditedUser({
-                                username: user?.username || '',
-                                email: user?.email || ''
-                              });
-                              setEditError(null);
-                            }}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </form>
-                    ) : (
-                      <>
-                        <h1 className="h2 mb-2">{user.username}</h1>
-                        <p className="text-muted mb-3">{user.email}</p>
-                        <div className="d-flex align-items-center justify-content-center justify-content-md-start gap-3">
-                          <div className="badge bg-primary bg-opacity-10 text-primary px-3 py-2">
-                            <span className="fw-semibold">{user.credits || 0}</span> credits
-                          </div>
-                          <button
-                            onClick={() => setIsEditing(true)}
-                            className="btn btn-outline-primary"
-                          >
-                            <i className="bi bi-pencil-square me-2"></i>
-                            Edit Profile
-                          </button>
-                          <button
-                            onClick={handleLogout}
-                            className="btn btn-link text-danger p-0 d-flex align-items-center"
-                          >
-                            <FaSignOutAlt className="me-2" />
-                            Logout
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Profile Image Upload */}
-                <div className="mt-4">
-                  <div className="d-flex align-items-center gap-3">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="d-none"
-                      id="profile-upload"
-                    />
-                    <label
-                      htmlFor="profile-upload"
-                      className="btn btn-primary d-flex align-items-center"
-                    >
-                      <FaImage className="me-2" />
-                      {selectedFile ? "Change Image" : "Upload Image"}
-                    </label>
-                    {selectedFile && (
-                      <button
-                        onClick={handleUpload}
-                        className="btn btn-success"
+                    <div className="d-flex flex-column gap-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="d-none"
+                        id="profile-upload"
+                      />
+                      <label
+                        htmlFor="profile-upload"
+                        className="btn btn-primary btn-sm"
                       >
-                        Save Changes
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Active Chats */}
-            <div className="card shadow-sm mb-4">
-              <div className="card-body">
-                <h2 className="h5 mb-4 d-flex align-items-center">
-                  <FaComments className="me-2" />
-                  Active Chats
-                </h2>
-                {activeChats.length === 0 ? (
-                  <p className="text-muted">No active chats</p>
-                ) : (
-                  <div className="d-flex flex-column gap-3">
-                    {activeChats.map((chat) => (
-                      <div
-                        key={chat.id}
-                        className="border rounded p-3 hover-bg-light"
-                      >
-                        <div className="d-flex justify-content-between align-items-center">
-                          <div>
-                            <h3 className="h6 mb-1">
-                              {chat.help_request?.title || "Untitled Chat"}
-                            </h3>
-                            <p className="small text-muted mb-0">
-                              With:{" "}
-                              {chat.requester.username === user.username
-                                ? chat.helper.username
-                                : chat.requester.username}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() =>
-                              navigate(
-                                `/help-requests/${chat.help_request?.id || 0}/chat/${chat.id}`
-                              )
-                            }
-                            className="btn btn-primary btn-sm"
-                          >
-                            Join Chat
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Credit Transactions */}
-            <div className="card shadow-sm">
-              <div className="card-body">
-                <h2 className="h5 mb-4 d-flex align-items-center">
-                  <FaHistory className="me-2" />
-                  Credit Transactions
-                </h2>
-                {transactions.length === 0 ? (
-                  <p className="text-muted">No transactions yet</p>
-                ) : (
-                  <div className="d-flex flex-column gap-3">
-                    {transactions.map((tx) => (
-                      <div
-                        key={tx.timestamp}
-                        className="border rounded p-3 hover-bg-light"
-                      >
-                        <div className="d-flex justify-content-between align-items-center">
-                          <div>
-                            <p className="mb-1">{tx.description}</p>
-                            <p className="small text-muted mb-0">
-                              {formatDistanceToNow(new Date(tx.timestamp), {
-                                addSuffix: true,
-                              })}
-                            </p>
-                          </div>
-                          <span
-                            className={`fw-semibold ${
-                              tx.amount > 0 ? "text-success" : "text-danger"
-                            }`}
-                          >
-                            {tx.amount > 0 ? "+" : ""}
-                            {tx.amount} credits
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* User Contributions */}
-            <div className="card shadow-sm mb-4">
-              <div className="card-body">
-                <h2 className="h5 mb-4 d-flex align-items-center">
-                  <FaFileAlt className="me-2" />
-                  My Contributions
-                </h2>
-                {contributionsLoading ? (
-                  <div className="d-flex justify-content-center">
-                    <div className="spinner-border text-primary" role="status">
-                      <span className="visually-hidden">Loading...</span>
+                        <FaImage className="me-2" />
+                        {selectedFile ? "Change Image" : "Upload Image"}
+                      </label>
+                      {selectedFile && (
+                        <button
+                          onClick={handleUpload}
+                          className="btn btn-success btn-sm"
+                        >
+                          Save Changes
+                        </button>
+                      )}
                     </div>
                   </div>
-                ) : contributionsError ? (
-                  <div className="alert alert-danger" role="alert">
-                    {contributionsError}
-                  </div>
-                ) : contributions.length === 0 ? (
-                  <p className="text-muted">No contributions yet</p>
-                ) : (
-                  <div className="d-flex flex-column gap-3">
-                    {contributions.map((contribution) => (
-                      <div
-                        key={`${contribution.type}-${contribution.id}`}
-                        className="border rounded p-3 hover-bg-light"
-                      >
-                        <div className="d-flex align-items-center mb-2">
-                          {contribution.type === 'resource' ? (
-                            <FaFileAlt className="me-2 text-primary" />
-                          ) : (
-                            <FaCommentDots className="me-2 text-primary" />
-                          )}
-                          <h3 className="h6 mb-0">{contribution.title}</h3>
+
+                  {/* Profile Info and Tabs */}
+                  <div className="flex-grow-1 p-4">
+                    <div className="d-flex flex-column h-100">
+                      <div className="mb-4">
+                        <h1 className="h3 mb-2">{user.username}</h1>
+                        <p className="text-muted mb-3">{user.email}</p>
+                        <div className="badge bg-primary bg-opacity-10 text-primary px-3 py-2 mb-3">
+                          <span className="fw-semibold">{user.credits || 0}</span> credits
                         </div>
-                        <p className="small text-muted mb-2">
-                          {contribution.type === 'resource' 
-                            ? `Downloads: ${contribution.download_count} | Upvotes: ${contribution.upvotes}`
-                            : `Upvotes: ${contribution.upvotes}`}
-                        </p>
-                        <p className="small text-muted mb-0">
-                          {formatDistanceToNow(new Date(contribution.created_at), {
-                            addSuffix: true,
-                          })}
-                        </p>
-                        {contribution.type === 'discussion' && (
-                          <p className="mt-2 mb-0 small">
-                            {contribution.content.length > 150
-                              ? `${contribution.content.substring(0, 150)}...`
-                              : contribution.content}
-                          </p>
-                        )}
                       </div>
-                    ))}
+
+                      {/* Navigation Tabs */}
+                      <ul className="nav nav-tabs mb-4" role="tablist">
+                        <li className="nav-item" role="presentation">
+                          <button
+                            className={`nav-link ${activeTab === 'profile' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('profile')}
+                          >
+                            <FaUserEdit className="me-2" />
+                            Profile
+                          </button>
+                        </li>
+                        <li className="nav-item" role="presentation">
+                          <button
+                            className={`nav-link ${activeTab === 'chats' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('chats')}
+                          >
+                            <FaComments className="me-2" />
+                            Active Chats
+                          </button>
+                        </li>
+                        <li className="nav-item" role="presentation">
+                          <button
+                            className={`nav-link ${activeTab === 'transactions' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('transactions')}
+                          >
+                            <FaHistory className="me-2" />
+                            Transactions
+                          </button>
+                        </li>
+                        <li className="nav-item" role="presentation">
+                          <button
+                            className={`nav-link ${activeTab === 'contributions' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('contributions')}
+                          >
+                            <FaFileAlt className="me-2" />
+                            Contributions
+                          </button>
+                        </li>
+                      </ul>
+
+                      {/* Tab Content */}
+                      <div className="tab-content flex-grow-1">
+                        {/* Profile Tab */}
+                        <div className={`tab-pane fade ${activeTab === 'profile' ? 'show active' : ''}`}>
+                          {isEditing ? (
+                            <form onSubmit={handleEditSubmit} className="mb-3">
+                              <div className="mb-3">
+                                <label htmlFor="username" className="form-label">Username</label>
+                                <input
+                                  type="text"
+                                  className="form-control"
+                                  id="username"
+                                  name="username"
+                                  value={editedUser.username}
+                                  onChange={handleEditChange}
+                                  required
+                                />
+                              </div>
+                              <div className="mb-3">
+                                <label htmlFor="email" className="form-label">Email</label>
+                                <input
+                                  type="email"
+                                  className="form-control"
+                                  id="email"
+                                  name="email"
+                                  value={editedUser.email}
+                                  onChange={handleEditChange}
+                                  required
+                                />
+                              </div>
+                              {editError && (
+                                <div className="alert alert-danger" role="alert">
+                                  {editError}
+                                </div>
+                              )}
+                              <div className="d-flex gap-2">
+                                <button type="submit" className="btn btn-primary">
+                                  Save Changes
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn-outline-secondary"
+                                  onClick={() => {
+                                    setIsEditing(false);
+                                    setEditedUser({
+                                      username: user?.username || '',
+                                      email: user?.email || ''
+                                    });
+                                    setEditError(null);
+                                  }}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </form>
+                          ) : (
+                            <div className="d-flex gap-2">
+                              <button
+                                onClick={() => setIsEditing(true)}
+                                className="btn btn-outline-primary"
+                              >
+                                <i className="bi bi-pencil-square me-2"></i>
+                                Edit Profile
+                              </button>
+                              <button
+                                onClick={handleLogout}
+                                className="btn btn-link text-danger p-0 d-flex align-items-center"
+                              >
+                                <FaSignOutAlt className="me-2" />
+                                Logout
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Active Chats Tab */}
+                        <div className={`tab-pane fade ${activeTab === 'chats' ? 'show active' : ''}`}>
+                          {activeChats.length === 0 ? (
+                            <p className="text-muted">No active chats</p>
+                          ) : (
+                            <div className="d-flex flex-column gap-3">
+                              {activeChats.map((chat) => (
+                                <div
+                                  key={chat.id}
+                                  className="border rounded p-3 hover-bg-light"
+                                >
+                                  <div className="d-flex justify-content-between align-items-center">
+                                    <div>
+                                      <h3 className="h6 mb-1">
+                                        {chat.help_request?.title || "Untitled Chat"}
+                                      </h3>
+                                      <p className="small text-muted mb-0">
+                                        With:{" "}
+                                        {chat.requester.username === user.username
+                                          ? chat.helper.username
+                                          : chat.requester.username}
+                                      </p>
+                                    </div>
+                                    <button
+                                      onClick={() =>
+                                        navigate(
+                                          `/help-requests/${chat.help_request?.id || 0}/chat/${chat.id}`
+                                        )
+                                      }
+                                      className="btn btn-primary btn-sm"
+                                    >
+                                      Join Chat
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Transactions Tab */}
+                        <div className={`tab-pane fade ${activeTab === 'transactions' ? 'show active' : ''}`}>
+                          {transactions.length === 0 ? (
+                            <p className="text-muted">No transactions yet</p>
+                          ) : (
+                            <div className="d-flex flex-column gap-3">
+                              {transactions.map((tx) => (
+                                <div
+                                  key={tx.timestamp}
+                                  className="border rounded p-3 hover-bg-light"
+                                >
+                                  <div className="d-flex justify-content-between align-items-center">
+                                    <div>
+                                      <p className="mb-1">{tx.description}</p>
+                                      <p className="small text-muted mb-0">
+                                        {formatDistanceToNow(new Date(tx.timestamp), {
+                                          addSuffix: true,
+                                        })}
+                                      </p>
+                                    </div>
+                                    <span
+                                      className={`fw-semibold ${
+                                        tx.amount > 0 ? "text-success" : "text-danger"
+                                      }`}
+                                    >
+                                      {tx.amount > 0 ? "+" : ""}
+                                      {tx.amount} credits
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Contributions Tab */}
+                        <div className={`tab-pane fade ${activeTab === 'contributions' ? 'show active' : ''}`}>
+                          {contributionsLoading ? (
+                            <div className="d-flex justify-content-center">
+                              <div className="spinner-border text-primary" role="status">
+                                <span className="visually-hidden">Loading...</span>
+                              </div>
+                            </div>
+                          ) : contributionsError ? (
+                            <div className="alert alert-danger" role="alert">
+                              {contributionsError}
+                            </div>
+                          ) : contributions.length === 0 ? (
+                            <p className="text-muted">No contributions yet</p>
+                          ) : (
+                            <div className="d-flex flex-column gap-3">
+                              {contributions.map((contribution) => (
+                                <div
+                                  key={`${contribution.type}-${contribution.id}`}
+                                  className="border rounded p-3 hover-bg-light"
+                                >
+                                  <div className="d-flex align-items-center mb-2">
+                                    {contribution.type === 'resource' ? (
+                                      <FaFileAlt className="me-2 text-primary" />
+                                    ) : (
+                                      <FaCommentDots className="me-2 text-primary" />
+                                    )}
+                                    <h3 className="h6 mb-0">{contribution.title}</h3>
+                                  </div>
+                                  <p className="small text-muted mb-2">
+                                    {contribution.type === 'resource' 
+                                      ? `Downloads: ${contribution.download_count} | Upvotes: ${contribution.upvotes}`
+                                      : `Upvotes: ${contribution.upvotes}`}
+                                  </p>
+                                  <p className="small text-muted mb-0">
+                                    {formatDistanceToNow(new Date(contribution.created_at), {
+                                      addSuffix: true,
+                                    })}
+                                  </p>
+                                  {contribution.type === 'discussion' && (
+                                    <p className="mt-2 mb-0 small">
+                                      {contribution.content.length > 150
+                                        ? `${contribution.content.substring(0, 150)}...`
+                                        : contribution.content}
+                                    </p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>

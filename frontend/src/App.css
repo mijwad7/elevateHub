@@ -6,7 +6,7 @@ body {
   --bs-secondary: #1d3557 !important; /* Adjusted secondary color */
 }
 
-.btn-primary, .form-button {
+.btn-primary, .form-button, .text-primary {
   background-color: var(--bs-primary) !important;
   border-color: var(--bs-primary) !important;
 }
