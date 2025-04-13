@@ -7,11 +7,13 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.views import APIView
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
 from django.contrib.auth import login
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import CustomUser
+from discussions.models import DiscussionPost
+from resources.models import Resource
 from .serializers import UserSerializer, PasswordResetRequestSerializer
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode
@@ -352,3 +354,37 @@ class UserUpdateView(APIView):
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_contributions(request):
+    user = request.user
+    
+    # Get discussion posts
+    discussion_posts = DiscussionPost.objects.filter(user=user).select_related('discussion').order_by('-created_at')
+    discussion_data = [{
+        'id': post.id,
+        'type': 'discussion',
+        'title': post.discussion.title,
+        'content': post.content,
+        'upvotes': post.upvotes,
+        'created_at': post.created_at.isoformat()
+    } for post in discussion_posts]
+    
+    # Get resources
+    resources = Resource.objects.filter(uploaded_by=user).order_by('-created_at')
+    resource_data = [{
+        'id': resource.id,
+        'type': 'resource',
+        'title': resource.title,
+        'description': resource.description,
+        'upvotes': resource.upvotes,
+        'download_count': resource.download_count,
+        'created_at': resource.created_at.isoformat()
+    } for resource in resources]
+    
+    # Combine and sort by creation date
+    contributions = discussion_data + resource_data
+    contributions.sort(key=lambda x: x['created_at'], reverse=True)
+    
+    return Response(contributions)

@@ -3,7 +3,8 @@ from .views import (
     CreateUserView, CustomTokenObtainPairView, UserListView, UserDeleteView,
     ProfileImageUploadView, UserListCreateView, UserRetrieveUpdateDestroyView,
     PasswordResetRequestView, PasswordResetConfirmView, auth_status, LogoutView,
-    GenerateOTPView, VerifyOTPView, UserUpdateView, create_session, get_csrf
+    GenerateOTPView, VerifyOTPView, UserUpdateView, create_session, get_csrf,
+    user_contributions
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.conf import settings
@@ -26,6 +27,9 @@ urlpatterns = [
     path("create-session/", create_session, name="create_session"),
     path("get-csrf/", get_csrf, name="get_csrf"),
     path("auth/status/", auth_status, name="auth_status"),
+    path('users/<int:pk>/update/', UserUpdateView.as_view(), name='user-update'),
+    path('users/<int:user_id>/upload-profile/', ProfileImageUploadView.as_view(), name='upload-profile'),
+    path('user/contributions/', user_contributions, name='user-contributions'),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

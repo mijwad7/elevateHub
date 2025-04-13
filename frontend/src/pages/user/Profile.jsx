@@ -8,7 +8,7 @@ import { loginSuccess, updateCredits } from "../../redux/authSlice";
 import Navbar from "../../components/Navbar";
 import { getCreditBalance, getCreditTransactions } from "../../apiRequests";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../../constants";
-import { FaUser, FaImage, FaHistory, FaComments, FaSignOutAlt } from "react-icons/fa";
+import { FaUser, FaImage, FaHistory, FaComments, FaSignOutAlt, FaFileAlt, FaCommentDots } from "react-icons/fa";
 import { formatDistanceToNow } from "date-fns";
 
 const Profile = () => {
@@ -26,6 +26,9 @@ const Profile = () => {
     email: user?.email || ''
   });
   const [editError, setEditError] = useState(null);
+  const [contributions, setContributions] = useState([]);
+  const [contributionsLoading, setContributionsLoading] = useState(true);
+  const [contributionsError, setContributionsError] = useState(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -122,12 +125,33 @@ const Profile = () => {
     }
   }, [isAuthenticated, user, dispatch, getAuthConfig]);
 
+  // Fetch user contributions
+  const fetchContributions = useCallback(async () => {
+    if (!isAuthenticated || !user) return;
+
+    try {
+      setContributionsLoading(true);
+      setContributionsError(null);
+      const config = await getAuthConfig();
+
+      const response = await api.get("/api/user/contributions/", config);
+      setContributions(response.data);
+    } catch (error) {
+      console.error("Error fetching contributions:", error);
+      setContributionsError("Failed to load contributions. Please try again.");
+      toast.error("Failed to load contributions");
+    } finally {
+      setContributionsLoading(false);
+    }
+  }, [isAuthenticated, user, getAuthConfig]);
+
   // Initial data fetch
   useEffect(() => {
     if (isAuthenticated && user) {
       fetchUserData();
+      fetchContributions();
     }
-  }, [isAuthenticated, user?.id, fetchUserData]);
+  }, [isAuthenticated, user?.id, fetchUserData, fetchContributions]);
 
   // Handle file selection
   const handleFileChange = (event) => {
@@ -514,6 +538,64 @@ const Profile = () => {
                             {tx.amount} credits
                           </span>
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* User Contributions */}
+            <div className="card shadow-sm mb-4">
+              <div className="card-body">
+                <h2 className="h5 mb-4 d-flex align-items-center">
+                  <FaFileAlt className="me-2" />
+                  My Contributions
+                </h2>
+                {contributionsLoading ? (
+                  <div className="d-flex justify-content-center">
+                    <div className="spinner-border text-primary" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  </div>
+                ) : contributionsError ? (
+                  <div className="alert alert-danger" role="alert">
+                    {contributionsError}
+                  </div>
+                ) : contributions.length === 0 ? (
+                  <p className="text-muted">No contributions yet</p>
+                ) : (
+                  <div className="d-flex flex-column gap-3">
+                    {contributions.map((contribution) => (
+                      <div
+                        key={`${contribution.type}-${contribution.id}`}
+                        className="border rounded p-3 hover-bg-light"
+                      >
+                        <div className="d-flex align-items-center mb-2">
+                          {contribution.type === 'resource' ? (
+                            <FaFileAlt className="me-2 text-primary" />
+                          ) : (
+                            <FaCommentDots className="me-2 text-primary" />
+                          )}
+                          <h3 className="h6 mb-0">{contribution.title}</h3>
+                        </div>
+                        <p className="small text-muted mb-2">
+                          {contribution.type === 'resource' 
+                            ? `Downloads: ${contribution.download_count} | Upvotes: ${contribution.upvotes}`
+                            : `Upvotes: ${contribution.upvotes}`}
+                        </p>
+                        <p className="small text-muted mb-0">
+                          {formatDistanceToNow(new Date(contribution.created_at), {
+                            addSuffix: true,
+                          })}
+                        </p>
+                        {contribution.type === 'discussion' && (
+                          <p className="mt-2 mb-0 small">
+                            {contribution.content.length > 150
+                              ? `${contribution.content.substring(0, 150)}...`
+                              : contribution.content}
+                          </p>
+                        )}
                       </div>
                     ))}
                   </div>
