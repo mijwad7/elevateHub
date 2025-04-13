@@ -107,7 +107,7 @@ const ChatHelp = () => {
       <div className="container mt-5">
         <h2 className="mb-4 text-center">Chat Help</h2>
         
-        {error && (
+        {error ? (
           <div className="text-center">
             <Alert variant="danger" className="mb-4">
               {error}
@@ -119,99 +119,104 @@ const ChatHelp = () => {
               Go Back to Help Requests
             </Button>
           </div>
-        )}
-
-        {isConnecting && !error && (
-          <Alert variant="info" className="mb-4">
-            Connecting to chat...
-          </Alert>
-        )}
-
-        {!error && (
-          <div
-            className="card shadow-sm"
-            style={{ height: "500px", overflowY: "auto" }}
-          >
-            {messages.length === 0 ? (
-              <p className="text-muted text-center">No messages yet.</p>
-            ) : (
-              messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`d-flex mb-3 ${
-                    msg.sender.username === user.username
-                      ? "justify-content-end"
-                      : "justify-content-start"
-                  }`}
-                >
-                  <div
-                    className={`p-2 rounded ${
-                      msg.sender.username === user.username
-                        ? "bg-primary text-white"
-                        : "bg-light border"
-                    }`}
-                    style={{ maxWidth: "70%" }}
-                  >
-                    <strong>{msg.sender.username}</strong>
-                    {msg.content && <p className="mb-1">{msg.content}</p>}
-                    {msg.image_url && (
-                      <img
-                        src={`http://localhost:8000${msg.image_url}`}
-                        alt="Chat image"
-                        className="img-fluid mt-2 d-block"
-                        style={{ maxWidth: "100%", maxHeight: "200px" }}
-                      />
-                    )}
-                    <small className="text-muted">
-                      {new Date(msg.timestamp).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </small>
-                  </div>
-                </div>
-              ))
+        ) : (
+          <>
+            {isConnecting && (
+              <Alert variant="info" className="mb-4">
+                Connecting to chat...
+              </Alert>
             )}
-            <div ref={messagesEndRef} />
-          </div>
+
+            <div
+              className="card shadow-sm"
+              style={{ height: "500px", overflowY: "auto" }}
+            >
+              <div className="card-body p-3">
+                {messages.length === 0 ? (
+                  <p className="text-muted text-center">No messages yet.</p>
+                ) : (
+                  messages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`d-flex mb-3 ${
+                        msg.sender.username === user.username
+                          ? "justify-content-end"
+                          : "justify-content-start"
+                      }`}
+                    >
+                      <div
+                        className={`p-2 rounded ${
+                          msg.sender.username === user.username
+                            ? "bg-primary text-white"
+                            : "bg-light border"
+                        }`}
+                        style={{ maxWidth: "70%" }}
+                      >
+                        <strong>{msg.sender.username}</strong>
+                        {msg.content && <p className="mb-1">{msg.content}</p>}
+                        {msg.image_url && (
+                          <img
+                            src={`http://localhost:8000${msg.image_url}`}
+                            alt="Chat image"
+                            className="img-fluid mt-2 d-block"
+                            style={{ maxWidth: "100%", maxHeight: "200px" }}
+                          />
+                        )}
+                        <small className="text-muted">
+                          {new Date(msg.timestamp).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </small>
+                      </div>
+                    </div>
+                  ))
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
+
+            <div className="input-group mt-3">
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Type your message..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              />
+              <button
+                className="btn btn-primary"
+                onClick={sendMessage}
+                disabled={
+                  !ws || ws.readyState !== WebSocket.OPEN || !message.trim()
+                }
+              >
+                Send
+              </button>
+            </div>
+
+            <div className="mt-3">
+              <input
+                type="file"
+                accept="image/*"
+                className="form-control"
+                onChange={(e) => setImage(e.target.files[0])}
+              />
+              <button
+                className="btn btn-secondary mt-2 w-100"
+                onClick={sendImage}
+                disabled={!ws || ws.readyState !== WebSocket.OPEN || !image}
+              >
+                Send Image
+              </button>
+            </div>
+
+            <button className="btn btn-danger mt-3 w-100" onClick={handleEndChat}>
+              End Chat
+            </button>
+          </>
         )}
-        <div className="input-group mt-3">
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Type your message..."
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-          />
-          <button
-            className="btn btn-primary"
-            onClick={sendMessage}
-            disabled={
-              !ws || ws.readyState !== WebSocket.OPEN || !message.trim()
-            }
-          >
-            Send
-          </button>
-        </div>
-        <div className="mt-3">
-          <input
-            type="file"
-            accept="image/*"
-            className="form-control"
-            onChange={(e) => setImage(e.target.files[0])}
-          />
-          <button
-            className="btn btn-secondary mt-2 w-100"
-            onClick={sendImage}
-            disabled={!ws || ws.readyState !== WebSocket.OPEN || !image}
-          >
-            Send Image
-          </button>
-        </div>
-        <button className="btn btn-danger mt-3 w-100" onClick={handleEndChat}>
-          End Chat
-        </button>
       </div>
     </>
   );
