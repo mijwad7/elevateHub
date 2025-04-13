@@ -2,7 +2,6 @@ from django.db import models
 from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from credits.models import CreditTransaction
 from api.models import Category
 from django.utils import timezone
 from channels.layers import get_channel_layer
@@ -95,7 +94,6 @@ class VideoCall(models.Model):
 # projects/models.py (append to existing file)
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from credits.models import Credit  # Adjust import based on your structure
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 

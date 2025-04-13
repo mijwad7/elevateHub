@@ -183,11 +183,8 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             await self.accept()
             logger.info(f"WebSocket connection accepted for user {self.user.username}")
 
-            # Send existing unread notifications
-            notifications = await database_sync_to_async(Notification.objects.filter)(
-                user=self.user,
-                is_read=False
-            )
+            # Fetch notifications asynchronously
+            notifications = await database_sync_to_async(self.get_notifications)()
             for notification in notifications:
                 await self.send(text_data=json.dumps({
                     'type': 'notification',
@@ -217,31 +214,17 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     async def notification(self, event):
         try:
             print(f"Received notification event: {event}")  # Debug log
-            # Only create notification if it's not from the admin panel
-            if not event.get('from_admin', False):
-                print("Creating new notification in database")  # Debug log
-                notification = await database_sync_to_async(Notification.objects.create)(
-                    user=self.user,
-                    message=event['notification']['message'],
-                    notification_type=event['notification'].get('type', 'info'),
-                    link=event['notification'].get('link')
-                )
-            else:
-                print("Processing admin-created notification")  # Debug log
-                notification = event['notification']
+            notification = event['notification']
             
-            print(f"Sending notification to WebSocket: {notification}")  # Debug log
+            # Check if all required fields are present
+            if not all(key in notification for key in ['id', 'message', 'is_read', 'created_at', 'notification_type']):
+                logger.error("Missing fields in notification data")
+                return
+            
             # Send notification to WebSocket
             await self.send(text_data=json.dumps({
                 'type': 'notification',
-                'notification': {
-                    'id': notification['id'],
-                    'message': notification['message'],
-                    'is_read': notification['is_read'],
-                    'created_at': notification['created_at'],
-                    'notification_type': notification['notification_type'],
-                    'link': notification['link']
-                }
+                'notification': notification
             }))
             print("Notification sent to WebSocket client")  # Debug log
         except Exception as e:
@@ -251,6 +234,10 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 'type': 'error',
                 'message': 'Error processing notification'
             }))
+
+    def get_notifications(self):
+        # This method will run in a synchronous context
+        return Notification.objects.filter(user=self.user)
 
 class VideoCallConsumer(AsyncWebsocketConsumer):
     async def connect(self):

@@ -55,6 +55,7 @@ const Navbar = () => {
                         }
                     } catch (error) {
                         console.error("Error parsing WebSocket message:", error);  // Debug log
+                        console.error("Raw message data:", e.data);  // Log the raw message data
                     }
                 };
                 
