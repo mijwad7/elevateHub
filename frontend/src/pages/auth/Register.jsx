@@ -35,6 +35,12 @@ const Register = () => {
         email,
         username,
         password 
+      }, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
       });
       setOtpSent(true);
     } catch (error) {
@@ -55,19 +61,16 @@ const Register = () => {
       const res = await api.post("api/verify-otp/", { 
         email, 
         otp_code: otpCode 
+      }, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
       });
       
-      const { user, access, refresh } = res.data;
-      
-      dispatch(loginSuccess({
-        user,
-        token: access,
-      }));
-      
-      localStorage.setItem(ACCESS_TOKEN, access);
-      localStorage.setItem(REFRESH_TOKEN, refresh);
-      localStorage.setItem("user", JSON.stringify(user));
-      navigate("/");
+      // Just redirect to login page after successful registration
+      navigate("/login");
     } catch (error) {
       setError(error.response?.data?.error || "Registration failed");
     } finally {
