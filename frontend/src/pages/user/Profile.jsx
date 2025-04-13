@@ -594,36 +594,39 @@ const Profile = () => {
                           ) : (
                             <div className="d-flex flex-column gap-3">
                               {contributions.map((contribution) => (
-                                <div
+                                <a
+                                  href={`/${contribution.type === 'resource' ? 'resources' : 'discussions'}/${contribution.id}`}
                                   key={`${contribution.type}-${contribution.id}`}
-                                  className="border rounded p-3 hover-bg-light"
+                                  className="text-decoration-none text-dark"
                                 >
-                                  <div className="d-flex align-items-center mb-2">
-                                    {contribution.type === 'resource' ? (
-                                      <FaFileAlt className="me-2 text-primary" />
-                                    ) : (
-                                      <FaCommentDots className="me-2 text-primary" />
-                                    )}
-                                    <h3 className="h6 mb-0">{contribution.title}</h3>
-                                  </div>
-                                  <p className="small text-muted mb-2">
-                                    {contribution.type === 'resource' 
-                                      ? `Downloads: ${contribution.download_count} | Upvotes: ${contribution.upvotes}`
-                                      : `Upvotes: ${contribution.upvotes}`}
-                                  </p>
-                                  <p className="small text-muted mb-0">
-                                    {formatDistanceToNow(new Date(contribution.created_at), {
-                                      addSuffix: true,
-                                    })}
-                                  </p>
-                                  {contribution.type === 'discussion' && (
-                                    <p className="mt-2 mb-0 small">
-                                      {contribution.content.length > 150
-                                        ? `${contribution.content.substring(0, 150)}...`
-                                        : contribution.content}
+                                  <div className="border rounded p-3 hover-bg-light">
+                                    <div className="d-flex align-items-center mb-2">
+                                      {contribution.type === 'resource' ? (
+                                        <FaFileAlt className="me-2 text-primary" />
+                                      ) : (
+                                        <FaCommentDots className="me-2 text-primary" />
+                                      )}
+                                      <h3 className="h6 mb-0">{contribution.title}</h3>
+                                    </div>
+                                    <p className="small text-muted mb-2">
+                                      {contribution.type === 'resource' 
+                                        ? `Downloads: ${contribution.download_count} | Upvotes: ${contribution.upvotes}`
+                                        : `Upvotes: ${contribution.upvotes}`}
                                     </p>
-                                  )}
-                                </div>
+                                    <p className="small text-muted mb-0">
+                                      {formatDistanceToNow(new Date(contribution.created_at), {
+                                        addSuffix: true,
+                                      })}
+                                    </p>
+                                    {contribution.type === 'discussion' && (
+                                      <p className="mt-2 mb-0 small">
+                                        {contribution.content.length > 150
+                                          ? `${contribution.content.substring(0, 150)}...`
+                                          : contribution.content}
+                                      </p>
+                                    )}
+                                  </div>
+                                </a>
                               ))}
                             </div>
                           )}

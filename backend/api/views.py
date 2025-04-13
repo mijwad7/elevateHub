@@ -363,7 +363,8 @@ def user_contributions(request):
     # Get discussion posts
     discussion_posts = DiscussionPost.objects.filter(user=user).select_related('discussion').order_by('-created_at')
     discussion_data = [{
-        'id': post.id,
+        'id': post.discussion.id,
+        'post_id': post.id,
         'type': 'discussion',
         'title': post.discussion.title,
         'content': post.content,
