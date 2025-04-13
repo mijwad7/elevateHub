@@ -383,13 +383,13 @@ const Profile = () => {
                         <h1 className="h3 mb-2">{user.username}</h1>
                         <p className="text-muted mb-3">{user.email}</p>
                         <div className="badge bg-primary bg-opacity-10 text-primary px-3 py-2 mb-3">
-                          <span className="fw-semibold">{user.credits || 0}</span> credits
+                          <span className="fw-semibold">{user.credits || 0} credits</span> 
                         </div>
                       </div>
 
                       {/* Navigation Tabs */}
                       <ul className="nav nav-tabs mb-4" role="tablist">
-                        <li className="nav-item" role="presentation">
+                        <li className="nav-item text-primary" role="presentation">
                           <button
                             className={`nav-link ${activeTab === 'profile' ? 'active' : ''}`}
                             onClick={() => setActiveTab('profile')}
