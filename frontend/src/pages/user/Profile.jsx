@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import api from "../../apiRequests/api";
@@ -667,7 +667,12 @@ const Profile = () => {
                                     ) : (
                                       <FaCommentDots className="me-2 text-primary" />
                                     )}
-                                    <h3 className="h6 mb-0">{contribution.title}</h3>
+                                    <Link
+                                      to={`/${contribution.type === 'resource' ? 'resources' : 'discussions'}/${contribution.id}`}
+                                      className="text-decoration-none text-dark flex-grow-1"
+                                    >
+                                      <h3 className="h6 mb-0">{contribution.title}</h3>
+                                    </Link>
                                     <div className="ms-auto">
                                       <button
                                         className="btn btn-sm btn-outline-primary me-2"
