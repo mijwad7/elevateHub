@@ -4,11 +4,12 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
-from .models import HelpRequest, HelpComment, HelpCommentUpvote, ChatSession, VideoCall
+from .models import HelpRequest, HelpComment, HelpCommentUpvote, ChatSession, VideoCall, Notification
 from .serializers import (
     HelpRequestSerializer,
     HelpCommentSerializer,
     ChatSessionSerializer,
+    NotificationSerializer
 )
 from rest_framework.filters import SearchFilter, OrderingFilter
 from api.models import Category
@@ -17,6 +18,8 @@ from credits.models import CreditTransaction
 from rest_framework.views import APIView
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from rest_framework import viewsets
+from rest_framework.decorators import action
 
 
 
@@ -192,9 +195,9 @@ class StartVideoCall(APIView):
                 {
                     'type': 'notification',
                     'notification': {
-                        'amount': 0,  # No credit change yet
-                        'description': f"{request.user.username} started a video call for {help_request.title}. Join at call ID {video_call.id}",
-                        'timestamp': video_call.started_at.isoformat()
+                        'message': 'Your message here',
+                        'type': 'info',  # or 'success', 'warning', 'error'
+                        'link': 'optional_url'  # if you want to link to something
                     }
                 }
             )
@@ -217,3 +220,28 @@ class EndVideoCall(APIView):
             return Response({'status': 'Video call ended'})
         except VideoCall.DoesNotExist:
             return Response({'error': 'Video call not found'}, status=404)
+
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Notification.objects.filter(user=self.request.user)
+
+    @action(detail=True, methods=['post'])
+    def mark_as_read(self, request, pk=None):
+        notification = self.get_object()
+        notification.is_read = True
+        notification.save()
+        return Response({'status': 'marked as read'})
+
+    @action(detail=False, methods=['post'])
+    def mark_all_as_read(self, request):
+        Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+        return Response({'status': 'all notifications marked as read'})
+
+    @action(detail=False, methods=['get'])
+    def unread_count(self, request):
+        count = Notification.objects.filter(user=request.user, is_read=False).count()
+        return Response({'count': count})

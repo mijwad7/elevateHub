@@ -4,46 +4,77 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { FaComments, FaFolderOpen, FaHandsHelping, FaBell } from 'react-icons/fa';
 import { logoutUser } from '../redux/authSlice';
-import { addNotification } from '../redux/notificationSlice';
+import { addNotification, fetchNotifications, markNotificationAsRead, markAllAsRead, clearNotifications } from '../redux/notificationSlice';
 import { Button } from 'react-bootstrap';
 import VideoCall from './VideoCall';
+import { ACCESS_TOKEN } from '../constants';
 
 const Navbar = () => {
     const { user, isAuthenticated } = useSelector((state) => state.auth);
-    const notifications = useSelector((state) => state.notifications.notifications);
+    const { notifications = [], status } = useSelector((state) => state.notifications);
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const wsRef = useRef(null);
     const [pendingCallId, setPendingCallId] = useState(null); // Changed from callId
     const [activeCallId, setActiveCallId] = useState(null); // New state for active call
 
+    // Safely calculate unread count
+    const unreadCount = Array.isArray(notifications) 
+        ? notifications.filter(n => !n.is_read).length 
+        : 0;
+
     useEffect(() => {
-        if (!isAuthenticated) return;
+        if (isAuthenticated) {
+            dispatch(fetchNotifications());
+            
+            const connectWebSocket = () => {
+                if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) return;
 
-        const connectWebSocket = () => {
-            if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) return;
-
-            const websocket = new WebSocket('ws://127.0.0.1:8000/api/ws/notifications/');
-            websocket.onopen = () => console.log("Notification WebSocket connected");
-            websocket.onmessage = (e) => {
-                const data = JSON.parse(e.data);
-                if (data.type === 'notification') {
-                    dispatch(addNotification(data.notification));
-                    if (data.notification.description.includes("started a video call")) {
-                        const callIdMatch = data.notification.description.match(/call ID (\d+)/);
-                        if (callIdMatch) setPendingCallId(callIdMatch[1]); // Set pending, not active
-                    }
+                const token = localStorage.getItem(ACCESS_TOKEN);
+                if (!token) {
+                    console.error("No access token found");
+                    return;
                 }
-            };
-            websocket.onerror = (e) => console.error("Notification WebSocket error:", e);
-            websocket.onclose = (e) => {
-                console.log("Notification WebSocket closed:", e.code);
-                if (e.code !== 1000) setTimeout(connectWebSocket, 1000);
-            };
-            wsRef.current = websocket;
-        };
 
-        connectWebSocket();
+                const websocket = new WebSocket(`ws://127.0.0.1:8000/api/ws/notifications/?token=${encodeURIComponent(token)}`);
+                
+                websocket.onopen = () => {
+                    console.log("Notification WebSocket connected");
+                    dispatch(clearNotifications());
+                };
+                
+                websocket.onmessage = (e) => {
+                    try {
+                        console.log("Received WebSocket message:", e.data);  // Debug log
+                        const data = JSON.parse(e.data);
+                        if (data.type === 'notification') {
+                            console.log("Processing notification:", data.notification);  // Debug log
+                            dispatch(addNotification(data.notification));
+                        } else if (data.type === 'error') {
+                            console.error("WebSocket error:", data.message);  // Debug log
+                        }
+                    } catch (error) {
+                        console.error("Error parsing WebSocket message:", error);  // Debug log
+                    }
+                };
+                
+                websocket.onerror = (e) => {
+                    console.error("Notification WebSocket error:", e);
+                    setTimeout(connectWebSocket, 5000);
+                };
+                
+                websocket.onclose = (e) => {
+                    console.log("Notification WebSocket closed:", e.code);
+                    if (e.code !== 1000) {
+                        setTimeout(connectWebSocket, 5000);
+                    }
+                };
+                
+                wsRef.current = websocket;
+            };
+
+            connectWebSocket();
+        }
 
         return () => {
             if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -57,9 +88,13 @@ const Navbar = () => {
         navigate('/login');
     };
 
-    const uniqueNotifications = Array.from(
-        new Map(notifications.map(n => [`${n.amount}-${n.description}-${n.timestamp}`, n])).values()
-    ).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const handleMarkAsRead = (notificationId) => {
+        dispatch(markNotificationAsRead(notificationId));
+    };
+
+    const handleMarkAllAsRead = () => {
+        dispatch(markAllAsRead());
+    };
 
     const handleJoinCall = (id) => {
         setActiveCallId(id); // Activate call only on click
@@ -83,22 +118,69 @@ const Navbar = () => {
                     <ul className="navbar-nav ms-auto">
                         <li className="nav-item dropdown">
                             <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                                <FaBell /> {uniqueNotifications.length}
+                                <FaBell />
+                                {unreadCount > 0 && (
+                                    <span className="badge bg-danger rounded-pill ms-1">
+                                        {unreadCount}
+                                    </span>
+                                )}
                             </span>
-                            <ul className="dropdown-menu dropdown-menu-end">
-                                {uniqueNotifications.length > 0 ? (
-                                    uniqueNotifications.map((n, i) => (
-                                        <li key={i} className="dropdown-item">
-                                            {n.description}
-                                            {n.description.includes("started a video call") && (
-                                                <Button variant="link" onClick={() => handleJoinCall(n.description.match(/call ID (\d+)/)[1])}>
-                                                    Join
-                                                </Button>
-                                            )}
+                            <ul className="dropdown-menu dropdown-menu-end" style={{ minWidth: '300px' }}>
+                                <div className="d-flex justify-content-between align-items-center p-2 border-bottom">
+                                    <h6 className="mb-0">Notifications</h6>
+                                    {unreadCount > 0 && (
+                                        <button
+                                            className="btn btn-sm btn-link"
+                                            onClick={handleMarkAllAsRead}
+                                        >
+                                            Mark all as read
+                                        </button>
+                                    )}
+                                </div>
+                                {status === 'loading' ? (
+                                    <li className="dropdown-item text-center">
+                                        <div className="spinner-border spinner-border-sm" role="status">
+                                            <span className="visually-hidden">Loading...</span>
+                                        </div>
+                                    </li>
+                                ) : Array.isArray(notifications) && notifications.length > 0 ? (
+                                    notifications.map((notification) => (
+                                        <li
+                                            key={notification.id}
+                                            className={`dropdown-item ${!notification.is_read ? 'bg-light' : ''}`}
+                                        >
+                                            <div className="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    {notification.message}
+                                                    {notification.link && (
+                                                        <a
+                                                            href={notification.link}
+                                                            className="ms-2"
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                        >
+                                                            View
+                                                        </a>
+                                                    )}
+                                                </div>
+                                                {!notification.is_read && (
+                                                    <button
+                                                        className="btn btn-sm btn-link"
+                                                        onClick={() => handleMarkAsRead(notification.id)}
+                                                    >
+                                                        Mark as read
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <small className="text-muted d-block">
+                                                {new Date(notification.created_at).toLocaleString()}
+                                            </small>
                                         </li>
                                     ))
                                 ) : (
-                                    <li className="dropdown-item">No notifications</li>
+                                    <li className="dropdown-item text-center text-muted">
+                                        No notifications
+                                    </li>
                                 )}
                             </ul>
                         </li>

@@ -5,6 +5,8 @@ from django.dispatch import receiver
 from credits.models import CreditTransaction
 from api.models import Category
 from django.utils import timezone
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 
 class HelpRequest(models.Model):
@@ -130,3 +132,54 @@ def handle_video_call_completion(sender, instance, created, update_fields, **kwa
                 }
             }
         )
+
+class Notification(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    notification_type = models.CharField(max_length=50, default='info')  # info, success, warning, error
+    link = models.URLField(blank=True, null=True)  # Optional link for the notification
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.message[:50]}"
+
+@receiver(post_save, sender=Notification)
+def send_notification(sender, instance, created, **kwargs):
+    if created:
+        print(f"Notification created: {instance.id} - {instance.message}")  # Debug log
+        channel_layer = get_channel_layer()
+        notification_data = {
+            'id': instance.id,
+            'message': instance.message,
+            'is_read': instance.is_read,
+            'created_at': instance.created_at.isoformat(),
+            'notification_type': instance.notification_type,
+            'link': instance.link
+        }
+        
+        print(f"Sending notification to user {instance.user.id}")  # Debug log
+        
+        # Send to user-specific group
+        async_to_sync(channel_layer.group_send)(
+            f'notifications_{instance.user.id}',
+            {
+                'type': 'notification',
+                'notification': notification_data,
+                'from_admin': True
+            }
+        )
+        
+        # Send to global notifications group
+        async_to_sync(channel_layer.group_send)(
+            'notifications',
+            {
+                'type': 'notification',
+                'notification': notification_data,
+                'from_admin': True
+            }
+        )
+        print("Notification sent through WebSocket")  # Debug log

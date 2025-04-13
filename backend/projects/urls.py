@@ -2,8 +2,13 @@ from django.urls import path
 from .views import (
     HelpRequestListCreateView, HelpRequestDetailView,
     HelpCommentListCreateView, HelpCommentDetailView,
-    toggle_upvote, CategoryListView, start_chat, end_chat, active_chats, StartVideoCall, EndVideoCall
+    toggle_upvote, CategoryListView, start_chat, end_chat, active_chats, StartVideoCall, EndVideoCall,
+    NotificationViewSet
 )
+from rest_framework.routers import DefaultRouter
+
+router = DefaultRouter()
+router.register(r'notifications', NotificationViewSet, basename='notification')
 
 urlpatterns = [
     path('active-chats/', active_chats, name='active-chats'),
@@ -17,4 +22,4 @@ urlpatterns = [
     path('chat/<int:chat_id>/end/', end_chat, name='end-chat'),
     path('start-video/<int:request_id>/', StartVideoCall.as_view(), name='start-video-call'),
     path('end-video/<int:call_id>/', EndVideoCall.as_view(), name='end-video-call'),
-]
+] + router.urls

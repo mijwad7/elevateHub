@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import HelpRequest, HelpComment, ChatMessage, ChatSession
+from .models import HelpRequest, HelpComment, ChatMessage, ChatSession, Notification
 from api.serializers import UserSerializer
 from api.models import Category
 
@@ -53,3 +53,9 @@ class ChatSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatSession
         fields = ['id', 'help_request', 'requester', 'helper', 'created_at', 'is_active', 'messages']
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['id', 'message', 'is_read', 'created_at', 'notification_type', 'link']
+        read_only_fields = ['created_at']

@@ -2,7 +2,7 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 import json
-from .models import ChatSession, ChatMessage
+from .models import ChatSession, ChatMessage, Notification
 from api.serializers import UserSerializer
 import logging
 import base64
@@ -152,14 +152,105 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        await self.channel_layer.group_add('notifications', self.channel_name)
-        await self.accept()
+        try:
+            # Get the token from query parameters
+            query_string = self.scope['query_string'].decode()
+            token = None
+            for param in query_string.split('&'):
+                if param.startswith('token='):
+                    token = param.split('=')[1]
+                    break
+
+            if not token:
+                logger.warning("No token provided in WebSocket connection")
+                await self.close(code=4001, reason="No token provided")
+                return
+
+            try:
+                # Verify the token and get the user
+                access_token = AccessToken(token)
+                user_id = access_token['user_id']
+                self.user = await database_sync_to_async(get_user_model().objects.get)(id=user_id)
+            except Exception as e:
+                logger.warning(f"JWT authentication failed: {str(e)}")
+                await self.close(code=4001, reason="Invalid token")
+                return
+
+            # Add to both global and user-specific groups
+            self.group_name = f'notifications_{self.user.id}'
+            await self.channel_layer.group_add('notifications', self.channel_name)
+            await self.channel_layer.group_add(self.group_name, self.channel_name)
+            await self.accept()
+            logger.info(f"WebSocket connection accepted for user {self.user.username}")
+
+            # Send existing unread notifications
+            notifications = await database_sync_to_async(Notification.objects.filter)(
+                user=self.user,
+                is_read=False
+            )
+            for notification in notifications:
+                await self.send(text_data=json.dumps({
+                    'type': 'notification',
+                    'notification': {
+                        'id': notification.id,
+                        'message': notification.message,
+                        'is_read': notification.is_read,
+                        'created_at': notification.created_at.isoformat(),
+                        'notification_type': notification.notification_type,
+                        'link': notification.link
+                    }
+                }))
+
+        except Exception as e:
+            logger.error(f"Error in WebSocket connection: {str(e)}")
+            await self.close(code=1011, reason="Internal server error")
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard('notifications', self.channel_name)
+        try:
+            if hasattr(self, 'group_name'):
+                await self.channel_layer.group_discard(self.group_name, self.channel_name)
+            await self.channel_layer.group_discard('notifications', self.channel_name)
+            logger.info(f"WebSocket disconnected with code {close_code}")
+        except Exception as e:
+            logger.error(f"Error in WebSocket disconnect: {str(e)}")
 
     async def notification(self, event):
-        await self.send(text_data=json.dumps(event))
+        try:
+            print(f"Received notification event: {event}")  # Debug log
+            # Only create notification if it's not from the admin panel
+            if not event.get('from_admin', False):
+                print("Creating new notification in database")  # Debug log
+                notification = await database_sync_to_async(Notification.objects.create)(
+                    user=self.user,
+                    message=event['notification']['message'],
+                    notification_type=event['notification'].get('type', 'info'),
+                    link=event['notification'].get('link')
+                )
+            else:
+                print("Processing admin-created notification")  # Debug log
+                notification = event['notification']
+            
+            print(f"Sending notification to WebSocket: {notification}")  # Debug log
+            # Send notification to WebSocket
+            await self.send(text_data=json.dumps({
+                'type': 'notification',
+                'notification': {
+                    'id': notification['id'],
+                    'message': notification['message'],
+                    'is_read': notification['is_read'],
+                    'created_at': notification['created_at'],
+                    'notification_type': notification['notification_type'],
+                    'link': notification['link']
+                }
+            }))
+            print("Notification sent to WebSocket client")  # Debug log
+        except Exception as e:
+            print(f"Error handling notification: {str(e)}")  # Debug log
+            logger.error(f"Error handling notification: {str(e)}")
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'Error processing notification'
+            }))
 
 class VideoCallConsumer(AsyncWebsocketConsumer):
     async def connect(self):
