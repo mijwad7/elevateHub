@@ -18,7 +18,6 @@ class Credit(models.Model):
         self.balance += amount
         self.save()
         transaction = CreditTransaction.objects.create(user=self.user, amount=amount, description=description)
-        self._send_notification('credit_added', amount, description, skip_signal=True)  # Avoid double notification
         return transaction
 
     def spend_credits(self, amount, description="Spent credits"):
@@ -26,7 +25,6 @@ class Credit(models.Model):
             self.balance -= amount
             self.save()
             transaction = CreditTransaction.objects.create(user=self.user, amount=-amount, description=description)
-            self._send_notification('credit_spent', amount, description, skip_signal=True)  # Avoid double notification
             return transaction
         return False
 
