@@ -278,6 +278,9 @@ class VideoCallConsumer(AsyncWebsocketConsumer):
     async def video_message(self, event):
         await self.send(text_data=json.dumps(event['message']))
 
+    async def call_ended(self, event):
+        await self.send(text_data=json.dumps(event['message']))
+
     @database_sync_to_async
     def get_user_from_token(self, token):
         try:

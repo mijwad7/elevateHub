@@ -220,7 +220,6 @@ class StartVideoCall(APIView):
             logger.error(f"HelpRequest {request_id} not found")
             return Response({'error': 'Help request not found'}, status=404)
 
-
 class EndVideoCall(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -247,19 +246,28 @@ class EndVideoCall(APIView):
                 user=video_call.requester,
                 message=f"Video call for '{video_call.help_request.title}' has ended. You spent {amount} credits.",
                 notification_type='success',
-                link=f"/help-request/{video_call.help_request.id}"  # Adjust URL as needed
+                link=f"/help-request/{video_call.help_request.id}"
             )
             Notification.objects.create(
                 user=video_call.helper,
                 message=f"Video call for '{video_call.help_request.title}' has ended. You earned {amount} credits.",
                 notification_type='success',
-                link=f"/help-request/{video_call.help_request.id}"  # Adjust URL as needed
+                link=f"/help-request/{video_call.help_request.id}"
+            )
+            
+            # Notify all participants via WebSocket
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f"video_call_{call_id}",
+                {
+                    'type': 'call_ended',
+                    'message': {'status': 'call_ended'}
+                }
             )
             
             return Response({'status': 'Video call ended'})
         except VideoCall.DoesNotExist:
             return Response({'error': 'Video call not found'}, status=404)
-
 
 class NotificationViewSet(viewsets.ModelViewSet):
     serializer_class = NotificationSerializer

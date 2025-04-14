@@ -1,3 +1,4 @@
+// src/components/VideoCall.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { Button } from 'react-bootstrap';
@@ -78,6 +79,13 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
                 const data = JSON.parse(e.data);
                 console.log(`Received WebSocket message (isHelper: ${isHelper}):`, data);
 
+                if (data.status === 'call_ended') {
+                    console.log("Call ended by other user");
+                    setIsCallActive(false);
+                    onEndCall();
+                    return;
+                }
+
                 if (data.type === 'offer' && !isHelper) {
                     console.log("Processing offer...");
                     await pcRef.current.setRemoteDescription(new RTCSessionDescription({ type: data.type_sdp, sdp: data.sdp }));
@@ -139,7 +147,7 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
                 pcRef.current.close();
             }
         };
-    }, [isAuthenticated, callId, isHelper, user]);
+    }, [isAuthenticated, callId, isHelper, onEndCall]);
 
     const handleEndCall = async () => {
         try {
