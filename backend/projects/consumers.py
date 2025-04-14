@@ -10,6 +10,7 @@ from django.core.files.base import ContentFile
 from django.conf import settings
 from rest_framework_simplejwt.tokens import AccessToken
 from django.contrib.auth import get_user_model
+from django.db import models
 
 logger = logging.getLogger(__name__)
 
@@ -150,6 +151,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             logger.info(f"Broadcasting to {self.channel_name}: {message_data}")
             await self.send(text_data=json.dumps(message_data))
 
+
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         try:
@@ -163,7 +165,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
             if not token:
                 logger.warning("No token provided in WebSocket connection")
-                await self.close(code=4001, reason="No token provided")
+                await self.close(code=4001)
                 return
 
             try:
@@ -173,7 +175,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 self.user = await database_sync_to_async(get_user_model().objects.get)(id=user_id)
             except Exception as e:
                 logger.warning(f"JWT authentication failed: {str(e)}")
-                await self.close(code=4001, reason="Invalid token")
+                await self.close(code=4001)
                 return
 
             # Add to both global and user-specific groups
@@ -184,23 +186,23 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             logger.info(f"WebSocket connection accepted for user {self.user.username}")
 
             # Fetch notifications asynchronously
-            notifications = await database_sync_to_async(self.get_notifications)()
+            notifications = await self.get_notifications()
             for notification in notifications:
                 await self.send(text_data=json.dumps({
                     'type': 'notification',
                     'notification': {
-                        'id': notification.id,
-                        'message': notification.message,
-                        'is_read': notification.is_read,
-                        'created_at': notification.created_at.isoformat(),
-                        'notification_type': notification.notification_type,
-                        'link': notification.link
+                        'id': notification['id'],
+                        'message': notification['message'],
+                        'is_read': notification['is_read'],
+                        'created_at': notification['created_at'].isoformat(),
+                        'notification_type': notification['notification_type'],
+                        'link': notification['link'] or None
                     }
                 }))
 
         except Exception as e:
             logger.error(f"Error in WebSocket connection: {str(e)}")
-            await self.close(code=1011, reason="Internal server error")
+            await self.close(code=4000)
 
     async def disconnect(self, close_code):
         try:
@@ -213,7 +215,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
     async def notification(self, event):
         try:
-            print(f"Received notification event: {event}")  # Debug log
+            logger.debug(f"Received notification event: {event}")
             notification = event['notification']
             
             # Check if all required fields are present
@@ -226,18 +228,22 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 'type': 'notification',
                 'notification': notification
             }))
-            print("Notification sent to WebSocket client")  # Debug log
+            logger.debug("Notification sent to WebSocket client")
         except Exception as e:
-            print(f"Error handling notification: {str(e)}")  # Debug log
             logger.error(f"Error handling notification: {str(e)}")
             await self.send(text_data=json.dumps({
                 'type': 'error',
                 'message': 'Error processing notification'
             }))
 
+    @database_sync_to_async
     def get_notifications(self):
-        # This method will run in a synchronous context
-        return Notification.objects.filter(user=self.user)
+        # Fetch queryset as list of dictionaries with formatted datetime
+        return list(Notification.objects.filter(user=self.user).values(
+            'id', 'message', 'is_read', 'created_at', 'notification_type', 'link'
+        ).annotate(
+            created_at_str=models.functions.Cast('created_at', output_field=models.CharField())
+        ))
 
 class VideoCallConsumer(AsyncWebsocketConsumer):
     async def connect(self):
