@@ -6,6 +6,9 @@ from api.models import Category
 from django.utils import timezone
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class HelpRequest(models.Model):
@@ -91,45 +94,7 @@ class VideoCall(models.Model):
 
 
 
-# projects/models.py (append to existing file)
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
 
-@receiver(post_save, sender=VideoCall)
-def handle_video_call_completion(sender, instance, created, update_fields, **kwargs):
-    if not created and update_fields and 'is_active' in update_fields and not instance.is_active:
-        # Call has ended
-        requester_credits = instance.requester.get_credits()
-        helper_credits = instance.helper.get_credits()
-        amount = instance.help_request.credit_offer_video
-        requester_credits.spend_credits(amount, f"Video call completed for {instance.help_request.title}")
-        helper_credits.add_credits(amount, f"Helped via video for {instance.help_request.title}")
-        # Notify both users
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            'notifications',
-            {
-                'type': 'notification',
-                'notification': {
-                    'amount': -amount,
-                    'description': f"Video call for {instance.help_request.title} completed",
-                    'timestamp': instance.ended_at.isoformat()
-                }
-            }
-        )
-        async_to_sync(channel_layer.group_send)(
-            'notifications',
-            {
-                'type': 'notification',
-                'notification': {
-                    'amount': amount,
-                    'description': f"Earned {amount} credits for video help on {instance.help_request.title}",
-                    'timestamp': instance.ended_at.isoformat()
-                }
-            }
-        )
 
 class Notification(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
@@ -148,7 +113,7 @@ class Notification(models.Model):
 @receiver(post_save, sender=Notification)
 def send_notification(sender, instance, created, **kwargs):
     if created:
-        print(f"Notification created: {instance.id} - {instance.message}")  # Debug log
+        logger.info(f"Notification created: {instance.id} - {instance.message}")
         channel_layer = get_channel_layer()
         notification_data = {
             'id': instance.id,
@@ -158,26 +123,29 @@ def send_notification(sender, instance, created, **kwargs):
             'notification_type': instance.notification_type,
             'link': instance.link
         }
-        
-        print(f"Sending notification to user {instance.user.id}")  # Debug log
+
+        # Add callId for video_call_started
+        if instance.notification_type == 'video_call_started':
+            try:
+                video_call = VideoCall.objects.filter(
+                    requester=instance.user,
+                    is_active=True
+                ).latest('started_at')
+                notification_data['callId'] = video_call.id
+                logger.info(f"Added callId {video_call.id} to notification {instance.id}")
+            except VideoCall.DoesNotExist:
+                logger.warning(f"No active VideoCall found for notification {instance.id}")
+                notification_data['callId'] = None
+
+        logger.info(f"Sending notification to user {instance.user.id}: {notification_data}")
         
         # Send to user-specific group
         async_to_sync(channel_layer.group_send)(
             f'notifications_{instance.user.id}',
             {
                 'type': 'notification',
-                'notification': notification_data,
-                'from_admin': True
+                'notification': notification_data
             }
         )
         
-        # Send to global notifications group
-        async_to_sync(channel_layer.group_send)(
-            'notifications',
-            {
-                'type': 'notification',
-                'notification': notification_data,
-                'from_admin': True
-            }
-        )
-        print("Notification sent through WebSocket")  # Debug log
+        logger.info(f"Notification {instance.id} sent through WebSocket")

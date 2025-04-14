@@ -50,6 +50,10 @@ const Navbar = () => {
                         if (data.type === 'notification') {
                             console.log("Processing notification:", data.notification);  // Debug log
                             dispatch(addNotification(data.notification));
+                            if (data.notification.notification_type === 'video_call_started') {
+                                console.log("Video call notification received, callId:", data.notification.callId);
+                                setPendingCallId(data.notification.callId || null);
+                            }
                         } else if (data.type === 'error') {
                             console.error("WebSocket error:", data.message);  // Debug log
                         }
@@ -162,6 +166,16 @@ const Navbar = () => {
                                                         >
                                                             View
                                                         </a>
+                                                    )}
+                                                    {notification.notification_type === 'video_call_started' && (
+                                                        <Button
+                                                            variant="link"
+                                                            className="ms-2 p-0"
+                                                            onClick={() => handleJoinCall(notification.callId)}
+                                                            disabled={!notification.callId}
+                                                        >
+                                                            Join Call
+                                                        </Button>
                                                     )}
                                                 </div>
                                                 {!notification.is_read && (

@@ -173,7 +173,19 @@ def active_chats(request):
 
     return Response(data)
 
+# projects/views.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from .models import HelpRequest, VideoCall, Notification
+from django.conf import settings
+from django.utils import timezone
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 class StartVideoCall(APIView):
     permission_classes = [IsAuthenticated]
@@ -182,27 +194,30 @@ class StartVideoCall(APIView):
         try:
             help_request = HelpRequest.objects.get(id=request_id)
             if request.user == help_request.created_by:
+                logger.warning(f"User {request.user.username} attempted to start video call on own request {request_id}")
                 return Response({'error': 'Only helpers can start video calls'}, status=403)
+            
             video_call = VideoCall.objects.create(
                 help_request=help_request,
                 requester=help_request.created_by,
                 helper=request.user
             )
-            # Notify requester
-            channel_layer = get_channel_layer()
-            async_to_sync(channel_layer.group_send)(
-                'notifications',
-                {
-                    'type': 'notification',
-                    'notification': {
-                        'message': 'Your message here',
-                        'type': 'info',  # or 'success', 'warning', 'error'
-                        'link': 'optional_url'  # if you want to link to something
-                    }
-                }
+            logger.info(f"Created VideoCall ID: {video_call.id} for HelpRequest {request_id}")
+
+            # Create notification for requester
+            notification_message = f"{request.user.username} has started a video call for '{help_request.title}'"
+            Notification.objects.create(
+                user=help_request.created_by,
+                message=notification_message,
+                notification_type="video_call_started",
+                link=None
             )
-            return Response({'call_id': video_call.id, 'status': 'Video call started'})
+            logger.info(f"Created Notification for user {help_request.created_by.username}")
+
+            return Response({'call_id': video_call.id, 'status': 'Video call started'}, status=200)
+        
         except HelpRequest.DoesNotExist:
+            logger.error(f"HelpRequest {request_id} not found")
             return Response({'error': 'Help request not found'}, status=404)
 
 
@@ -216,7 +231,31 @@ class EndVideoCall(APIView):
                 return Response({'error': 'Unauthorized'}, status=403)
             if not video_call.is_active:
                 return Response({'error': 'Call already ended'}, status=400)
+            
+            # End the call
             video_call.end_call()
+            
+            # Handle credit transactions
+            amount = video_call.help_request.credit_offer_video
+            requester_credits = video_call.requester.get_credits()
+            helper_credits = video_call.helper.get_credits()
+            requester_credits.spend_credits(amount, f"Video call completed for {video_call.help_request.title}")
+            helper_credits.add_credits(amount, f"Helped via video for {video_call.help_request.title}")
+            
+            # Create notifications for both users
+            Notification.objects.create(
+                user=video_call.requester,
+                message=f"Video call for '{video_call.help_request.title}' has ended. You spent {amount} credits.",
+                notification_type='success',
+                link=f"/help-request/{video_call.help_request.id}"  # Adjust URL as needed
+            )
+            Notification.objects.create(
+                user=video_call.helper,
+                message=f"Video call for '{video_call.help_request.title}' has ended. You earned {amount} credits.",
+                notification_type='success',
+                link=f"/help-request/{video_call.help_request.id}"  # Adjust URL as needed
+            )
+            
             return Response({'status': 'Video call ended'})
         except VideoCall.DoesNotExist:
             return Response({'error': 'Video call not found'}, status=404)
