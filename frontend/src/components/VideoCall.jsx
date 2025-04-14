@@ -15,6 +15,8 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
     const [connectionState, setConnectionState] = useState('initial');
     const candidateQueue = useRef([]);
     const isRemoteDescriptionSet = useRef(false);
+    const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+    const [isVideoEnabled, setIsVideoEnabled] = useState(true);
 
     useEffect(() => {
         if (!isAuthenticated) return;
@@ -151,17 +153,41 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
         }
     };
 
+    const toggleAudio = () => {
+        const audioTracks = localVideoRef.current.srcObject.getAudioTracks();
+        audioTracks.forEach(track => {
+            track.enabled = !track.enabled;
+        });
+        setIsAudioEnabled(prev => !prev);
+    };
+
+    const toggleVideo = () => {
+        const videoTracks = localVideoRef.current.srcObject.getVideoTracks();
+        videoTracks.forEach(track => {
+            track.enabled = !track.enabled;
+        });
+        setIsVideoEnabled(prev => !prev);
+    };
+
     if (!isCallActive) return null;
 
     return (
-        <div className="video-call-container" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', zIndex: 1000 }}>
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                <video ref={localVideoRef} autoPlay muted style={{ width: '300px', margin: '10px', borderRadius: '5px' }} />
-                <video ref={remoteVideoRef} autoPlay style={{ width: '300px', margin: '10px', borderRadius: '5px', border: '2px solid #fff' }} />
+        <div className="video-call-container d-flex flex-column justify-content-center align-items-center" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', zIndex: 1000 }}>
+            <div className="d-flex justify-content-center align-items-center mb-3">
+                <video ref={localVideoRef} autoPlay muted className="rounded border border-light" style={{ width: '500px', margin: '10px' }} />
+                <video ref={remoteVideoRef} autoPlay className="rounded border border-light" style={{ width: '500px', margin: '10px' }} />
             </div>
-            <Button variant="danger" onClick={handleEndCall} style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)' }}>
-                <FaVideoSlash /> End Call
-            </Button>
+            <div className="button-group" style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)' }}>
+                <Button variant="danger" onClick={handleEndCall} className="mx-2">
+                    <FaVideoSlash /> End Call
+                </Button>
+                <Button variant="secondary" onClick={toggleAudio} className="mx-2">
+                    {isAudioEnabled ? 'Mute Audio' : 'Unmute Audio'}
+                </Button>
+                <Button variant="secondary" onClick={toggleVideo} className="mx-2">
+                    {isVideoEnabled ? 'Disable Video' : 'Enable Video'}
+                </Button>
+            </div>
         </div>
     );
 };
