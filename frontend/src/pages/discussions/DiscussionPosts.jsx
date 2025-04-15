@@ -36,7 +36,7 @@ function DiscussionPosts() {
         {discussion && (
           <div className="card p-3 mb-4">
             <div className="d-flex align-items-center">
-              <img src={discussion.created_by.profile} alt="User" className="rounded-circle me-2" width="40" />
+              <img src={discussion.created_by.profile  || "https://avatar.iran.liara.run/public/4"} alt="User" className="rounded-circle me-2" width="40" />
               <div>
                 <strong>@{discussion.created_by_username}</strong>
                 <small className="text-muted d-block">{discussion.created_at_formatted}</small>
@@ -62,7 +62,7 @@ function DiscussionPosts() {
             <div className="card p-3 mb-3" key={post.id}>
               {/* Post Author */}
               <div className="d-flex align-items-center">
-                <img src={post.user.profile} alt="User" className="rounded-circle me-2" width="40" />
+                <img src={post.user.profile || "https://avatar.iran.liara.run/public/4"} alt="User" className="rounded-circle me-2" width="40" />
                 <div>
                   <strong>@{post.user_username}</strong>
                   <small className="text-muted d-block">{new Date(post.created_at).toLocaleString()}</small>

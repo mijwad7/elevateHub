@@ -394,7 +394,7 @@ const Profile = () => {
                           />
                         ) : profileImageUrl ? (
                           <img
-                            src={profileImageUrl}
+                            src={profileImageUrl || "https://avatar.iran.liara.run/public/4"}
                             alt="Profile"
                             className="w-100 h-100 object-fit-cover"
                           />

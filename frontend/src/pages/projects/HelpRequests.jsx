@@ -201,7 +201,7 @@ const HelpRequests = () => {
                                     <div className="card-body d-flex flex-column">
                                         <div className="d-flex align-items-center mb-3">
                                             <img
-                                                src={req.created_by.profile}
+                                                src={req.created_by.profile || "https://avatar.iran.liara.run/public/4"}
                                                 alt={req.created_by.username}
                                                 className="rounded-circle me-2"
                                                 style={{ width: '40px', height: '40px', objectFit: 'cover' }}

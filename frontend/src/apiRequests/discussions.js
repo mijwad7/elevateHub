@@ -22,9 +22,7 @@ export const getDiscussions = async (url = "/api/discussions/") => {
       posts_count: discussion.posts_count,
       created_by: {
         username: discussion.created_by_username,
-        profile: discussion.created_by_profile
-          ? `${import.meta.env.VITE_API_URL}${discussion.created_by_profile}`
-          : "/default-avatar.png",
+        profile: import.meta.env.VITE_API_URL + discussion.created_by_profile,
       },
     }));
   } catch (error) {

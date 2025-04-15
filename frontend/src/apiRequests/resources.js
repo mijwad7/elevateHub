@@ -12,7 +12,7 @@ export const getResources = async (url = "/api/resources/") => {
         username: resource.uploaded_by_username,
         profile: resource.uploaded_by_profile
           ? `${import.meta.env.VITE_API_URL}${resource.uploaded_by_profile}`
-          : "/default-avatar.png",
+          : "https://avatar.iran.liara.run/public/4",
       },
     }));
   } catch (error) {
@@ -34,7 +34,7 @@ export const getResourceDetails = async (resourceId) => {
           ? `${import.meta.env.VITE_API_URL}${
               response.data.uploaded_by_profile
             }`
-          : "/default-avatar.png",
+          : "https://avatar.iran.liara.run/public/4",
       },
     };
   } catch (error) {

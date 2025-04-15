@@ -192,7 +192,7 @@ function Resources() {
                       className="rounded-circle me-2"
                       width="40"
                       height="40"
-                      src={resource.uploaded_by_profile}
+                      src={resource.uploaded_by_profile || "https://avatar.iran.liara.run/public/4"}
                     />
                     {resource.uploaded_by.username}
                   </p>
