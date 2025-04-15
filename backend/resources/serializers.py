@@ -1,6 +1,12 @@
 from rest_framework import serializers
-from .models import Resource, ResourceVote
+from .models import Resource, ResourceVote, ResourceFile
 from api.models import Category
+
+
+class ResourceFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResourceFile
+        fields = ["id", "file", "file_type"]
 
 
 class ResourceCategorySerializer(serializers.ModelSerializer):
@@ -18,6 +24,7 @@ class ResourceSerializer(serializers.ModelSerializer):
     category_detail = ResourceCategorySerializer(source="category", read_only=True)
     has_upvoted = serializers.SerializerMethodField()
     uploaded_by = serializers.PrimaryKeyRelatedField(read_only=True)  # Make read-only
+    files = ResourceFileSerializer(many=True, read_only=True)  # Add files field
 
     def get_has_upvoted(self, obj):
         user = self.context["request"].user
@@ -29,7 +36,7 @@ class ResourceSerializer(serializers.ModelSerializer):
             "id",
             "title",
             "description",
-            "file",
+            "files",  # Replace "file" with "files"
             "category",
             "category_detail",
             "uploaded_by",

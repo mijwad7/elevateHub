@@ -8,10 +8,10 @@ function UploadResource() {
     title: "",
     description: "",
     category: "",
-    file: null,
+    files: [],
   });
   const [categories, setCategories] = useState([]);
-  const [preview, setPreview] = useState(null);
+  const [previews, setPreviews] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -20,10 +20,11 @@ function UploadResource() {
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    if (name === "file") {
-      const file = files[0];
-      setFormData({ ...formData, file });
-      setPreview(URL.createObjectURL(file));
+    if (name === "files") {
+      const selectedFiles = Array.from(files);
+      setFormData({ ...formData, files: selectedFiles });
+      const previewUrls = selectedFiles.map((file) => URL.createObjectURL(file));
+      setPreviews(previewUrls);
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -35,7 +36,9 @@ function UploadResource() {
     data.append("title", formData.title);
     data.append("description", formData.description);
     data.append("category", formData.category);
-    data.append("file", formData.file);
+    formData.files.forEach((file) => {
+      data.append("files", file);
+    });
 
     const result = await uploadResource(data);
     if (result) navigate(`/resources/${result.id}`);
@@ -78,36 +81,54 @@ function UploadResource() {
               required
             >
               <option value="">Select Category</option>
-              {categories.map(cat => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
               ))}
             </select>
           </div>
           <div className="mb-3">
-            <label className="form-label">File</label>
+            <label className="form-label">Files</label>
             <input
               type="file"
-              name="file"
+              name="files"
               className="form-control"
               onChange={handleChange}
               accept="image/*,video/mp4,.pdf,.docx,.txt,.mp3"
+              multiple
               required
             />
-            {preview && (
-              <div className="mt-2">
-                {formData.file.type.startsWith("image") ? (
-                  <img src={preview} alt="Preview" className="img-fluid" style={{ maxHeight: "200px" }} />
-                ) : formData.file.type === "video/mp4" ? (
-                  <video controls className="w-100" style={{ maxHeight: "200px" }}>
-                    <source src={preview} type="video/mp4" />
-                  </video>
-                ) : (
-                  <p>Preview not available for this file type</p>
-                )}
+            {previews.length > 0 && (
+              <div className="mt-2 d-flex flex-wrap gap-2">
+                {previews.map((preview, index) => (
+                  <div key={index}>
+                    {formData.files[index].type.startsWith("image") ? (
+                      <img
+                        src={preview}
+                        alt={`Preview ${index}`}
+                        className="img-fluid"
+                        style={{ maxHeight: "100px" }}
+                      />
+                    ) : formData.files[index].type === "video/mp4" ? (
+                      <video
+                        controls
+                        className="w-100"
+                        style={{ maxHeight: "100px" }}
+                      >
+                        <source src={preview} type="video/mp4" />
+                      </video>
+                    ) : (
+                      <p>Preview not available for {formData.files[index].name}</p>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>
-          <button type="submit" className="btn btn-primary">Upload</button>
+          <button type="submit" className="btn btn-primary">
+            Upload
+          </button>
         </form>
       </div>
     </>

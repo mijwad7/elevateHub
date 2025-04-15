@@ -49,30 +49,37 @@ function ResourceDetail() {
       <div className="container mt-4">
         <div className="row">
           <div className="col-md-8">
-            {resource.file.endsWith(".jpg") ||
-            resource.file.endsWith(".png") ||
-            resource.file.endsWith(".jpeg") ? (
-              <img
-                src={resource.file}
-                className="img-fluid"
-                alt={resource.title}
-              />
-            ) : resource.file.endsWith(".mp4") ? (
-              <video controls className="w-100">
-                <source src={resource.file} type="video/mp4" />
-              </video>
-            ) : resource.file.endsWith(".pdf") ? (
-              <iframe
-                src={resource.file}
-                className="w-100"
-                style={{ height: "500px" }}
-                title={resource.title}
-              />
-            ) : (
-              <a href={resource.file} download className="btn btn-primary">
-                Download File
-              </a>
-            )}
+            <div className="d-flex flex-wrap gap-3">
+              {resource.files.map((file) => (
+                <div key={file.id}>
+                  {file.file.endsWith(".jpg") ||
+                  file.file.endsWith(".png") ||
+                  file.file.endsWith(".jpeg") ? (
+                    <img
+                      src={file.file}
+                      className="img-fluid"
+                      alt={resource.title}
+                      style={{ maxHeight: "300px" }}
+                    />
+                  ) : file.file.endsWith(".mp4") ? (
+                    <video controls className="w-100" style={{ maxHeight: "300px" }}>
+                      <source src={file.file} type="video/mp4" />
+                    </video>
+                  ) : file.file.endsWith(".pdf") ? (
+                    <iframe
+                      src={file.file}
+                      className="w-100"
+                      style={{ height: "300px" }}
+                      title={resource.title}
+                    />
+                  ) : (
+                    <a href={file.file} download className="btn btn-primary">
+                      Download {file.file.split("/").pop()}
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
           <div className="col-md-4">
             <h2>{resource.title}</h2>
@@ -100,16 +107,12 @@ function ResourceDetail() {
                 >
                   ⬆ {resource.upvotes}
                 </button>
-                <a
-                  target="_blank"
-                  href={resource.file}
-                  download
+                <button
                   onClick={handleDownload}
                   className="btn btn-success"
                 >
-                  <i className="bi bi-download me-1"></i>{" "}
-                  {resource.download_count}
-                </a>
+                  <i className="bi bi-download me-1"></i> {resource.download_count}
+                </button>
               </div>
             )}
             <p className="mt-3">{resource.description}</p>

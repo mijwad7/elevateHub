@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django.shortcuts import get_object_or_404
-from .models import Resource, ResourceVote, ResourceDownload
+from .models import Resource, ResourceVote, ResourceDownload, ResourceFile
 from .serializers import ResourceSerializer
 
 class ResourceListCreateView(generics.ListCreateAPIView):
@@ -31,7 +31,13 @@ class ResourceListCreateView(generics.ListCreateAPIView):
         return queryset
 
     def perform_create(self, serializer):
-        serializer.save(uploaded_by=self.request.user)
+        # Save the resource
+        resource = serializer.save(uploaded_by=self.request.user)
+        # Handle multiple file uploads
+        files = self.request.FILES.getlist('files')  # Expect multiple files
+        for file in files:
+            file_type = file.content_type.split('/')[0]  # e.g., "image", "video", "application"
+            ResourceFile.objects.create(resource=resource, file=file, file_type=file_type)
 
 class ResourceDetailView(generics.RetrieveUpdateDestroyAPIView):
     """

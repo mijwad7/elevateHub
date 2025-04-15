@@ -8,7 +8,6 @@ from api.models import Category
 class Resource(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
-    file = models.FileField(upload_to="resources/")
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -17,6 +16,14 @@ class Resource(models.Model):
 
     def __str__(self):
         return self.title
+
+class ResourceFile(models.Model):
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name="files")
+    file = models.FileField(upload_to="resources/")
+    file_type = models.CharField(max_length=50, blank=True)  # Optional: store file type (e.g., image, video, pdf)
+
+    def __str__(self):
+        return f"File for {self.resource.title}"
 
 class ResourceVote(models.Model):
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='votes')

@@ -39,7 +39,7 @@ function Resources() {
       if (params.toString()) url += `?${params.toString()}`;
 
       try {
-        const response = await getResources(url); // Pass custom URL
+        const response = await getResources(url);
         setResources(response);
       } catch (error) {
         console.error("Error fetching filtered resources:", error);
@@ -136,30 +136,39 @@ function Resources() {
           {resources.map((resource) => (
             <div key={resource.id} className="col">
               <div className="card h-100 shadow-sm border-0">
-                {resource.file.endsWith(".jpg") ||
-                resource.file.endsWith(".png") ||
-                resource.file.endsWith(".jpeg") ? (
-                  <img
-                    src={resource.file}
-                    className="card-img-top"
-                    alt={resource.title}
-                    style={{ height: "250px", objectFit: "cover" }}
-                  />
-                ) : resource.file.endsWith(".mp4") ? (
-                  <video
-                    className="card-img-top"
-                    style={{ height: "250px", objectFit: "cover" }}
-                    muted
-                  >
-                    <source src={resource.file} type="video/mp4" />
-                  </video>
-                ) : resource.file.endsWith(".pdf") ? (
-                  <div
-                    className="card-img-top bg-light text-center d-flex align-items-center justify-content-center"
-                    style={{ height: "250px" }}
-                  >
-                    <i className="bi bi-file-earmark-pdf fs-1 text-danger"></i>
-                  </div>
+                {resource.files.length > 0 ? (
+                  resource.files[0].file.endsWith(".jpg") ||
+                  resource.files[0].file.endsWith(".png") ||
+                  resource.files[0].file.endsWith(".jpeg") ? (
+                    <img
+                      src={resource.files[0].file}
+                      className="card-img-top"
+                      alt={resource.title}
+                      style={{ height: "250px", objectFit: "cover" }}
+                    />
+                  ) : resource.files[0].file.endsWith(".mp4") ? (
+                    <video
+                      className="card-img-top"
+                      style={{ height: "250px", objectFit: "cover" }}
+                      muted
+                    >
+                      <source src={resource.files[0].file} type="video/mp4" />
+                    </video>
+                  ) : resource.files[0].file.endsWith(".pdf") ? (
+                    <div
+                      className="card-img-top bg-light text-center d-flex align-items-center justify-content-center"
+                      style={{ height: "250px" }}
+                    >
+                      <i className="bi bi-file-earmark-pdf fs-1 text-danger"></i>
+                    </div>
+                  ) : (
+                    <div
+                      className="card-img-top bg-light text-center d-flex align-items-center justify-content-center"
+                      style={{ height: "250px" }}
+                    >
+                      <i className="bi bi-file-earmark-text fs-1 text-muted"></i>
+                    </div>
+                  )
                 ) : (
                   <div
                     className="card-img-top bg-light text-center d-flex align-items-center justify-content-center"
@@ -190,6 +199,9 @@ function Resources() {
                   <p className="card-text text-muted small">
                     Category: {resource.category_detail.name}
                   </p>
+                  <p className="card-text text-muted small">
+                    Files: {resource.files.length}
+                  </p>
                   {user && (
                     <div className="d-flex gap-2">
                       <button
@@ -203,16 +215,13 @@ function Resources() {
                         <i className="bi bi-arrow-up me-1"></i>{" "}
                         {resource.upvotes}
                       </button>
-                      <a
-                        target="_blank"
-                        href={resource.file}
-                        download
-                        onClick={handleDownload}
-                        className="btn btn-success"
+                      <button
+                        onClick={() => handleDownload(resource.id)}
+                        className="btn btn-sm btn-success"
                       >
                         <i className="bi bi-download me-1"></i>{" "}
                         {resource.download_count}
-                      </a>
+                      </button>
                     </div>
                   )}
                 </div>
