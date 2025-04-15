@@ -107,12 +107,14 @@ function ResourceDetail() {
                 >
                   ⬆ {resource.upvotes}
                 </button>
-                <button
+                <a
+                  href={resource.files[0].file}
+                  download
                   onClick={handleDownload}
                   className="btn btn-success"
                 >
                   <i className="bi bi-download me-1"></i> {resource.download_count}
-                </button>
+                </a>
               </div>
             )}
             <p className="mt-3">{resource.description}</p>
