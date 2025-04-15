@@ -295,12 +295,12 @@ const Navbar = () => {
           ) : (
             <ul className="navbar-nav ms-auto">
               <li className="nav-item">
-                <NavLink className="nav-link btn btn-outline-light me-2" to="/login">
+                <NavLink className="nav-link btn btn-primary me-2" to="/login">
                   Login
                 </NavLink>
               </li>
               <li className="nav-item">
-                <NavLink className="nav-link btn btn-outline-light" to="/register">
+                <NavLink className="nav-link btn btn-primary" to="/register">
                   Register
                 </NavLink>
               </li>
