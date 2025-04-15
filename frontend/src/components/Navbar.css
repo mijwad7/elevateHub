@@ -118,3 +118,18 @@
       transform: translateY(0);
     }
   }
+
+  .notification-message {
+    max-width: 220px;
+    word-wrap: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer; /* Indicate clickable */
+  }
+  
+  .notification-message.expanded {
+    max-width: none; /* Remove width limit */
+    overflow: visible; /* Show full text */
+    text-overflow: initial; /* Disable ellipsis */
+    white-space: normal; /* Allow wrapping */
+  }

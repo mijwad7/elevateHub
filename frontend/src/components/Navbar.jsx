@@ -19,6 +19,7 @@ const Navbar = () => {
   const [pendingCallId, setPendingCallId] = useState(null);
   const [activeCallId, setActiveCallId] = useState(null);
   const [showUnreadOnly, setShowUnreadOnly] = useState(true);
+  const [expandedNotificationId, setExpandedNotificationId] = useState(null);
 
   // Filter duplicates (same timestamp and message) and sort by timestamp
   const filteredNotifications = Array.isArray(notifications)
@@ -108,6 +109,10 @@ const Navbar = () => {
 
   const handleMarkAllAsRead = () => {
     dispatch(markAllAsRead());
+  };
+
+  const toggleExpandNotification = (id) => {
+    setExpandedNotificationId(expandedNotificationId === id ? null : id);
   };
 
   const handleJoinCall = (id) => {
@@ -209,7 +214,10 @@ const Navbar = () => {
                           }`}
                         >
                           <div className="d-flex justify-content-between align-items-start">
-                            <div className="notification-message">
+                            <div
+                              className={`notification-message ${expandedNotificationId === notification.id ? 'expanded' : ''}`}
+                              onClick={() => toggleExpandNotification(notification.id)}
+                            >
                               <span>{notification.message}</span>
                               <div className="mt-1">
                                 {notification.link && (
@@ -226,7 +234,10 @@ const Navbar = () => {
                                   <Button
                                     variant="primary"
                                     size="sm"
-                                    onClick={() => handleJoinCall(notification.callId)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleJoinCall(notification.callId);
+                                    }}
                                     disabled={!notification.callId}
                                     className="btn-join-call"
                                   >
