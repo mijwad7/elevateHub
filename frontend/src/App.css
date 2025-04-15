@@ -128,3 +128,19 @@ body {
 .transition-btn:hover {
   transform: translateY(-2px);
 }
+
+.modal-preview .modal-content {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.modal-preview .modal-body {
+  background-color: #f8f9fa;
+}
+.modal-body .card {
+  animation: fadeInModal 0.3s ease;
+}
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

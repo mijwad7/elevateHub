@@ -11,11 +11,13 @@ import {
 import { Link } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import { updateCredits } from "../../redux/authSlice";
+import { Modal, Button } from "react-bootstrap"; // Import Modal
 
 function ResourceDetail() {
   const { id } = useParams();
   const [resource, setResource] = useState(null);
   const [selectedFileIndex, setSelectedFileIndex] = useState(0); // Track centered file
+  const [showModal, setShowModal] = useState(false); // Track modal visibility
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
 
@@ -63,7 +65,10 @@ function ResourceDetail() {
                 {resource.files.length > 0 ? (
                   <>
                     {/* Main Display */}
-                    <div className="main-gallery mb-4">
+                    <div
+                      className="main-gallery mb-4 cursor-pointer"
+                      onClick={() => setShowModal(true)} // Fixed syntax
+                    >
                       <div className="card border-0 shadow-sm rounded-3 overflow-hidden gallery-item">
                         {resource.files[selectedFileIndex].file.endsWith(".jpg") ||
                         resource.files[selectedFileIndex].file.endsWith(".png") ||
@@ -220,6 +225,79 @@ function ResourceDetail() {
           </div>
         </div>
       </div>
+      {/* Full-Screen Preview Modal */}
+      <Modal
+        show={showModal}
+        onHide={() => setShowModal(false)}
+        size="lg"
+        centered
+        aria-labelledby="resource-preview-modal"
+        className="modal-preview"
+      >
+        <Modal.Header closeButton className="border-0 pb-2">
+          <Modal.Title id="resource-preview-modal" className="fw-medium">
+            {resource.title} - Preview
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="p-0">
+          <div className="card border-0 rounded-0 overflow-hidden">
+            {resource.files[selectedFileIndex].file.endsWith(".jpg") ||
+            resource.files[selectedFileIndex].file.endsWith(".png") ||
+            resource.files[selectedFileIndex].file.endsWith(".jpeg") ? (
+              <img
+                src={resource.files[selectedFileIndex].file}
+                className="img-fluid"
+                alt={resource.title}
+                style={{ maxHeight: "80vh", objectFit: "contain", width: "100%" }}
+              />
+            ) : resource.files[selectedFileIndex].file.endsWith(".mp4") ? (
+              <video
+                controls
+                autoPlay
+                className="w-100"
+                style={{ maxHeight: "80vh", objectFit: "contain" }}
+              >
+                <source src={resource.files[selectedFileIndex].file} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            ) : resource.files[selectedFileIndex].file.endsWith(".pdf") ? (
+              <iframe
+                src={resource.files[selectedFileIndex].file}
+                className="w-100"
+                style={{ height: "80vh", border: "none" }}
+                title={resource.title}
+              />
+            ) : (
+              <div className="card-body text-center py-5 bg-light">
+                <a
+                  href={resource.files[selectedFileIndex].file}
+                  download
+                  className="btn btn-primary btn-lg transition-btn"
+                >
+                  <i className="bi bi-download me-2"></i>
+                  Download {resource.files[selectedFileIndex].file.split("/").pop()}
+                </a>
+              </div>
+            )}
+          </div>
+        </Modal.Body>
+        <Modal.Footer className="border-0">
+          <Button
+            variant="outline-secondary"
+            disabled={selectedFileIndex === 0}
+            onClick={() => setSelectedFileIndex((prev) => prev - 1)}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline-secondary"
+            disabled={selectedFileIndex === resource.files.length - 1}
+            onClick={() => setSelectedFileIndex((prev) => prev + 1)}
+          >
+            Next
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 }
