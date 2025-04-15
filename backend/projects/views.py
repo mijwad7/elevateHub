@@ -246,13 +246,13 @@ class EndVideoCall(APIView):
                 user=video_call.requester,
                 message=f"Video call for '{video_call.help_request.title}' has ended. You spent {amount} credits.",
                 notification_type='success',
-                link=f"/help-request/{video_call.help_request.id}"
+                link=f"/help-requests/{video_call.help_request.id}"
             )
             Notification.objects.create(
                 user=video_call.helper,
                 message=f"Video call for '{video_call.help_request.title}' has ended. You earned {amount} credits.",
                 notification_type='success',
-                link=f"/help-request/{video_call.help_request.id}"
+                link=f"/help-requests/{video_call.help_request.id}"
             )
             
             # Notify all participants via WebSocket
