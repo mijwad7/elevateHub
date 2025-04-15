@@ -1,221 +1,295 @@
-// src/components/Navbar.jsx (updated snippet)
+// src/components/Navbar.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { FaComments, FaFolderOpen, FaHandsHelping, FaBell } from 'react-icons/fa';
 import { logoutUser } from '../redux/authSlice';
 import { addNotification, fetchNotifications, markNotificationAsRead, markAllAsRead, clearNotifications } from '../redux/notificationSlice';
-import { Button } from 'react-bootstrap';
+import { Button, Badge, Dropdown, Spinner } from 'react-bootstrap';
 import VideoCall from './VideoCall';
 import { ACCESS_TOKEN } from '../constants';
-
+import './Navbar.css';
 const Navbar = () => {
-    const { user, isAuthenticated } = useSelector((state) => state.auth);
-    const { notifications = [], status } = useSelector((state) => state.notifications);
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
-    const wsRef = useRef(null);
-    const [pendingCallId, setPendingCallId] = useState(null); // Changed from callId
-    const [activeCallId, setActiveCallId] = useState(null); // New state for active call
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const { notifications = [], status } = useSelector((state) => state.notifications);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const wsRef = useRef(null);
+  const [pendingCallId, setPendingCallId] = useState(null);
+  const [activeCallId, setActiveCallId] = useState(null);
+  const [showUnreadOnly, setShowUnreadOnly] = useState(true);
 
-    // Safely calculate unread count
-    const unreadCount = Array.isArray(notifications) 
-        ? notifications.filter(n => !n.is_read).length 
-        : 0;
+  // Filter duplicates (same timestamp and message) and sort by timestamp
+  const filteredNotifications = Array.isArray(notifications)
+    ? [...new Map(
+        notifications
+          .filter(n => showUnreadOnly ? !n.is_read : true)
+          .map(n => [`${n.created_at}_${n.message}`, n])
+      ).values()]
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    : [];
 
-    useEffect(() => {
-        if (isAuthenticated) {
-            dispatch(fetchNotifications());
-            
-            const connectWebSocket = () => {
-                if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) return;
+  const unreadCount = filteredNotifications.filter(n => !n.is_read).length;
 
-                const token = localStorage.getItem(ACCESS_TOKEN);
-                if (!token) {
-                    console.error("No access token found");
-                    return;
-                }
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(fetchNotifications());
 
-                const websocket = new WebSocket(`ws://127.0.0.1:8000/api/ws/notifications/?token=${encodeURIComponent(token)}`);
-                
-                websocket.onopen = () => {
-                    console.log("Notification WebSocket connected");
-                    dispatch(clearNotifications());
-                };
-                
-                websocket.onmessage = (e) => {
-                    try {
-                        console.log("Received WebSocket message:", e.data);  // Debug log
-                        const data = JSON.parse(e.data);
-                        if (data.type === 'notification') {
-                            console.log("Processing notification:", data.notification);  // Debug log
-                            dispatch(addNotification(data.notification));
-                            if (data.notification.notification_type === 'video_call_started') {
-                                console.log("Video call notification received, callId:", data.notification.callId);
-                                setPendingCallId(data.notification.callId || null);
-                            }
-                        } else if (data.type === 'error') {
-                            console.error("WebSocket error:", data.message);  // Debug log
-                        }
-                    } catch (error) {
-                        console.error("Error parsing WebSocket message:", error);  // Debug log
-                        console.error("Raw message data:", e.data);  // Log the raw message data
-                    }
-                };
-                
-                websocket.onerror = (e) => {
-                    console.error("Notification WebSocket error:", e);
-                    setTimeout(connectWebSocket, 5000);
-                };
-                
-                websocket.onclose = (e) => {
-                    console.log("Notification WebSocket closed:", e.code);
-                    if (e.code !== 1000) {
-                        setTimeout(connectWebSocket, 5000);
-                    }
-                };
-                
-                wsRef.current = websocket;
-            };
+      const connectWebSocket = () => {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) return;
 
-            connectWebSocket();
+        const token = localStorage.getItem(ACCESS_TOKEN);
+        if (!token) {
+          console.error("No access token found");
+          return;
         }
 
-        return () => {
-            if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-                wsRef.current.close(1000, "Navbar unmounted");
-            }
+        const websocket = new WebSocket(`ws://127.0.0.1:8000/api/ws/notifications/?token=${encodeURIComponent(token)}`);
+
+        websocket.onopen = () => {
+          console.log("Notification WebSocket connected");
+          dispatch(clearNotifications());
         };
-    }, [isAuthenticated, dispatch]);
 
-    const handleLogout = () => {
-        dispatch(logoutUser());
-        navigate('/login');
+        websocket.onmessage = (e) => {
+          try {
+            console.log("Received WebSocket message:", e.data);
+            const data = JSON.parse(e.data);
+            if (data.type === 'notification') {
+              console.log("Processing notification:", data.notification);
+              dispatch(addNotification(data.notification));
+              if (data.notification.notification_type === 'video_call_started') {
+                console.log("Video call notification received, callId:", data.notification.callId);
+                setPendingCallId(data.notification.callId || null);
+              }
+            } else if (data.type === 'error') {
+              console.error("WebSocket error:", data.message);
+            }
+          } catch (error) {
+            console.error("Error parsing WebSocket message:", error);
+            console.error("Raw message data:", e.data);
+          }
+        };
+
+        websocket.onerror = (e) => {
+          console.error("Notification WebSocket error:", e);
+          setTimeout(connectWebSocket, 5000);
+        };
+
+        websocket.onclose = (e) => {
+          console.log("Notification WebSocket closed:", e.code);
+          if (e.code !== 1000) {
+            setTimeout(connectWebSocket, 5000);
+          }
+        };
+
+      wsRef.current = websocket;
+      };
+
+      connectWebSocket();
+    }
+
+    return () => {
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.close(1000, "Navbar unmounted");
+      }
     };
+  }, [isAuthenticated, dispatch]);
 
-    const handleMarkAsRead = (notificationId) => {
-        dispatch(markNotificationAsRead(notificationId));
-    };
+  const handleLogout = () => {
+    dispatch(logoutUser());
+    navigate('/login');
+  };
 
-    const handleMarkAllAsRead = () => {
-        dispatch(markAllAsRead());
-    };
+  const handleMarkAsRead = (notificationId) => {
+    dispatch(markNotificationAsRead(notificationId));
+  };
 
-    const handleJoinCall = (id) => {
-        setActiveCallId(id); // Activate call only on click
-    };
+  const handleMarkAllAsRead = () => {
+    dispatch(markAllAsRead());
+  };
 
-    const handleEndCall = () => {
-        setActiveCallId(null);
-        setPendingCallId(null); // Clear pending call
-    };
+  const handleJoinCall = (id) => {
+    setActiveCallId(id);
+  };
 
-    return (
-        <nav className="navbar navbar-expand-lg navbar-light bg-light">
-            <div className="container">
-                <Link className="navbar-brand" to="/">ElevateHub</Link>
-                <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li className="nav-item"><Link className="nav-link" to="/discussions"><FaComments /> Discussions</Link></li>
-                    <li className="nav-item"><Link className="nav-link" to="/resources"><FaFolderOpen /> Resources</Link></li>
-                    <li className="nav-item"><Link className="nav-link" to="/help-requests"><FaHandsHelping /> Project Help</Link></li>
-                </ul>
-                {isAuthenticated ? (
-                    <ul className="navbar-nav ms-auto">
-                        <li className="nav-item dropdown">
-                            <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                                <FaBell />
-                                {unreadCount > 0 && (
-                                    <span className="badge bg-danger rounded-pill ms-1">
-                                        {unreadCount}
-                                    </span>
+  const handleEndCall = () => {
+    setActiveCallId(null);
+    setPendingCallId(null);
+  };
+
+  const toggleShowUnread = () => {
+    setShowUnreadOnly(!showUnreadOnly);
+  };
+
+  return (
+    <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+      <div className="container">
+        <Link className="navbar-brand fw-bold" to="/">ElevateHub</Link>
+        <button
+          className="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span className="navbar-toggler-icon"></span>
+        </button>
+        <div className="collapse navbar-collapse" id="navbarNav">
+          <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+            <li className="nav-item">
+              <Link className="nav-link" to="/discussions">
+                <FaComments className="me-1" /> Discussions
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/resources">
+                <FaFolderOpen className="me-1" /> Resources
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/help-requests">
+                <FaHandsHelping className="me-1" /> Project Help
+              </Link>
+            </li>
+          </ul>
+          {isAuthenticated ? (
+            <ul className="navbar-nav ms-auto align-items-center">
+              <li className="nav-item">
+                <Dropdown>
+                  <Dropdown.Toggle
+                    variant="link"
+                    className="nav-link text-white p-0"
+                    id="notifications-dropdown"
+                  >
+                    <FaBell size={20} />
+                    {unreadCount > 0 && (
+                      <Badge bg="danger" pill className="ms-1">
+                        {unreadCount}
+                      </Badge>
+                    )}
+                  </Dropdown.Toggle>
+                  <Dropdown.Menu align="end" className="notification-dropdown p-3">
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <h6 className="mb-0 fw-bold">Notifications</h6>
+                      <div>
+                        <Button
+                          variant="link"
+                          size="sm"
+                          onClick={toggleShowUnread}
+                          className="me-2 text-decoration-none"
+                        >
+                          {showUnreadOnly ? 'Show All' : 'Show Unread'}
+                        </Button>
+                        {unreadCount > 0 && (
+                          <Button
+                            variant="link"
+                            size="sm"
+                            onClick={handleMarkAllAsRead}
+                            className="text-decoration-none"
+                          >
+                            Mark All Read
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    {status === 'loading' ? (
+                      <div className="text-center py-3">
+                        <Spinner animation="border" size="sm" />
+                      </div>
+                    ) : filteredNotifications.length > 0 ? (
+                      filteredNotifications.map((notification) => (
+                        <Dropdown.Item
+                          key={notification.id}
+                          className={`notification-item py-2 px-3 mb-2 rounded ${
+                            !notification.is_read ? 'bg-light' : ''
+                          }`}
+                        >
+                          <div className="d-flex justify-content-between align-items-start">
+                            <div>
+                              <span>{notification.message}</span>
+                              <div className="mt-1">
+                                {notification.link && (
+                                  <a
+                                    href={notification.link}
+                                    className="text-primary me-2"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    View
+                                  </a>
                                 )}
-                            </span>
-                            <ul className="dropdown-menu dropdown-menu-end" style={{ minWidth: '300px' }}>
-                                <div className="d-flex justify-content-between align-items-center p-2 border-bottom">
-                                    <h6 className="mb-0">Notifications</h6>
-                                    {unreadCount > 0 && (
-                                        <button
-                                            className="btn btn-sm btn-link"
-                                            onClick={handleMarkAllAsRead}
-                                        >
-                                            Mark all as read
-                                        </button>
-                                    )}
-                                </div>
-                                {status === 'loading' ? (
-                                    <li className="dropdown-item text-center">
-                                        <div className="spinner-border spinner-border-sm" role="status">
-                                            <span className="visually-hidden">Loading...</span>
-                                        </div>
-                                    </li>
-                                ) : Array.isArray(notifications) && notifications.length > 0 ? (
-                                    notifications.map((notification) => (
-                                        <li
-                                            key={notification.id}
-                                            className={`dropdown-item ${!notification.is_read ? 'bg-light' : ''}`}
-                                        >
-                                            <div className="d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    {notification.message}
-                                                    {notification.link && (
-                                                        <a
-                                                            href={notification.link}
-                                                            className="ms-2"
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                        >
-                                                            View
-                                                        </a>
-                                                    )}
-                                                    {notification.notification_type === 'video_call_started' && (
-                                                        <Button
-                                                            variant="link"
-                                                            className="ms-2 p-0"
-                                                            onClick={() => handleJoinCall(notification.callId)}
-                                                            disabled={!notification.callId}
-                                                        >
-                                                            Join Call
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                                {!notification.is_read && (
-                                                    <button
-                                                        className="btn btn-sm btn-link"
-                                                        onClick={() => handleMarkAsRead(notification.id)}
-                                                    >
-                                                        Mark as read
-                                                    </button>
-                                                )}
-                                            </div>
-                                            <small className="text-muted d-block">
-                                                {new Date(notification.created_at).toLocaleString()}
-                                            </small>
-                                        </li>
-                                    ))
-                                ) : (
-                                    <li className="dropdown-item text-center text-muted">
-                                        No notifications
-                                    </li>
+                                {notification.notification_type === 'video_call_started' && (
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={() => handleJoinCall(notification.callId)}
+                                    disabled={!notification.callId}
+                                  >
+                                    Join Call
+                                  </Button>
                                 )}
-                            </ul>
-                        </li>
-                        <li className="nav-item"><Link className="nav-link" to="/profile">Profile</Link></li>
-                        <li className="nav-item"><button className="nav-link btn" onClick={handleLogout}>Logout</button></li>
-                    </ul>
-                ) : (
-                    <ul className="navbar-nav ms-auto">
-                        <li className="nav-item">
-                            <Link className="nav-link btn btn-outline-primary me-2" to="/login">Login</Link>
-                        </li>
-                        <li className="nav-item">
-                            <Link className="nav-link btn btn-outline-primary" to="/register">Register</Link>
-                        </li>
-                    </ul>
-                )}
-            </div>
-            {activeCallId && <VideoCall callId={activeCallId} isHelper={false} onEndCall={handleEndCall} />}
-        </nav>
-    );
+                              </div>
+                            </div>
+                            {!notification.is_read && (
+                              <Button
+                                variant="link"
+                                size="sm"
+                                onClick={() => handleMarkAsRead(notification.id)}
+                                className="text-muted p-0"
+                              >
+                                Mark Read
+                              </Button>
+                            )}
+                          </div>
+                          <small className="text-muted d-block mt-1">
+                            {new Date(notification.created_at).toLocaleString()}
+                          </small>
+                        </Dropdown.Item>
+                      ))
+                    ) : (
+                      <div className="text-center text-muted py-3">
+                        No {showUnreadOnly ? 'unread' : ''} notifications
+                      </div>
+                    )}
+                  </Dropdown.Menu>
+                </Dropdown>
+              </li>
+              <li className="nav-item">
+                <Link className="nav-link text-white" to="/profile">Profile</Link>
+              </li>
+              <li className="nav-item">
+                <Button
+                  variant="outline-light"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="ms-2"
+                >
+                  Logout
+                </Button>
+              </li>
+            </ul>
+          ) : (
+            <ul className="navbar-nav ms-auto">
+              <li className="nav-item">
+                <Link className="nav-link btn btn-outline-light me-2" to="/login">
+                  Login
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link className="nav-link btn btn-outline-light" to="/register">
+                  Register
+                </Link>
+              </li>
+            </ul>
+          )}
+        </div>
+      </div>
+      {activeCallId && <VideoCall callId={activeCallId} isHelper={false} onEndCall={handleEndCall} />}
+    </nav>
+  );
 };
 
 export default Navbar;

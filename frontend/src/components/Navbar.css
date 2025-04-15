@@ -1,0 +1,57 @@
+/* src/components/Navbar.css */
+.navbar {
+    transition: all 0.3s ease;
+  }
+  
+  .navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  
+  .nav-link {
+    font-size: 1rem;
+    transition: color 0.2s ease;
+  }
+  
+
+  
+  .notification-dropdown {
+    width: 350px;
+    max-height: 500px;
+    overflow-y: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background-color: #fff;
+  }
+  
+  .notification-item {
+    transition: background-color 0.2s ease;
+  }
+  
+  .notification-item:hover {
+    background-color: #f1f3f5 !important;
+  }
+  
+  .notification-item.bg-light {
+    background-color: #e9ecef !important;
+  }
+  
+  .notification-item .btn-primary {
+    font-size: 0.85rem;
+    padding: 0.25rem 0.75rem;
+  }
+  
+  .notification-item .text-muted {
+    font-size: 0.8rem;
+  }
+  
+  .navbar-dark .nav-link.btn-outline-light {
+    border-radius: 20px;
+    padding: 0.25rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .navbar-dark .nav-link.btn-outline-light:hover {
+    background-color: #ffffff;
+    color: #0d6efd;
+  }
