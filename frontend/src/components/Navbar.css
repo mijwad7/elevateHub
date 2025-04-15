@@ -1,7 +1,6 @@
 /* src/components/Navbar.css */
 .navbar {
     transition: all 0.3s ease;
-    background-color: #4a90e2; /* Softer blue for a modern look */
   }
   
   .navbar-brand {
