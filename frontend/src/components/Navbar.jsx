@@ -9,6 +9,7 @@ import { Button, Badge, Dropdown, Spinner } from 'react-bootstrap';
 import VideoCall from './VideoCall';
 import { ACCESS_TOKEN } from '../constants';
 import './Navbar.css';
+
 const Navbar = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const { notifications = [], status } = useSelector((state) => state.notifications);
@@ -83,7 +84,7 @@ const Navbar = () => {
           }
         };
 
-      wsRef.current = websocket;
+        wsRef.current = websocket;
       };
 
       connectWebSocket();
@@ -171,7 +172,7 @@ const Navbar = () => {
                       </Badge>
                     )}
                   </Dropdown.Toggle>
-                  <Dropdown.Menu align="end" className="notification-dropdown p-3">
+                  <Dropdown.Menu align="end" className="notification-dropdown p-3 animate__animated animate__fadeIn">
                     <div className="d-flex justify-content-between align-items-center mb-2">
                       <h6 className="mb-0 fw-bold">Notifications</h6>
                       <div>
@@ -203,12 +204,12 @@ const Navbar = () => {
                       filteredNotifications.map((notification) => (
                         <Dropdown.Item
                           key={notification.id}
-                          className={`notification-item py-2 px-3 mb-2 rounded ${
+                          className={`notification-item py-2 px-3 mb-1 rounded animate__animated animate__fadeInUp ${
                             !notification.is_read ? 'bg-light' : ''
                           }`}
                         >
                           <div className="d-flex justify-content-between align-items-start">
-                            <div>
+                            <div className="notification-message">
                               <span>{notification.message}</span>
                               <div className="mt-1">
                                 {notification.link && (
@@ -227,6 +228,7 @@ const Navbar = () => {
                                     size="sm"
                                     onClick={() => handleJoinCall(notification.callId)}
                                     disabled={!notification.callId}
+                                    className="btn-join-call"
                                   >
                                     Join Call
                                   </Button>
@@ -238,7 +240,7 @@ const Navbar = () => {
                                 variant="link"
                                 size="sm"
                                 onClick={() => handleMarkAsRead(notification.id)}
-                                className="text-muted p-0"
+                                className="text-muted p-0 btn-mark-read"
                               >
                                 Mark Read
                               </Button>

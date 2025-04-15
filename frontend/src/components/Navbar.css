@@ -1,57 +1,120 @@
 /* src/components/Navbar.css */
 .navbar {
     transition: all 0.3s ease;
+    background-color: #4a90e2; /* Softer blue for a modern look */
   }
   
   .navbar-brand {
     font-size: 1.5rem;
     font-weight: 700;
+    color: #ffffff !important;
   }
   
   .nav-link {
     font-size: 1rem;
     transition: color 0.2s ease;
+    color: #ffffff !important;
   }
   
-
+  .nav-link:hover {
+    color: #e0e0e0 !important;
+  }
   
   .notification-dropdown {
-    width: 350px;
+    width: 360px;
     max-height: 500px;
     overflow-y: auto;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    background-color: #fff;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    background-color: #ffffff;
+    transition: opacity 0.3s ease, transform 0.3s ease;
   }
   
   .notification-item {
     transition: background-color 0.2s ease;
+    border-bottom: 1px solid #e9ecef; /* Subtle separator */
+  }
+  
+  .notification-item:last-child {
+    border-bottom: none; /* Remove border from last item */
   }
   
   .notification-item:hover {
-    background-color: #f1f3f5 !important;
+    background-color: #f5f6f5 !important;
   }
   
   .notification-item.bg-light {
     background-color: #e9ecef !important;
   }
   
-  .notification-item .btn-primary {
+  .notification-message {
+    max-width: 220px; /* Limit width to prevent overflow */
+    word-wrap: break-word; /* Wrap long words */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Truncate if still too long */
+  }
+  
+  .notification-item .btn-primary.btn-join-call {
     font-size: 0.85rem;
     padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+  }
+  
+  .notification-item .btn-primary.btn-join-call:hover {
+    background-color: #0056b3;
+  }
+  
+  .notification-item .btn-mark-read {
+    font-size: 0.8rem;
+    color: #6c757d !important;
+    transition: color 0.2s ease;
+  }
+  
+  .notification-item .btn-mark-read:hover {
+    color: #495057 !important;
+    text-decoration: none !important;
   }
   
   .notification-item .text-muted {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
   }
   
   .navbar-dark .nav-link.btn-outline-light {
     border-radius: 20px;
     padding: 0.25rem 1rem;
     font-size: 0.9rem;
+    transition: all 0.2s ease;
   }
   
   .navbar-dark .nav-link.btn-outline-light:hover {
     background-color: #ffffff;
-    color: #0d6efd;
+    color: #4a90e2 !important;
+  }
+  
+  /* Animation for dropdown */
+  .notification-dropdown.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .notification-dropdown {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  
+  /* Fade-in for notification items */
+  .animate__fadeInUp {
+    animation: fadeInUp 0.3s ease-out;
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
