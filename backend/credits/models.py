@@ -6,6 +6,8 @@ from asgiref.sync import async_to_sync
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from projects.models import Notification
+from django.utils import timezone
+from datetime import timedelta
 
 class Credit(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='credits')
@@ -74,15 +76,38 @@ class CreditTransaction(models.Model):
 @receiver(post_save, sender=CreditTransaction)
 def transaction_created(sender, instance, created, **kwargs):
     if created:  # Only on new transactions
-        credit = instance.user.get_credits()  # Access related Credit object
         type = 'credit_added' if instance.amount > 0 else 'credit_spent'
-        
-        # Create a notification for the user
         notification_message = f"{'Earned' if instance.amount > 0 else 'Spent'} {abs(instance.amount)} credits: {instance.description}"
-        Notification.objects.create(
+
+        # Check for duplicates within the last second
+        recent_time = timezone.now() - timedelta(seconds=1)
+        if not Notification.objects.filter(
             user=instance.user,
-            message=notification_message,
-            notification_type=type
-        )
-        
-        credit._send_notification(type, instance.amount, instance.description)
+            notification_type=type,
+            created_at__gte=recent_time
+        ).exists():
+            # Create a single notification
+            notification = Notification.objects.create(
+                user=instance.user,
+                message=notification_message,
+                notification_type=type
+            )
+
+            # Send WebSocket notification
+            channel_layer = get_channel_layer()
+            if channel_layer:
+                async_to_sync(channel_layer.group_send)(
+                    f'notifications_{instance.user.id}',
+                    {
+                        'type': 'notification',
+                        'notification': {
+                            'id': notification.id,
+                            'message': notification.message,
+                            'is_read': notification.is_read,
+                            'created_at': notification.created_at.isoformat(),
+                            'notification_type': notification.notification_type,
+                            'link': getattr(notification, 'link', None),
+                            'callId': getattr(notification, 'callId', None)
+                        }
+                    }
+                )
