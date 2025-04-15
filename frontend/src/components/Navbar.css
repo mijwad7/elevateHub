@@ -13,12 +13,8 @@
   .nav-link {
     font-size: 1rem;
     transition: color 0.2s ease;
-    color: #ffffff !important;
   }
-  
-  .nav-link:hover {
-    color: #e0e0e0 !important;
-  }
+
   
   .notification-dropdown {
     width: 360px;
