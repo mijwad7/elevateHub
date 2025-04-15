@@ -56,3 +56,21 @@ body {
 .btn {
     border-radius: 0 !important;
 }
+
+/* src/index.css or src/components/ResourceDetail.css */
+.transition-img {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.transition-img:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+.transition-btn {
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.transition-btn:hover {
+  transform: translateY(-2px);
+}

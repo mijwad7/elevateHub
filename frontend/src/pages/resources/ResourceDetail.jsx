@@ -70,7 +70,7 @@ function ResourceDetail() {
                               src={file.file}
                               className="card-img-top img-fluid transition-img"
                               alt={resource.title}
-                              style={{ objectFit: "cover", height: "200px" }}
+                              style={{ objectFit: "contain", height: "400px" }}
                             />
                           </div>
                         ) : file.file.endsWith(".mp4") ? (
