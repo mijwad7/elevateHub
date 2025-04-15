@@ -1,6 +1,6 @@
 // src/components/Navbar.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, NavLink } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { FaComments, FaFolderOpen, FaHandsHelping, FaBell, FaUserCircle, FaSignOutAlt } from 'react-icons/fa';
 import { logoutUser } from '../redux/authSlice';
@@ -146,19 +146,19 @@ const Navbar = () => {
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
             <li className="nav-item">
-              <Link className="nav-link" to="/discussions">
+              <NavLink className="nav-link" to="/discussions">
                 <FaComments className="me-1" /> Discussions
-              </Link>
+              </NavLink>
             </li>
             <li className="nav-item">
-              <Link className="nav-link" to="/resources">
+              <NavLink className="nav-link" to="/resources">
                 <FaFolderOpen className="me-1" /> Resources
-              </Link>
+              </NavLink>
             </li>
             <li className="nav-item">
-              <Link className="nav-link" to="/help-requests">
+              <NavLink className="nav-link" to="/help-requests">
                 <FaHandsHelping className="me-1" /> Project Help
-              </Link>
+              </NavLink>
             </li>
           </ul>
           {isAuthenticated ? (
@@ -279,7 +279,7 @@ const Navbar = () => {
                 </Dropdown>
               </li>
               <li className="nav-item ms-3">
-                <Link className="nav-link text-white" to="/profile"><FaUserCircle size={20} /></Link>
+                <NavLink className="nav-link text-white" to="/profile"><FaUserCircle size={20} /></NavLink>
               </li>
               <li className="nav-item ms-3">
                 <Button
@@ -295,14 +295,14 @@ const Navbar = () => {
           ) : (
             <ul className="navbar-nav ms-auto">
               <li className="nav-item">
-                <Link className="nav-link btn btn-outline-light me-2" to="/login">
+                <NavLink className="nav-link btn btn-outline-light me-2" to="/login">
                   Login
-                </Link>
+                </NavLink>
               </li>
               <li className="nav-item">
-                <Link className="nav-link btn btn-outline-light" to="/register">
+                <NavLink className="nav-link btn btn-outline-light" to="/register">
                   Register
-                </Link>
+                </NavLink>
               </li>
             </ul>
           )}
