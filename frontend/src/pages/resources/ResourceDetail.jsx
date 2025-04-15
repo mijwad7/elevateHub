@@ -15,6 +15,7 @@ import { updateCredits } from "../../redux/authSlice";
 function ResourceDetail() {
   const { id } = useParams();
   const [resource, setResource] = useState(null);
+  const [selectedFileIndex, setSelectedFileIndex] = useState(0); // Track centered file
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
 
@@ -41,13 +42,14 @@ function ResourceDetail() {
     dispatch(updateCredits(newBalance));
   };
 
-  if (!resource) return (
-    <div className="d-flex justify-content-center align-items-center vh-100">
-      <div className="spinner-border text-primary" role="status">
-        <span className="visually-hidden">Loading...</span>
+  if (!resource)
+    return (
+      <div className="d-flex justify-content-center align-items-center vh-100">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
       </div>
-    </div>
-  );
+    );
 
   return (
     <>
@@ -55,58 +57,108 @@ function ResourceDetail() {
       <div className="container py-5">
         <div className="card shadow-sm border-0 rounded-3 overflow-hidden">
           <div className="row g-0">
-            {/* Media Section */}
+            {/* Media Section (Gallery) */}
             <div className="col-lg-8">
               <div className="p-4">
-                <div className="row row-cols-1 row-cols-md-2 g-3">
-                  {resource.files.map((file) => (
-                    <div key={file.id} className="col">
-                      <div className="card h-100 border-0 shadow-sm overflow-hidden">
-                        {file.file.endsWith(".jpg") ||
-                        file.file.endsWith(".png") ||
-                        file.file.endsWith(".jpeg") ? (
-                          <div className="position-relative overflow-hidden">
-                            <img
-                              src={file.file}
-                              className="card-img-top img-fluid transition-img"
-                              alt={resource.title}
-                              style={{ objectFit: "contain", height: "400px" }}
-                            />
-                          </div>
-                        ) : file.file.endsWith(".mp4") ? (
+                {resource.files.length > 0 ? (
+                  <>
+                    {/* Main Display */}
+                    <div className="main-gallery mb-4">
+                      <div className="card border-0 shadow-sm rounded-3 overflow-hidden gallery-item">
+                        {resource.files[selectedFileIndex].file.endsWith(".jpg") ||
+                        resource.files[selectedFileIndex].file.endsWith(".png") ||
+                        resource.files[selectedFileIndex].file.endsWith(".jpeg") ? (
+                          <img
+                            src={resource.files[selectedFileIndex].file}
+                            className="img-fluid gallery-main-img"
+                            alt={resource.title}
+                            style={{ objectFit: "contain", maxHeight: "400px", width: "100%" }}
+                          />
+                        ) : resource.files[selectedFileIndex].file.endsWith(".mp4") ? (
                           <video
                             controls
                             className="w-100"
-                            style={{ height: "200px", objectFit: "cover" }}
+                            style={{ maxHeight: "400px", objectFit: "cover" }}
                           >
-                            <source src={file.file} type="video/mp4" />
+                            <source src={resource.files[selectedFileIndex].file} type="video/mp4" />
                             Your browser does not support the video tag.
                           </video>
-                        ) : file.file.endsWith(".pdf") ? (
+                        ) : resource.files[selectedFileIndex].file.endsWith(".pdf") ? (
                           <div className="ratio ratio-4x3">
                             <iframe
-                              src={file.file}
+                              src={resource.files[selectedFileIndex].file}
                               className="w-100 rounded"
                               title={resource.title}
                               style={{ border: "none" }}
                             />
                           </div>
                         ) : (
-                          <div className="card-body text-center">
+                          <div className="card-body text-center py-5 bg-light">
                             <a
-                              href={file.file}
+                              href={resource.files[selectedFileIndex].file}
                               download
-                              className="btn btn-outline-primary btn-sm w-100 transition-btn"
+                              className="btn btn-primary btn-lg transition-btn"
                             >
                               <i className="bi bi-download me-2"></i>
-                              Download {file.file.split("/").pop()}
+                              Download {resource.files[selectedFileIndex].file.split("/").pop()}
                             </a>
                           </div>
                         )}
                       </div>
                     </div>
-                  ))}
-                </div>
+                    {/* Thumbnails */}
+                    <div className="thumbnail-gallery d-flex flex-nowrap overflow-auto pb-3">
+                      {resource.files.map((file, index) => (
+                        <div
+                          key={file.id}
+                          className={`thumbnail-item mx-2 flex-shrink-0 cursor-pointer ${
+                            selectedFileIndex === index ? "thumbnail-active" : ""
+                          }`}
+                          onClick={() => setSelectedFileIndex(index)}
+                        >
+                          <div className="card border-0 shadow-sm rounded-2 overflow-hidden">
+                            {file.file.endsWith(".jpg") ||
+                            file.file.endsWith(".png") ||
+                            file.file.endsWith(".jpeg") ? (
+                              <img
+                                src={file.file}
+                                className="img-fluid"
+                                alt={resource.title}
+                                style={{ objectFit: "cover", height: "80px", width: "120px" }}
+                              />
+                            ) : file.file.endsWith(".mp4") ? (
+                              <video
+                                className="w-100"
+                                style={{ height: "80px", width: "120px", objectFit: "cover" }}
+                                muted
+                              >
+                                <source src={file.file} type="video/mp4" />
+                              </video>
+                            ) : file.file.endsWith(".pdf") ? (
+                              <div
+                                className="d-flex align-items-center justify-content-center bg-light"
+                                style={{ height: "80px", width: "120px" }}
+                              >
+                                <i className="bi bi-file-pdf text-muted" style={{ fontSize: "2rem" }}></i>
+                              </div>
+                            ) : (
+                              <div
+                                className="d-flex align-items-center justify-content-center bg-light text-muted small p-2"
+                                style={{ height: "80px", width: "120px" }}
+                              >
+                                {file.file.split("/").pop()}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center text-muted py-5">
+                    No files available for this resource.
+                  </div>
+                )}
               </div>
             </div>
             {/* Details Section */}
@@ -145,9 +197,7 @@ function ResourceDetail() {
                     <button
                       onClick={handleVote}
                       className={`btn ${
-                        resource.has_upvoted
-                          ? "btn-primary"
-                          : "btn-outline-primary"
+                        resource.has_upvoted ? "btn-primary" : "btn-outline-primary"
                       } btn-sm px-3 transition-btn`}
                     >
                       <i className="bi bi-arrow-up me-1"></i>

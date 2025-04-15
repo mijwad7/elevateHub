@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { FaComments, FaFolderOpen, FaHandsHelping, FaBell } from 'react-icons/fa';
+import { FaComments, FaFolderOpen, FaHandsHelping, FaBell, FaUserCircle, FaSignOutAlt } from 'react-icons/fa';
 import { logoutUser } from '../redux/authSlice';
 import { addNotification, fetchNotifications, markNotificationAsRead, markAllAsRead, clearNotifications } from '../redux/notificationSlice';
 import { Button, Badge, Dropdown, Spinner } from 'react-bootstrap';
@@ -278,17 +278,17 @@ const Navbar = () => {
                   </Dropdown.Menu>
                 </Dropdown>
               </li>
-              <li className="nav-item">
-                <Link className="nav-link text-white" to="/profile">Profile</Link>
+              <li className="nav-item ms-3">
+                <Link className="nav-link text-white" to="/profile"><FaUserCircle size={20} /></Link>
               </li>
-              <li className="nav-item">
+              <li className="nav-item ms-3">
                 <Button
                   variant="outline-light"
                   size="sm"
                   onClick={handleLogout}
                   className="ms-2"
                 >
-                  Logout
+                  <FaSignOutAlt size={20} /> Logout
                 </Button>
               </li>
             </ul>

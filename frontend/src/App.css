@@ -74,3 +74,57 @@ body {
 .transition-btn:hover {
   transform: translateY(-2px);
 }
+
+/* src/index.css or src/components/ResourceDetail.css */
+.main-gallery {
+  min-height: 400px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.gallery-item {
+  opacity: 0;
+  animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+.gallery-main-img {
+  transition: opacity 0.3s ease;
+}
+
+.thumbnail-gallery {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+.thumbnail-item {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.thumbnail-item:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+.thumbnail-active .card {
+  border: 2px solid #007bff !important;
+  transform: scale(1.1);
+}
+
+.thumbnail-item .card {
+  transition: border 0.2s ease, transform 0.2s ease;
+}
+
+.transition-btn {
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.transition-btn:hover {
+  transform: translateY(-2px);
+}
