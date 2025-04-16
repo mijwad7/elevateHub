@@ -73,9 +73,22 @@ export const toggleVote = async (resourceId) => {
 export const downloadResource = async (resourceId) => {
   try {
     console.log(`Downloading resource ${resourceId}...`);
-    const response = await api.post(`/api/resources/${resourceId}/download/`);
-    console.log("Response received:", response.data);
-    return response.data;
+    const response = await api.post(`/api/resources/${resourceId}/download/`, null, {
+      responseType: 'blob', // Handle binary ZIP file
+    });
+    console.log("Response received: ZIP file");
+    
+    // Create a blob URL and trigger download
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${resourceId}_files.zip`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    return { success: true };
   } catch (error) {
     console.error(`Error downloading resource ${resourceId}:`, error);
     return null;

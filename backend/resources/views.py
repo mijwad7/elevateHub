@@ -64,12 +64,48 @@ def toggle_vote(request, resource_id):
         message = "Upvote added"  # Increment handled by signal
     return Response({"message": message, "upvotes": resource.upvotes}, status=status.HTTP_200_OK)
 
+import zipfile
+import io
+from django.http import StreamingHttpResponse
+from urllib.parse import quote
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def download_resource(request, resource_id):
     """
-    Record a download for a resource.
+    Download all files of a resource as a ZIP archive and record a single download event.
     """
     resource = get_object_or_404(Resource, id=resource_id)
+    
+    # Record the download (triggers credit awarding via signal)
     ResourceDownload.objects.get_or_create(user=request.user, resource=resource)
-    return Response({"download_count": resource.download_count}, status=status.HTTP_200_OK)
+    
+    # Get all files for the resource
+    files = resource.files.all()
+    
+    if not files:
+        return Response({"error": "No files available for this resource"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Create an in-memory ZIP file
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for resource_file in files:
+            # Read the file content
+            file_path = resource_file.file.path
+            file_name = resource_file.file.name.split('/')[-1]  # Extract filename
+            with open(file_path, 'rb') as f:
+                zip_file.writestr(file_name, f.read())
+    
+    buffer.seek(0)
+    
+    # Create a streaming response
+    response = StreamingHttpResponse(
+        buffer,
+        content_type='application/zip'
+    )
+    # Safe filename for download
+    zip_filename = quote(f"{resource.title}_files.zip")
+    response['Content-Disposition'] = f'attachment; filename="{zip_filename}"'
+    response['Content-Length'] = buffer.getbuffer().nbytes
+    
+    return response

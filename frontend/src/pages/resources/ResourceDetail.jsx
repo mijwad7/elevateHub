@@ -11,13 +11,13 @@ import {
 import { Link } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import { updateCredits } from "../../redux/authSlice";
-import { Modal, Button } from "react-bootstrap"; // Import Modal
+import { Modal, Button } from "react-bootstrap";
 
 function ResourceDetail() {
   const { id } = useParams();
   const [resource, setResource] = useState(null);
-  const [selectedFileIndex, setSelectedFileIndex] = useState(0); // Track centered file
-  const [showModal, setShowModal] = useState(false); // Track modal visibility
+  const [selectedFileIndex, setSelectedFileIndex] = useState(0);
+  const [showModal, setShowModal] = useState(false);
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
 
@@ -37,11 +37,21 @@ function ResourceDetail() {
   };
 
   const handleDownload = async () => {
-    await downloadResource(id);
+    await downloadResource(id); // Downloads all files as ZIP
     const updated = await getResourceDetails(id);
     setResource(updated);
     const newBalance = await getCreditBalance();
     dispatch(updateCredits(newBalance));
+  };
+
+  const handleSingleFileDownload = async (fileUrl, fileName) => {
+    // For gallery/modal single-file downloads
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   if (!resource)
@@ -67,7 +77,7 @@ function ResourceDetail() {
                     {/* Main Display */}
                     <div
                       className="main-gallery mb-4 cursor-pointer"
-                      onClick={() => setShowModal(true)} // Fixed syntax
+                      onClick={() => setShowModal(true)}
                     >
                       <div className="card border-0 shadow-sm rounded-3 overflow-hidden gallery-item">
                         {resource.files[selectedFileIndex].file.endsWith(".jpg") ||
@@ -99,14 +109,18 @@ function ResourceDetail() {
                           </div>
                         ) : (
                           <div className="card-body text-center py-5 bg-light">
-                            <a
-                              href={resource.files[selectedFileIndex].file}
-                              download
+                            <button
+                              onClick={() =>
+                                handleSingleFileDownload(
+                                  resource.files[selectedFileIndex].file,
+                                  resource.files[selectedFileIndex].file.split("/").pop()
+                                )
+                              }
                               className="btn btn-primary btn-lg transition-btn"
                             >
                               <i className="bi bi-download me-2"></i>
                               Download {resource.files[selectedFileIndex].file.split("/").pop()}
-                            </a>
+                            </button>
                           </div>
                         )}
                       </div>
@@ -197,7 +211,7 @@ function ResourceDetail() {
                     day: "numeric",
                   })}
                 </p>
-                {user && (
+                {user && resource.files.length > 0 && (
                   <div className="d-flex gap-2 mb-4">
                     <button
                       onClick={handleVote}
@@ -208,15 +222,13 @@ function ResourceDetail() {
                       <i className="bi bi-arrow-up me-1"></i>
                       Upvote ({resource.upvotes})
                     </button>
-                    <a
-                      href={resource.files[0].file}
-                      download
+                    <button
                       onClick={handleDownload}
                       className="btn btn-success btn-sm px-3 transition-btn"
                     >
                       <i className="bi bi-download me-1"></i>
-                      Download ({resource.download_count})
-                    </a>
+                      Download All ({resource.download_count})
+                    </button>
                   </div>
                 )}
                 <p className="text-dark">{resource.description}</p>
@@ -269,14 +281,18 @@ function ResourceDetail() {
               />
             ) : (
               <div className="card-body text-center py-5 bg-light">
-                <a
-                  href={resource.files[selectedFileIndex].file}
-                  download
+                <button
+                  onClick={() =>
+                    handleSingleFileDownload(
+                      resource.files[selectedFileIndex].file,
+                      resource.files[selectedFileIndex].file.split("/").pop()
+                    )
+                  }
                   className="btn btn-primary btn-lg transition-btn"
                 >
                   <i className="bi bi-download me-2"></i>
                   Download {resource.files[selectedFileIndex].file.split("/").pop()}
-                </a>
+                </button>
               </div>
             )}
           </div>
