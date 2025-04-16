@@ -24,3 +24,38 @@ export const deleteContribution = async (contributionType, contributionId) => {
     throw error;
   }
 }; 
+
+export const getUserHelpRequests = async (config) => {
+  try {
+    const response = await api.get('/api/user/help-requests/', config);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching help requests:', error);
+    throw error;
+  }
+};
+
+export const editHelpRequest = async (helpRequestId, data) => {
+  try {
+    const response = await api.put(
+      `/api/help-requests/${helpRequestId}/edit/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error editing help request:', error);
+    throw error;
+  }
+};
+
+export const deleteHelpRequest = async (helpRequestId) => {
+  try {
+    const response = await api.delete(
+      `/api/help-requests/${helpRequestId}/delete/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting help request:', error);
+    throw error;
+  }
+};

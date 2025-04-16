@@ -6,9 +6,29 @@ import "react-toastify/dist/ReactToastify.css";
 import api from "../../apiRequests/api";
 import { loginSuccess, updateCredits } from "../../redux/authSlice";
 import Navbar from "../../components/Navbar";
-import { getCreditBalance, getCreditTransactions, editContribution, deleteContribution } from "../../apiRequests";
+import {
+  getCreditBalance,
+  getCreditTransactions,
+  editContribution,
+  deleteContribution,
+  getUserHelpRequests,
+  editHelpRequest,
+  deleteHelpRequest,
+} from "../../apiRequests";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../../constants";
-import { FaUser, FaImage, FaHistory, FaComments, FaSignOutAlt, FaFileAlt, FaCommentDots, FaUserEdit, FaEdit, FaTrash } from "react-icons/fa";
+import {
+  FaUser,
+  FaImage,
+  FaHistory,
+  FaComments,
+  FaSignOutAlt,
+  FaFileAlt,
+  FaCommentDots,
+  FaUserEdit,
+  FaEdit,
+  FaTrash,
+  FaQuestionCircle,
+} from "react-icons/fa";
 import { formatDistanceToNow } from "date-fns";
 
 const Profile = () => {
@@ -22,8 +42,8 @@ const Profile = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState({
-    username: user?.username || '',
-    email: user?.email || ''
+    username: user?.username || "",
+    email: user?.email || "",
   });
   const [editError, setEditError] = useState(null);
   const [contributions, setContributions] = useState([]);
@@ -31,10 +51,14 @@ const Profile = () => {
   const [contributionsError, setContributionsError] = useState(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState("profile");
   const [editingContribution, setEditingContribution] = useState(null);
   const [deleteContributionId, setDeleteContributionId] = useState(null);
   const [deleteContributionType, setDeleteContributionType] = useState(null);
+  const [helpRequests, setHelpRequests] = useState([]);
+  const [helpRequestsLoading, setHelpRequestsLoading] = useState(true);
+  const [helpRequestsError, setHelpRequestsError] = useState(null);
+  const [deleteHelpRequestId, setDeleteHelpRequestId] = useState(null);
 
   // Validate authentication and redirect if needed
   useEffect(() => {
@@ -71,7 +95,7 @@ const Profile = () => {
   // Get auth config with token refresh
   const getAuthConfig = useCallback(async () => {
     let accessToken = localStorage.getItem(ACCESS_TOKEN);
-    
+
     if (!accessToken || accessToken === "null") {
       return { withCredentials: true };
     }
@@ -149,20 +173,46 @@ const Profile = () => {
     }
   }, [isAuthenticated, user, getAuthConfig]);
 
+  const fetchHelpRequests = useCallback(async () => {
+    if (!isAuthenticated || !user) return;
+
+    try {
+      setHelpRequestsLoading(true);
+      setHelpRequestsError(null);
+      const config = await getAuthConfig();
+
+      const response = await getUserHelpRequests(config);
+      setHelpRequests(response);
+    } catch (error) {
+      console.error("Error fetching help requests:", error);
+      setHelpRequestsError("Failed to load help requests. Please try again.");
+      toast.error("Failed to load help requests");
+    } finally {
+      setHelpRequestsLoading(false);
+    }
+  }, [isAuthenticated, user, getAuthConfig]);
+
   // Initial data fetch
   useEffect(() => {
     if (isAuthenticated && user) {
       fetchUserData();
       fetchContributions();
+      fetchHelpRequests();
     }
-  }, [isAuthenticated, user?.id, fetchUserData, fetchContributions]);
+  }, [
+    isAuthenticated,
+    user?.id,
+    fetchUserData,
+    fetchContributions,
+    fetchHelpRequests,
+  ]);
 
   // Handle file selection
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
       // Validate file type
-      if (!file.type.startsWith('image/')) {
+      if (!file.type.startsWith("image/")) {
         toast.error("Please select an image file");
         return;
       }
@@ -183,79 +233,87 @@ const Profile = () => {
     if (!selectedFile) return;
 
     try {
-        setUploadProgress(0);
-        const formData = new FormData();
-        formData.append('profile_image', selectedFile);
+      setUploadProgress(0);
+      const formData = new FormData();
+      formData.append("profile_image", selectedFile);
 
-        // Get auth config with proper headers
-        const config = await getAuthConfig();
+      // Get auth config with proper headers
+      const config = await getAuthConfig();
 
-        // First ensure we have a CSRF token
-        let csrfToken = document.cookie.split('; ')
-            .find(row => row.startsWith('csrftoken='))
-            ?.split('=')[1];
+      // First ensure we have a CSRF token
+      let csrfToken = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("csrftoken="))
+        ?.split("=")[1];
 
-        // If no CSRF token found or in incognito mode, fetch it
-        if (!csrfToken) {
-            const csrfResponse = await api.get('/api/get-csrf/', {
-                withCredentials: true,
-                headers: {
-                    ...config.headers
-                }
-            });
-            csrfToken = csrfResponse.data.csrftoken;
-        }
-
-        const headers = {
+      // If no CSRF token found or in incognito mode, fetch it
+      if (!csrfToken) {
+        const csrfResponse = await api.get("/api/get-csrf/", {
+          withCredentials: true,
+          headers: {
             ...config.headers,
-            'Content-Type': 'multipart/form-data',
-            'X-CSRFToken': csrfToken
-        };
+          },
+        });
+        csrfToken = csrfResponse.data.csrftoken;
+      }
 
-        const response = await api.put(
-            `/api/users/${user.id}/upload-profile/`,
-            formData,
-            {
-                ...config,
-                headers,
-                withCredentials: true,
-                onUploadProgress: (progressEvent) => {
-                    const percentCompleted = Math.round(
-                        (progressEvent.loaded * 100) / progressEvent.total
-                    );
-                    setUploadProgress(percentCompleted);
-                },
-            }
+      const headers = {
+        ...config.headers,
+        "Content-Type": "multipart/form-data",
+        "X-CSRFToken": csrfToken,
+      };
+
+      const response = await api.put(
+        `/api/users/${user.id}/upload-profile/`,
+        formData,
+        {
+          ...config,
+          headers,
+          withCredentials: true,
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            setUploadProgress(percentCompleted);
+          },
+        }
+      );
+
+      if (response.data) {
+        dispatch(
+          loginSuccess({
+            user: response.data,
+            token: localStorage.getItem(ACCESS_TOKEN),
+          })
         );
-
-        if (response.data) {
-            dispatch(loginSuccess({ user: response.data, token: localStorage.getItem(ACCESS_TOKEN) }));
-            setSelectedFile(null);
-            setPreviewUrl(null);
-            toast.success('Profile image updated successfully!');
-        }
+        setSelectedFile(null);
+        setPreviewUrl(null);
+        toast.success("Profile image updated successfully!");
+      }
     } catch (error) {
-        console.error('Error uploading profile image:', error);
-        if (error.response?.status === 401) {
-            // Token expired, try to refresh
-            const newToken = await refreshToken();
-            if (newToken) {
-                // Retry the upload with new token
-                return handleUpload();
-            }
+      console.error("Error uploading profile image:", error);
+      if (error.response?.status === 401) {
+        // Token expired, try to refresh
+        const newToken = await refreshToken();
+        if (newToken) {
+          // Retry the upload with new token
+          return handleUpload();
         }
-        toast.error(error.response?.data?.error || 'Failed to upload profile image');
+      }
+      toast.error(
+        error.response?.data?.error || "Failed to upload profile image"
+      );
     } finally {
-        setUploadProgress(0);
+      setUploadProgress(0);
     }
   };
 
   // Handle edit form changes
   const handleEditChange = (e) => {
     const { name, value } = e.target;
-    setEditedUser(prev => ({
+    setEditedUser((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -270,26 +328,31 @@ const Profile = () => {
         `/api/users/${user?.id}/update/`,
         {
           username: editedUser.username,
-          email: editedUser.email
+          email: editedUser.email,
         },
         {
           ...config,
           headers: {
             ...config.headers,
-            'Content-Type': 'application/json'
-          }
+            "Content-Type": "application/json",
+          },
         }
       );
 
       if (response.data) {
-        dispatch(loginSuccess({ user: response.data, token: localStorage.getItem(ACCESS_TOKEN) }));
+        dispatch(
+          loginSuccess({
+            user: response.data,
+            token: localStorage.getItem(ACCESS_TOKEN),
+          })
+        );
         setIsEditing(false);
-        toast.success('Profile updated successfully!');
+        toast.success("Profile updated successfully!");
       }
     } catch (error) {
-      console.error('Error updating profile:', error);
-      setEditError(error.response?.data?.error || 'Failed to update profile');
-      toast.error(error.response?.data?.error || 'Failed to update profile');
+      console.error("Error updating profile:", error);
+      setEditError(error.response?.data?.error || "Failed to update profile");
+      toast.error(error.response?.data?.error || "Failed to update profile");
     }
   };
 
@@ -307,29 +370,36 @@ const Profile = () => {
       const data = {
         content: editingContribution.content,
         title: editingContribution.title,
-        description: editingContribution.description
+        description: editingContribution.description,
       };
-      
+
       // For discussion posts, use post_id instead of id
-      const contributionId = editingContribution.type === 'discussion' 
-        ? editingContribution.post_id 
-        : editingContribution.id;
-      
+      const contributionId =
+        editingContribution.type === "discussion"
+          ? editingContribution.post_id
+          : editingContribution.id;
+
       const updatedContribution = await editContribution(
         editingContribution.type,
         contributionId,
         data
       );
 
-      setContributions(contributions.map(contribution => 
-        contribution.id === editingContribution.id && 
-        contribution.type === editingContribution.type ? updatedContribution : contribution
-      ));
+      setContributions(
+        contributions.map((contribution) =>
+          contribution.id === editingContribution.id &&
+          contribution.type === editingContribution.type
+            ? updatedContribution
+            : contribution
+        )
+      );
       setEditingContribution(null);
-      toast.success('Contribution updated successfully!');
+      toast.success("Contribution updated successfully!");
     } catch (error) {
-      console.error('Error updating contribution:', error);
-      toast.error(error.response?.data?.error || 'Failed to update contribution');
+      console.error("Error updating contribution:", error);
+      toast.error(
+        error.response?.data?.error || "Failed to update contribution"
+      );
     }
   };
 
@@ -339,22 +409,83 @@ const Profile = () => {
 
     try {
       // For discussion posts, use post_id instead of id
-      const contributionId = deleteContributionType === 'discussion'
-        ? contributions.find(c => c.id === deleteContributionId)?.post_id
-        : deleteContributionId;
+      const contributionId =
+        deleteContributionType === "discussion"
+          ? contributions.find((c) => c.id === deleteContributionId)?.post_id
+          : deleteContributionId;
 
       await deleteContribution(deleteContributionType, contributionId);
 
-      setContributions(contributions.filter(contribution => 
-        !(contribution.id === deleteContributionId && 
-          contribution.type === deleteContributionType)
-      ));
+      setContributions(
+        contributions.filter(
+          (contribution) =>
+            !(
+              contribution.id === deleteContributionId &&
+              contribution.type === deleteContributionType
+            )
+        )
+      );
       setDeleteContributionId(null);
       setDeleteContributionType(null);
-      toast.success('Contribution deleted successfully!');
+      toast.success("Contribution deleted successfully!");
     } catch (error) {
-      console.error('Error deleting contribution:', error);
-      toast.error(error.response?.data?.error || 'Failed to delete contribution');
+      console.error("Error deleting contribution:", error);
+      toast.error(
+        error.response?.data?.error || "Failed to delete contribution"
+      );
+    }
+  };
+
+  const handleEditHelpRequest = async (e) => {
+    e.preventDefault();
+    if (!editingContribution) return;
+
+    try {
+      const data = {
+        title: editingContribution.title,
+        description: editingContribution.description,
+        status: editingContribution.status,
+        credit_offer_chat: editingContribution.credit_offer_chat,
+        credit_offer_video: editingContribution.credit_offer_video,
+        category: editingContribution.category,
+      };
+
+      const updatedHelpRequest = await editHelpRequest(
+        editingContribution.id,
+        data
+      );
+
+      setHelpRequests(
+        helpRequests.map((request) =>
+          request.id === editingContribution.id ? updatedHelpRequest : request
+        )
+      );
+      setEditingContribution(null);
+      toast.success("Help request updated successfully!");
+    } catch (error) {
+      console.error("Error updating help request:", error);
+      toast.error(
+        error.response?.data?.error || "Failed to update help request"
+      );
+    }
+  };
+
+  const handleDeleteHelpRequest = async () => {
+    if (!deleteHelpRequestId) return;
+
+    try {
+      await deleteHelpRequest(deleteHelpRequestId);
+
+      setHelpRequests(
+        helpRequests.filter((request) => request.id !== deleteHelpRequestId)
+      );
+      setDeleteHelpRequestId(null);
+      toast.success("Help request deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting help request:", error);
+      toast.error(
+        error.response?.data?.error || "Failed to delete help request"
+      );
     }
   };
 
@@ -385,7 +516,10 @@ const Profile = () => {
                   {/* Profile Image Section */}
                   <div className="p-4 text-center bg-primary bg-opacity-10">
                     <div className="position-relative d-inline-block mb-3">
-                      <div className="rounded-circle overflow-hidden border border-4 border-white shadow" style={{ width: '150px', height: '150px' }}>
+                      <div
+                        className="rounded-circle overflow-hidden border border-4 border-white shadow"
+                        style={{ width: "150px", height: "150px" }}
+                      >
                         {previewUrl ? (
                           <img
                             src={previewUrl}
@@ -394,7 +528,10 @@ const Profile = () => {
                           />
                         ) : profileImageUrl ? (
                           <img
-                            src={profileImageUrl || "https://avatar.iran.liara.run/public/4"}
+                            src={
+                              profileImageUrl ||
+                              "https://avatar.iran.liara.run/public/4"
+                            }
                             alt="Profile"
                             className="w-100 h-100 object-fit-cover"
                           />
@@ -408,7 +545,10 @@ const Profile = () => {
                         <div className="position-absolute bottom-0 start-0 end-0 bg-light">
                           <div
                             className="bg-primary h-1"
-                            style={{ width: `${uploadProgress}%`, transition: 'width 0.3s' }}
+                            style={{
+                              width: `${uploadProgress}%`,
+                              transition: "width 0.3s",
+                            }}
                           />
                         </div>
                       )}
@@ -446,16 +586,23 @@ const Profile = () => {
                         <h1 className="h3 mb-2">{user.username}</h1>
                         <p className="text-muted mb-3">{user.email}</p>
                         <div className="badge bg-primary bg-opacity-10 text-primary px-3 py-2 mb-3">
-                          <span className="fw-semibold text-light">{user.credits || 0} credits</span> 
+                          <span className="fw-semibold text-light">
+                            {user.credits || 0} credits
+                          </span>
                         </div>
                       </div>
 
                       {/* Navigation Tabs */}
                       <ul className="nav nav-tabs mb-4" role="tablist">
-                        <li className="nav-item text-primary" role="presentation">
+                        <li
+                          className="nav-item text-primary"
+                          role="presentation"
+                        >
                           <button
-                            className={`nav-link ${activeTab === 'profile' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('profile')}
+                            className={`nav-link ${
+                              activeTab === "profile" ? "active" : ""
+                            }`}
+                            onClick={() => setActiveTab("profile")}
                           >
                             <FaUserEdit className="me-2" />
                             Profile
@@ -463,8 +610,10 @@ const Profile = () => {
                         </li>
                         <li className="nav-item" role="presentation">
                           <button
-                            className={`nav-link ${activeTab === 'chats' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('chats')}
+                            className={`nav-link ${
+                              activeTab === "chats" ? "active" : ""
+                            }`}
+                            onClick={() => setActiveTab("chats")}
                           >
                             <FaComments className="me-2" />
                             Active Chats
@@ -472,8 +621,10 @@ const Profile = () => {
                         </li>
                         <li className="nav-item" role="presentation">
                           <button
-                            className={`nav-link ${activeTab === 'transactions' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('transactions')}
+                            className={`nav-link ${
+                              activeTab === "transactions" ? "active" : ""
+                            }`}
+                            onClick={() => setActiveTab("transactions")}
                           >
                             <FaHistory className="me-2" />
                             Transactions
@@ -481,11 +632,24 @@ const Profile = () => {
                         </li>
                         <li className="nav-item" role="presentation">
                           <button
-                            className={`nav-link ${activeTab === 'contributions' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('contributions')}
+                            className={`nav-link ${
+                              activeTab === "contributions" ? "active" : ""
+                            }`}
+                            onClick={() => setActiveTab("contributions")}
                           >
                             <FaFileAlt className="me-2" />
                             Contributions
+                          </button>
+                        </li>
+                        <li className="nav-item" role="presentation">
+                          <button
+                            className={`nav-link ${
+                              activeTab === "help_requests" ? "active" : ""
+                            }`}
+                            onClick={() => setActiveTab("help_requests")}
+                          >
+                            <FaQuestionCircle className="me-2" />
+                            Help Requests
                           </button>
                         </li>
                       </ul>
@@ -493,11 +657,20 @@ const Profile = () => {
                       {/* Tab Content */}
                       <div className="tab-content flex-grow-1">
                         {/* Profile Tab */}
-                        <div className={`tab-pane fade ${activeTab === 'profile' ? 'show active' : ''}`}>
+                        <div
+                          className={`tab-pane fade ${
+                            activeTab === "profile" ? "show active" : ""
+                          }`}
+                        >
                           {isEditing ? (
                             <form onSubmit={handleEditSubmit} className="mb-3">
                               <div className="mb-3">
-                                <label htmlFor="username" className="form-label">Username</label>
+                                <label
+                                  htmlFor="username"
+                                  className="form-label"
+                                >
+                                  Username
+                                </label>
                                 <input
                                   type="text"
                                   className="form-control"
@@ -509,7 +682,9 @@ const Profile = () => {
                                 />
                               </div>
                               <div className="mb-3">
-                                <label htmlFor="email" className="form-label">Email</label>
+                                <label htmlFor="email" className="form-label">
+                                  Email
+                                </label>
                                 <input
                                   type="email"
                                   className="form-control"
@@ -521,12 +696,18 @@ const Profile = () => {
                                 />
                               </div>
                               {editError && (
-                                <div className="alert alert-danger" role="alert">
+                                <div
+                                  className="alert alert-danger"
+                                  role="alert"
+                                >
                                   {editError}
                                 </div>
                               )}
                               <div className="d-flex gap-2">
-                                <button type="submit" className="btn btn-primary">
+                                <button
+                                  type="submit"
+                                  className="btn btn-primary"
+                                >
                                   Save Changes
                                 </button>
                                 <button
@@ -535,8 +716,8 @@ const Profile = () => {
                                   onClick={() => {
                                     setIsEditing(false);
                                     setEditedUser({
-                                      username: user?.username || '',
-                                      email: user?.email || ''
+                                      username: user?.username || "",
+                                      email: user?.email || "",
                                     });
                                     setEditError(null);
                                   }}
@@ -566,7 +747,11 @@ const Profile = () => {
                         </div>
 
                         {/* Active Chats Tab */}
-                        <div className={`tab-pane fade ${activeTab === 'chats' ? 'show active' : ''}`}>
+                        <div
+                          className={`tab-pane fade ${
+                            activeTab === "chats" ? "show active" : ""
+                          }`}
+                        >
                           {activeChats.length === 0 ? (
                             <p className="text-muted">No active chats</p>
                           ) : (
@@ -579,11 +764,13 @@ const Profile = () => {
                                   <div className="d-flex justify-content-between align-items-center">
                                     <div>
                                       <h3 className="h6 mb-1">
-                                        {chat.help_request?.title || "Untitled Chat"}
+                                        {chat.help_request?.title ||
+                                          "Untitled Chat"}
                                       </h3>
                                       <p className="small text-muted mb-0">
                                         With:{" "}
-                                        {chat.requester.username === user.username
+                                        {chat.requester.username ===
+                                        user.username
                                           ? chat.helper.username
                                           : chat.requester.username}
                                       </p>
@@ -591,7 +778,9 @@ const Profile = () => {
                                     <button
                                       onClick={() =>
                                         navigate(
-                                          `/help-requests/${chat.help_request?.id || 0}/chat/${chat.id}`
+                                          `/help-requests/${
+                                            chat.help_request?.id || 0
+                                          }/chat/${chat.id}`
                                         )
                                       }
                                       className="btn btn-primary btn-sm"
@@ -606,7 +795,11 @@ const Profile = () => {
                         </div>
 
                         {/* Transactions Tab */}
-                        <div className={`tab-pane fade ${activeTab === 'transactions' ? 'show active' : ''}`}>
+                        <div
+                          className={`tab-pane fade ${
+                            activeTab === "transactions" ? "show active" : ""
+                          }`}
+                        >
                           {transactions.length === 0 ? (
                             <p className="text-muted">No transactions yet</p>
                           ) : (
@@ -620,14 +813,19 @@ const Profile = () => {
                                     <div>
                                       <p className="mb-1">{tx.description}</p>
                                       <p className="small text-muted mb-0">
-                                        {formatDistanceToNow(new Date(tx.timestamp), {
-                                          addSuffix: true,
-                                        })}
+                                        {formatDistanceToNow(
+                                          new Date(tx.timestamp),
+                                          {
+                                            addSuffix: true,
+                                          }
+                                        )}
                                       </p>
                                     </div>
                                     <span
                                       className={`fw-semibold ${
-                                        tx.amount > 0 ? "text-success" : "text-danger"
+                                        tx.amount > 0
+                                          ? "text-success"
+                                          : "text-danger"
                                       }`}
                                     >
                                       {tx.amount > 0 ? "+" : ""}
@@ -641,11 +839,20 @@ const Profile = () => {
                         </div>
 
                         {/* Contributions Tab */}
-                        <div className={`tab-pane fade ${activeTab === 'contributions' ? 'show active' : ''}`}>
+                        <div
+                          className={`tab-pane fade ${
+                            activeTab === "contributions" ? "show active" : ""
+                          }`}
+                        >
                           {contributionsLoading ? (
                             <div className="d-flex justify-content-center">
-                              <div className="spinner-border text-primary" role="status">
-                                <span className="visually-hidden">Loading...</span>
+                              <div
+                                className="spinner-border text-primary"
+                                role="status"
+                              >
+                                <span className="visually-hidden">
+                                  Loading...
+                                </span>
                               </div>
                             </div>
                           ) : contributionsError ? (
@@ -662,29 +869,41 @@ const Profile = () => {
                                   className="border rounded p-3 hover-bg-light"
                                 >
                                   <div className="d-flex align-items-center mb-2">
-                                    {contribution.type === 'resource' ? (
+                                    {contribution.type === "resource" ? (
                                       <FaFileAlt className="me-2 text-primary" />
                                     ) : (
                                       <FaCommentDots className="me-2 text-primary" />
                                     )}
                                     <Link
-                                      to={`/${contribution.type === 'resource' ? 'resources' : 'discussions'}/${contribution.id}`}
+                                      to={`/${
+                                        contribution.type === "resource"
+                                          ? "resources"
+                                          : "discussions"
+                                      }/${contribution.id}`}
                                       className="text-decoration-none text-dark flex-grow-1"
                                     >
-                                      <h3 className="h6 mb-0">{contribution.title}</h3>
+                                      <h3 className="h6 mb-0">
+                                        {contribution.title}
+                                      </h3>
                                     </Link>
                                     <div className="ms-auto">
                                       <button
                                         className="btn btn-sm btn-outline-primary me-2"
-                                        onClick={() => setEditingContribution(contribution)}
+                                        onClick={() =>
+                                          setEditingContribution(contribution)
+                                        }
                                       >
                                         <FaEdit />
                                       </button>
                                       <button
                                         className="btn btn-sm btn-outline-danger"
                                         onClick={() => {
-                                          setDeleteContributionId(contribution.id);
-                                          setDeleteContributionType(contribution.type);
+                                          setDeleteContributionId(
+                                            contribution.id
+                                          );
+                                          setDeleteContributionType(
+                                            contribution.type
+                                          );
                                         }}
                                       >
                                         <FaTrash />
@@ -692,22 +911,113 @@ const Profile = () => {
                                     </div>
                                   </div>
                                   <p className="small text-muted mb-2">
-                                    {contribution.type === 'resource' 
+                                    {contribution.type === "resource"
                                       ? `Downloads: ${contribution.download_count} | Upvotes: ${contribution.upvotes}`
                                       : `Upvotes: ${contribution.upvotes}`}
                                   </p>
                                   <p className="small text-muted mb-0">
-                                    {formatDistanceToNow(new Date(contribution.created_at), {
-                                      addSuffix: true,
-                                    })}
+                                    {formatDistanceToNow(
+                                      new Date(contribution.created_at),
+                                      {
+                                        addSuffix: true,
+                                      }
+                                    )}
                                   </p>
-                                  {contribution.type === 'discussion' && (
+                                  {contribution.type === "discussion" && (
                                     <p className="mt-2 mb-0 small">
                                       {contribution.content.length > 150
-                                        ? `${contribution.content.substring(0, 150)}...`
+                                        ? `${contribution.content.substring(
+                                            0,
+                                            150
+                                          )}...`
                                         : contribution.content}
                                     </p>
                                   )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div
+                          className={`tab-pane fade ${
+                            activeTab === "help_requests" ? "show active" : ""
+                          }`}
+                        >
+                          {helpRequestsLoading ? (
+                            <div className="d-flex justify-content-center">
+                              <div
+                                className="spinner-border text-primary"
+                                role="status"
+                              >
+                                <span className="visually-hidden">
+                                  Loading...
+                                </span>
+                              </div>
+                            </div>
+                          ) : helpRequestsError ? (
+                            <div className="alert alert-danger" role="alert">
+                              {helpRequestsError}
+                            </div>
+                          ) : helpRequests.length === 0 ? (
+                            <p className="text-muted">No help requests yet</p>
+                          ) : (
+                            <div className="d-flex flex-column gap-3">
+                              {helpRequests.map((request) => (
+                                <div
+                                  key={`help_request-${request.id}`}
+                                  className="border rounded p-3 hover-bg-light"
+                                >
+                                  <div className="d-flex align-items-center mb-2">
+                                    <FaQuestionCircle className="me-2 text-primary" />
+                                    <Link
+                                      to={`/help-requests/${request.id}`}
+                                      className="text-decoration-none text-dark flex-grow-1"
+                                    >
+                                      <h3 className="h6 mb-0">
+                                        {request.title}
+                                      </h3>
+                                    </Link>
+                                    <div className="ms-auto">
+                                      <button
+                                        className="btn btn-sm btn-outline-primary me-2"
+                                        onClick={() =>
+                                          setEditingContribution(request)
+                                        }
+                                      >
+                                        <FaEdit />
+                                      </button>
+                                      <button
+                                        className="btn btn-sm btn-outline-danger"
+                                        onClick={() =>
+                                          setDeleteHelpRequestId(request.id)
+                                        }
+                                      >
+                                        <FaTrash />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <p className="small text-muted mb-2">
+                                    Status: {request.status} | Category:{" "}
+                                    {request.category || "None"} | Chat Credits:{" "}
+                                    {request.credit_offer_chat} | Video Credits:{" "}
+                                    {request.credit_offer_video}
+                                  </p>
+                                  <p className="small text-muted mb-0">
+                                    {formatDistanceToNow(
+                                      new Date(request.created_at),
+                                      {
+                                        addSuffix: true,
+                                      }
+                                    )}
+                                  </p>
+                                  <p className="mt-2 mb-0 small">
+                                    {request.description.length > 150
+                                      ? `${request.description.substring(
+                                          0,
+                                          150
+                                        )}...`
+                                      : request.description}
+                                  </p>
                                 </div>
                               ))}
                             </div>
@@ -725,11 +1035,20 @@ const Profile = () => {
 
       {/* Edit Contribution Modal */}
       {editingContribution && (
-        <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1">
+        <div
+          className="modal fade show"
+          style={{ display: "block" }}
+          tabIndex="-1"
+        >
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Edit Contribution</h5>
+                <h5 className="modal-title">
+                  Edit{" "}
+                  {editingContribution.type === "help_request"
+                    ? "Help Request"
+                    : "Contribution"}
+                </h5>
                 <button
                   type="button"
                   className="btn-close"
@@ -737,8 +1056,14 @@ const Profile = () => {
                 ></button>
               </div>
               <div className="modal-body">
-                <form onSubmit={handleEditContribution}>
-                  {editingContribution.type === 'resource' ? (
+                <form
+                  onSubmit={
+                    editingContribution.type === "help_request"
+                      ? handleEditHelpRequest
+                      : handleEditContribution
+                  }
+                >
+                  {editingContribution.type === "resource" ? (
                     <>
                       <div className="mb-3">
                         <label className="form-label">Title</label>
@@ -746,10 +1071,12 @@ const Profile = () => {
                           type="text"
                           className="form-control"
                           value={editingContribution.title}
-                          onChange={(e) => setEditingContribution({
-                            ...editingContribution,
-                            title: e.target.value
-                          })}
+                          onChange={(e) =>
+                            setEditingContribution({
+                              ...editingContribution,
+                              title: e.target.value,
+                            })
+                          }
                         />
                       </div>
                       <div className="mb-3">
@@ -757,25 +1084,117 @@ const Profile = () => {
                         <textarea
                           className="form-control"
                           value={editingContribution.description}
-                          onChange={(e) => setEditingContribution({
-                            ...editingContribution,
-                            description: e.target.value
-                          })}
+                          onChange={(e) =>
+                            setEditingContribution({
+                              ...editingContribution,
+                              description: e.target.value,
+                            })
+                          }
                         />
                       </div>
                     </>
-                  ) : (
+                  ) : editingContribution.type === "discussion" ? (
                     <div className="mb-3">
                       <label className="form-label">Content</label>
                       <textarea
                         className="form-control"
                         value={editingContribution.content}
-                        onChange={(e) => setEditingContribution({
-                          ...editingContribution,
-                          content: e.target.value
-                        })}
+                        onChange={(e) =>
+                          setEditingContribution({
+                            ...editingContribution,
+                            content: e.target.value,
+                          })
+                        }
                       />
                     </div>
+                  ) : (
+                    <>
+                      <div className="mb-3">
+                        <label className="form-label">Title</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={editingContribution.title}
+                          onChange={(e) =>
+                            setEditingContribution({
+                              ...editingContribution,
+                              title: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="mb-3">
+                        <label className="form-label">Description</label>
+                        <textarea
+                          className="form-control"
+                          value={editingContribution.description}
+                          onChange={(e) =>
+                            setEditingContribution({
+                              ...editingContribution,
+                              description: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="mb-3">
+                        <label className="form-label">Status</label>
+                        <select
+                          className="form-control"
+                          value={editingContribution.status}
+                          onChange={(e) =>
+                            setEditingContribution({
+                              ...editingContribution,
+                              status: e.target.value,
+                            })
+                          }
+                        >
+                          <option value="open">Open</option>
+                          <option value="resolved">Resolved</option>
+                        </select>
+                      </div>
+                      <div className="mb-3">
+                        <label className="form-label">Chat Credit Offer</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          value={editingContribution.credit_offer_chat}
+                          onChange={(e) =>
+                            setEditingContribution({
+                              ...editingContribution,
+                              credit_offer_chat: parseInt(e.target.value) || 0,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="mb-3">
+                        <label className="form-label">Video Credit Offer</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          value={editingContribution.credit_offer_video}
+                          onChange={(e) =>
+                            setEditingContribution({
+                              ...editingContribution,
+                              credit_offer_video: parseInt(e.target.value) || 0,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="mb-3">
+                        <label className="form-label">Category</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={editingContribution.category || ""}
+                          onChange={(e) =>
+                            setEditingContribution({
+                              ...editingContribution,
+                              category: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                    </>
                   )}
                   <div className="d-flex gap-2">
                     <button type="submit" className="btn btn-primary">
@@ -797,8 +1216,12 @@ const Profile = () => {
       )}
 
       {/* Delete Confirmation Modal */}
-      {deleteContributionId && deleteContributionType && (
-        <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1">
+      {(deleteContributionId || deleteHelpRequestId) && (
+        <div
+          className="modal fade show"
+          style={{ display: "block" }}
+          tabIndex="-1"
+        >
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-header">
@@ -809,11 +1232,14 @@ const Profile = () => {
                   onClick={() => {
                     setDeleteContributionId(null);
                     setDeleteContributionType(null);
+                    setDeleteHelpRequestId(null);
                   }}
                 ></button>
               </div>
               <div className="modal-body">
-                Are you sure you want to delete this contribution? This action cannot be undone.
+                Are you sure you want to delete this{" "}
+                {deleteHelpRequestId ? "help request" : "contribution"}? This
+                action cannot be undone.
               </div>
               <div className="modal-footer">
                 <button
@@ -822,6 +1248,7 @@ const Profile = () => {
                   onClick={() => {
                     setDeleteContributionId(null);
                     setDeleteContributionType(null);
+                    setDeleteHelpRequestId(null);
                   }}
                 >
                   Cancel
@@ -829,7 +1256,11 @@ const Profile = () => {
                 <button
                   type="button"
                   className="btn btn-danger"
-                  onClick={handleDeleteContribution}
+                  onClick={
+                    deleteHelpRequestId
+                      ? handleDeleteHelpRequest
+                      : handleDeleteContribution
+                  }
                 >
                   Delete
                 </button>

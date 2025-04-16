@@ -14,6 +14,8 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import CustomUser
 from discussions.models import DiscussionPost
 from resources.models import Resource
+from projects.models import HelpRequest
+from .models import Category
 from .serializers import UserSerializer, PasswordResetRequestSerializer
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode
@@ -462,3 +464,77 @@ def delete_contribution(request, contribution_type, contribution_id):
             return Response({"error": "Invalid contribution type"}, status=status.HTTP_400_BAD_REQUEST)
     except (DiscussionPost.DoesNotExist, Resource.DoesNotExist):
         return Response({"error": "Contribution not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_help_requests(request):
+    user = request.user
+    
+    # Get help requests
+    help_requests = HelpRequest.objects.filter(created_by=user).select_related('category').order_by('-created_at')
+    help_request_data = [{
+        'id': help_request.id,
+        'type': 'help_request',
+        'title': help_request.title,
+        'description': help_request.description,
+        'category': help_request.category.name if help_request.category else None,
+        'status': help_request.status,
+        'credit_offer_chat': help_request.credit_offer_chat,
+        'credit_offer_video': help_request.credit_offer_video,
+        'created_at': help_request.created_at.isoformat()
+    } for help_request in help_requests]
+    
+    return Response(help_request_data)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def edit_help_request(request, help_request_id):
+    user = request.user
+    
+    try:
+        help_request = HelpRequest.objects.get(id=help_request_id)
+        if help_request.created_by != user:
+            return Response({"error": "You can only edit your own help requests"}, status=status.HTTP_403_FORBIDDEN)
+        
+        help_request.title = request.data.get('title', help_request.title)
+        help_request.description = request.data.get('description', help_request.description)
+        help_request.status = request.data.get('status', help_request.status)
+        help_request.credit_offer_chat = request.data.get('credit_offer_chat', help_request.credit_offer_chat)
+        help_request.credit_offer_video = request.data.get('credit_offer_video', help_request.credit_offer_video)
+        # Update category if provided
+        if 'category' in request.data:
+            try:
+                category = Category.objects.get(name=request.data['category'])
+                help_request.category = category
+            except Category.DoesNotExist:
+                return Response({"error": "Invalid category"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        help_request.save()
+        return Response({
+            'id': help_request.id,
+            'type': 'help_request',
+            'title': help_request.title,
+            'description': help_request.description,
+            'category': help_request.category.name if help_request.category else None,
+            'status': help_request.status,
+            'credit_offer_chat': help_request.credit_offer_chat,
+            'credit_offer_video': help_request.credit_offer_video,
+            'created_at': help_request.created_at.isoformat()
+        })
+    except HelpRequest.DoesNotExist:
+        return Response({"error": "Help request not found"}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_help_request(request, help_request_id):
+    user = request.user
+    
+    try:
+        help_request = HelpRequest.objects.get(id=help_request_id)
+        if help_request.created_by != user:
+            return Response({"error": "You can only delete your own help requests"}, status=status.HTTP_403_FORBIDDEN)
+        help_request.delete()
+        return Response({"message": "Help request deleted successfully"})
+    except HelpRequest.DoesNotExist:
+        return Response({"error": "Help request not found"}, status=status.HTTP_404_NOT_FOUND)
