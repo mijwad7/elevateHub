@@ -27,7 +27,7 @@ class ResourceListCreateView(generics.ListCreateAPIView):
 
         file_type = self.request.query_params.get('file_type')
         if file_type:
-            queryset = queryset.filter(file__endswith=f'.{file_type.lower()}')
+            queryset = queryset.filter(files__file__endswith=f'.{file_type.lower()}').distinct()
         return queryset
 
     def perform_create(self, serializer):
