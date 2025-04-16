@@ -4,9 +4,9 @@ import { useDispatch } from "react-redux";
 import Navbar from "../../components/Navbar";
 import { loginSuccess } from "../../redux/authSlice";
 import api from "../../apiRequests/api";
-import { ACCESS_TOKEN, REFRESH_TOKEN } from "../../constants"; // Already correct
+import { ACCESS_TOKEN, REFRESH_TOKEN } from "../../constants";
 import LoadingIndicator from "../../components/LoadingIndicator";
-import "../../styles/Form.css";
+import "../../styles/AuthStyles.css";
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -14,6 +14,7 @@ const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleGoogleLogin = () => {
     window.location.href = "http://localhost:8000/accounts/google/login/";
@@ -22,9 +23,9 @@ const Login = () => {
   const handleNormalLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
     const payload = { username, password };
     try {
-      // Perform login
       const res = await api.post("api/token/", payload, {
         withCredentials: true,
         headers: {
@@ -42,7 +43,6 @@ const Login = () => {
         localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
         localStorage.setItem("user", JSON.stringify(res.data.user));
 
-        // Verify session is set
         try {
           const authStatus = await api.get("auth/status/", {
             withCredentials: true,
@@ -56,7 +56,7 @@ const Login = () => {
       }
     } catch (error) {
       console.error("Login error:", error.response?.data || error.message);
-      alert(error.response?.data?.detail || "Login failed");
+      setError(error.response?.data?.detail || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -65,47 +65,59 @@ const Login = () => {
   return (
     <>
       <Navbar />
-      <div className="container mt-5">
-        <div className="row justify-content-center">
-          <div className="col-md-6">
-            <div className="card p-4 shadow-sm">
-              <form onSubmit={handleNormalLogin} className="form-container">
-                <h1>Login</h1>
-                <input
-                  className="form-input"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Username"
-                  disabled={loading}
-                />
-                <input
-                  className="form-input"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password"
-                  disabled={loading}
-                />
+      <div className="auth-container">
+        <div className="container">
+          <div className="row g-0 shadow-lg">
+            <div className="col-md-6 auth-welcome">
+              <h1>Welcome to ElevateHub</h1>
+              <p>Connect, learn, and grow with our vibrant community. Sign in to start your journey!</p>
+            </div>
+            <div className="col-md-6 auth-form-card">
+              <h2>Sign In</h2>
+              <form onSubmit={handleNormalLogin}>
+                {error && <div className="alert alert-danger">{error}</div>}
+                <div className="mb-3">
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Username"
+                    disabled={loading}
+                    required
+                  />
+                </div>
+                <div className="mb-3">
+                  <input
+                    type="password"
+                    className="form-control"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Password"
+                    disabled={loading}
+                    required
+                  />
+                </div>
                 {loading && <LoadingIndicator />}
-                <button className="form-button" type="submit" disabled={loading}>
-                  Login
+                <button className="btn auth-btn-primary w-100 mb-3" type="submit" disabled={loading}>
+                  Sign In
                 </button>
-                <Link className="link-primary" to="/forgot-password">
-                  Forgot password?
-                </Link>
+                <div className="text-center">
+                  <Link to="/forgot-password" className="text-primary text-decoration-none fw-semibold small d-inline-block mb-3 hover-underline">
+                    Forgot password?
+                  </Link>
+                </div>
               </form>
-              <div className="d-flex align-items-center my-3">
-                <hr className="flex-grow-1" />
-                <span className="px-2 text-muted">or</span>
-                <hr className="flex-grow-1" />
+              <div className="divider">
+                <hr /><span>OR</span><hr />
               </div>
               <button
-                className="btn btn-primary w-100 d-flex align-items-center justify-content-center"
+                className="google-btn w-100"
                 onClick={handleGoogleLogin}
                 disabled={loading}
               >
-                <i className="bi bi-google me-2"></i> Login with Google
+                <img src="https://www.google.com/favicon.ico" alt="Google" />
+                Sign in with Google
               </button>
             </div>
           </div>

@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import Navbar from "../../components/Navbar";
 import { loginSuccess } from "../../redux/authSlice";
 import api from "../../apiRequests/api";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../../constants";
 import LoadingIndicator from "../../components/LoadingIndicator";
-import "../../styles/Form.css";
+import "../../styles/AuthStyles.css";
 
 const Register = () => {
   const dispatch = useDispatch();
@@ -19,12 +19,10 @@ const Register = () => {
   const [otpCode, setOtpCode] = useState("");
   const [error, setError] = useState("");
 
-  // Handle Google login/registration redirect
   const handleGoogleLogin = () => {
     window.location.href = "http://localhost:8000/accounts/google/login/";
   };
 
-  // Handle OTP generation
   const handleGenerateOTP = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -44,20 +42,18 @@ const Register = () => {
       });
       setOtpSent(true);
     } catch (error) {
-      setError(error.response?.data?.error || "Failed to send OTP");
+      setError(error.response?.data?.error || "Failed to send OTP. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle OTP verification and registration
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     
     try {
-      // Verify OTP and get tokens
       const res = await api.post("api/verify-otp/", { 
         email, 
         otp_code: otpCode 
@@ -69,10 +65,9 @@ const Register = () => {
         },
       });
       
-      // Just redirect to login page after successful registration
       navigate("/login");
     } catch (error) {
-      setError(error.response?.data?.error || "Registration failed");
+      setError(error.response?.data?.error || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -81,68 +76,78 @@ const Register = () => {
   return (
     <>
       <Navbar />
-      <div className="container mt-5">
-        <div className="row justify-content-center">
-          <div className="col-md-6">
-            <div className="card p-4 shadow-sm">
-              <form onSubmit={otpSent ? handleVerifyOTP : handleGenerateOTP} className="form-container">
-                <h1>Register</h1>
-                <input
-                  className="form-input"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Username"
-                  disabled={loading || otpSent}
-                />
-                <input
-                  className="form-input"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email"
-                  disabled={loading || otpSent}
-                />
-                <input
-                  className="form-input"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password"
-                  disabled={loading || otpSent}
-                />
-                
-                {otpSent && (
-                  <input
-                    className="form-input"
-                    type="text"
-                    value={otpCode}
-                    onChange={(e) => setOtpCode(e.target.value)}
-                    placeholder="Enter OTP"
-                    disabled={loading}
-                  />
-                )}
-                
+      <div className="auth-container">
+        <div className="container">
+          <div className="row g-0 shadow-lg">
+            <div className="col-md-6 auth-welcome">
+              <h1>Welcome to ElevateHub</h1>
+              <p>Join our community to connect, learn, and grow. Create your account now!</p>
+            </div>
+            <div className="col-md-6 auth-form-card">
+              <h2>Sign Up</h2>
+              <form onSubmit={otpSent ? handleVerifyOTP : handleGenerateOTP}>
                 {error && <div className="alert alert-danger">{error}</div>}
+                <div className="mb-3">
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Username"
+                    disabled={loading || otpSent}
+                    required
+                  />
+                </div>
+                <div className="mb-3">
+                  <input
+                    type="email"
+                    className="form-control"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Email"
+                    disabled={loading || otpSent}
+                    required
+                  />
+                </div>
+                <div className="mb-3">
+                  <input
+                    type="password"
+                    className="form-control"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Password"
+                    disabled={loading || otpSent}
+                    required
+                  />
+                </div>
+                {otpSent && (
+                  <div className="mb-3">
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value)}
+                      placeholder="Enter OTP"
+                      disabled={loading}
+                      required
+                    />
+                  </div>
+                )}
                 {loading && <LoadingIndicator />}
-                
-                <button className="form-button" type="submit" disabled={loading}>
-                  {otpSent ? "Verify OTP & Register" : "Send OTP"}
+                <button className="btn auth-btn-primary w-100 mb-3" type="submit" disabled={loading}>
+                  {otpSent ? "Verify OTP & Sign Up" : "Send OTP"}
                 </button>
               </form>
-              
-              <div className="d-flex align-items-center my-3">
-                <hr className="flex-grow-1" />
-                <span className="px-2 text-muted">or</span>
-                <hr className="flex-grow-1" />
+              <div className="divider">
+                <hr /><span>OR</span><hr />
               </div>
-              
               <button
-                className="btn btn-primary w-100 d-flex align-items-center justify-content-center"
+                className="google-btn w-100"
                 onClick={handleGoogleLogin}
                 disabled={loading}
               >
-                <i className="bi bi-google me-2"></i> Register with Google
+                <img src="https://www.google.com/favicon.ico" alt="Google" />
+                Sign up with Google
               </button>
             </div>
           </div>

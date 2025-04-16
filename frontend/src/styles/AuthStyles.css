@@ -1,0 +1,160 @@
+/* Custom styles for Login and Register pages */
+.auth-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  }
+  
+  .auth-welcome {
+    background: linear-gradient(135deg, #0B2447 0%, #051124 100%);
+    color: white;
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-radius: 1rem 0 0 1rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  .auth-welcome h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  .auth-welcome p {
+    font-size: 1.2rem;
+    opacity: 0.9;
+  }
+  
+  .auth-form-card {
+    background: white;
+    padding: 3rem;
+    border-radius: 0 1rem 1rem 0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .auth-form-card h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: #333;
+  }
+  
+  .form-control {
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid #ced4da;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  }
+  
+  .auth-btn-primary {
+    background: linear-gradient(135deg, #0B2447 0%, #051124 100%);
+    border: none;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    color: white;
+}
+
+.auth-btn-primary:hover {
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+  }
+  
+  .btn-outline-secondary {
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    transition: background-color 0.3s ease;
+  }
+  
+  .btn-outline-secondary:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .google-btn {
+    background: white;
+    color: #333;
+    border: 1px solid #ced4da;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .google-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .google-btn img {
+    width: 20px;
+    margin-right: 0.5rem;
+  }
+  
+  .divider {
+    display: flex;
+    align-items: center;
+    margin: 1.5rem 0;
+    color: #6c757d;
+  }
+  
+  .divider hr {
+    flex-grow: 1;
+    border-top: 1px solid #ced4da;
+  }
+  
+  .divider span {
+    padding: 0 1rem;
+  }
+  
+  .auth-footer {
+    background: #343a40;
+    color: white;
+    padding: 1rem 0;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .auth-footer a {
+    color: #007bff;
+    text-decoration: none;
+  }
+  
+  .auth-footer a:hover {
+    text-decoration: underline;
+  }
+  
+  .alert {
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  @media (max-width: 768px) {
+    .auth-welcome {
+      border-radius: 1rem 1rem 0 0;
+      text-align: center;
+    }
+    .auth-form-card {
+      border-radius: 0 0 1rem 1rem;
+    }
+    .auth-welcome h1 {
+      font-size: 2rem;
+    }
+    .auth-welcome p {
+      font-size: 1rem;
+    }
+  }
