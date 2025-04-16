@@ -99,14 +99,12 @@ function ResourceDetail() {
                             Your browser does not support the video tag.
                           </video>
                         ) : resource.files[selectedFileIndex].file.endsWith(".pdf") ? (
-                          <div className="ratio ratio-4x3">
                             <iframe
                               src={resource.files[selectedFileIndex].file}
                               className="w-100 rounded"
+                              style={{ width: "100%", height: "500px", border: "none" }}
                               title={resource.title}
-                              style={{ border: "none" }}
                             />
-                          </div>
                         ) : (
                           <div className="card-body text-center py-5 bg-light">
                             <button
