@@ -65,6 +65,13 @@ def create_session(request):
     except Exception as e:
         return Response({"error": str(e)}, status=401)
 
+@api_view(['POST'])
+def logout_session(request):
+    if request.user.is_authenticated:
+        logout(request)  # Clears the session
+        return Response({"message": "Session logged out successfully"}, status=status.HTTP_200_OK)
+    return Response({"message": "No active session"}, status=status.HTTP_200_OK)
+
 class CreateUserView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer

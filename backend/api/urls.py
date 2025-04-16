@@ -4,7 +4,7 @@ from .views import (
     ProfileImageUploadView, UserListCreateView, UserRetrieveUpdateDestroyView,
     PasswordResetRequestView, PasswordResetConfirmView, auth_status, LogoutView,
     GenerateOTPView, VerifyOTPView, UserUpdateView, create_session, get_csrf,
-    user_contributions, edit_contribution, delete_contribution
+    user_contributions, edit_contribution, delete_contribution, logout_session
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.conf import settings
@@ -21,6 +21,7 @@ urlpatterns = [
     path("reset-password/", PasswordResetRequestView.as_view(), name="password_reset_request"),
     path("reset-password/<uidb64>/<token>/", PasswordResetConfirmView.as_view(), name="password_reset_confirm"),
     path("logout/", LogoutView.as_view(), name="logout"),
+    path("logout-session/", logout_session, name="logout_session"),
     path("generate-otp/", GenerateOTPView.as_view(), name="generate_otp"),
     path("verify-otp/", VerifyOTPView.as_view(), name="verify_otp"),
     path("users/<int:user_id>/update/", UserUpdateView.as_view(), name="user_update"),

@@ -10,10 +10,17 @@ export const logoutUser = createAsyncThunk(
             console.log("Sending refresh token:", refreshToken); // Debug log
             if (refreshToken) {
                 await api.post("/api/logout/", { refresh: refreshToken });
-                console.log("Logout API call successful"); // Confirm success
+                console.log("JWT Logout API call successful"); // Confirm success
             } else {
                 console.log("No refresh token found in localStorage");
             }
+
+            // Call session logout endpoint to invalidate session
+            await api.post("/api/logout-session/", {}, {
+                withCredentials: true, // Ensure session cookie is sent
+            });
+            console.log("Session logout API call successful");
+
             return true;
         } catch (error) {
             console.error("Logout error:", error.response?.data);
