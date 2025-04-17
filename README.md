@@ -1,4 +1,4 @@
-# elevateHub
+# ElevateHub
 
 A collaborative knowledge-sharing platform built with Django and React, where users can help each other, share resources, and earn credits for their contributions.
 
