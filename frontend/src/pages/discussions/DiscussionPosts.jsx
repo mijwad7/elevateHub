@@ -56,13 +56,6 @@ function DiscussionPosts() {
       <Navbar />
       <div className="container py-5">
         <style>{`
-          .discussion-card {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-          }
-          .discussion-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-          }
           .avatar-img {
             object-fit: cover;
             border: 2px solid #e9ecef;
