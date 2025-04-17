@@ -19,7 +19,7 @@ Instead of relying on paid consultations or long forum threads, users can reach 
 - It reduces the **barrier of cost** for students and hobbyists who need quality help but can't afford it.
 
 ### 🎯 Target Audience:
-- Self-taught programmers and developers
+- Self-taught programmers, designers, editors and the like
 - Students working on assignments or projects
 - Online course learners needing real-world guidance
 - Hobbyists building passion projects
