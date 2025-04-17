@@ -11,7 +11,7 @@ body {
   border-color: var(--bs-primary) !important;
 }
 
-.link-primary {
+.link-primary, .text-primary {
     color: var(--bs-primary) !important;
     text-decoration: none !important;
 }
