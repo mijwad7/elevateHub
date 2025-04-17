@@ -15,24 +15,19 @@ const Home = () => {
             A collaborative learning platform where you earn credits by helping
             others and use them to improve your skills.
           </p>
-          <a href="#" className="btn btn-primary btn-lg mt-3 fw-semibold">
+          <a href="#offer" className="btn btn-primary btn-lg mt-3 fw-semibold">
             Get Started
           </a>
         </div>
 
         {/* Our Courses Section */}
         <div className="mt-5">
-          <h2 className="fw-bold mb-4">What we offer</h2>
+          <h2 className="fw-bold mb-4" id="offer">What we offer</h2>
           <p className="mb-4">
-            Tempus tincidunt etiam eget elit id imperdiet et. Cras eu sit
-            dignissim lorem nibh et. Ac cum eget habitasse in velit fringilla
-            feugiat senectus in.
+          ElevateHub is a collaborative knowledge-sharing platform, designed to bring together learners, educators, and professionals in a unique, credit-based ecosystem.
           </p>
           <div className="d-flex justify-content-between align-items-center mb-4">
-            <div></div> {/* Spacer for alignment */}
-            <a href="#" className="btn btn-primary">
-              View All
-            </a>
+            
           </div>
 
           <div className="row">
@@ -41,21 +36,25 @@ const Home = () => {
                 title: "Forum Discussions",
                 text: "Ask and answer questions to help the community.",
                 image: "/images/discussions.jpg",
+                link: "/discussions",
               },
               {
                 title: "Project Help",
                 text: "Get guidance on real-world projects.",
                 image: "/images/help.jpg",
+                link: "/help-requests",
               },
               {
                 title: "Skill Improvement",
                 text: "Get one-on-one help from expert users.",
                 image: "/images/upskill.jpg",
+                link: "#",
               },
               {
                 title: "Resource Sharing",
                 text: "Share and access useful study materials.",
                 image: "/images/resources.jpg",
+                link: "/resources",
               },
             ].map((course, index) => (
               <div key={index} className="col-md-6 mb-4">
@@ -68,7 +67,7 @@ const Home = () => {
                   <div className="card-body">
                     <h5 className="fw-bold">{course.title}</h5>
                     <p>{course.text}</p>
-                    <a href="#" className="btn btn-outline-dark">
+                    <a href={course.link} className="btn btn-outline-dark">
                       Explore
                     </a>
                   </div>
@@ -82,15 +81,10 @@ const Home = () => {
         <div className="mt-5">
           <h2 className="fw-bold mb-4">Benefits</h2>
           <p className="mb-4">
-            Lorem ipsum dolor sit amet consectetur. Tempus tincidunt etiam eget
-            elit id imperdiet et. Cras eu sit dignissim lorem nibh et. Ac cum
-            eget habitasse in velit fringilla feugiat senectus in.
+          ElevateHub is built to make sure no one has to learn alone. It brings people together in a way that's fair, community-driven, and empowering for everyone involved.
           </p>
           <div className="d-flex justify-content-between align-items-center mb-4">
-            <div></div> {/* Spacer for alignment */}
-            <a href="#" className="btn btn-primary">
-              View All
-            </a>
+            
           </div>
 
           <div className="row">
@@ -145,10 +139,6 @@ const Home = () => {
             experienced members.
           </p>
           <div className="d-flex justify-content-between align-items-center mb-4">
-            <div></div> {/* Spacer for alignment */}
-            <a href="#" className="btn btn-primary">
-              Learn More
-            </a>
           </div>
 
           {/* Earning Credits Section */}
