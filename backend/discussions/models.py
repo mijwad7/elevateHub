@@ -4,6 +4,9 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from credits.models import CreditTransaction
 from api.models import Category
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Discussion(models.Model):
     title = models.CharField(max_length=255)
@@ -39,18 +42,18 @@ def award_credit_on_upvote(sender, instance, created, **kwargs):
     if created:  # Only on new upvotes
         post = instance.post
         user = post.user
+        logger.info(f"Processing upvote on discussion post {post.id} by user {instance.user.username}")
         
-        # Increment upvotes
         post.upvotes += 1
-        post.save(update_fields=['upvotes'])  # Optimize by only updating upvotes
+        post.save(update_fields=['upvotes'])
 
-        # Check if this post has already earned credits
         has_earned_credits = CreditTransaction.objects.filter(
             user=user,
-            amount=1,  # Specific to upvote credits
+            amount=1,
             description__contains=f"upvote on post {post.id}"
         ).exists()
 
-        if not has_earned_credits and post.upvotes == 1:  # Only award on first upvote
-            credits = user.get_credits()  # Assuming this returns Credit instance
+        if not has_earned_credits and post.upvotes == 1:
+            logger.info(f"Awarding 1 credit to {user.username} for first upvote on post {post.id}")
+            credits = user.get_credits()
             credits.add_credits(1, description=f"Earned 1 credit for first upvote on post {post.id}")

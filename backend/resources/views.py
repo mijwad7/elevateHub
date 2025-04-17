@@ -6,6 +6,13 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from django.shortcuts import get_object_or_404
 from .models import Resource, ResourceVote, ResourceDownload, ResourceFile
 from .serializers import ResourceSerializer
+import logging
+import zipfile
+import io
+from django.http import StreamingHttpResponse
+from urllib.parse import quote
+
+logger = logging.getLogger(__name__)
 
 class ResourceListCreateView(generics.ListCreateAPIView):
     """
@@ -20,6 +27,7 @@ class ResourceListCreateView(generics.ListCreateAPIView):
     ordering = ['-created_at']
 
     def get_queryset(self):
+        logger.info(f"Retrieving resources with filters: category={self.request.query_params.get('category')}, file_type={self.request.query_params.get('file_type')}")
         queryset = Resource.objects.all()
         category_id = self.request.query_params.get('category')
         if category_id:
@@ -31,6 +39,7 @@ class ResourceListCreateView(generics.ListCreateAPIView):
         return queryset
 
     def perform_create(self, serializer):
+        logger.info(f"Creating new resource for user {self.request.user.username}")
         # Save the resource
         resource = serializer.save(uploaded_by=self.request.user)
         # Handle multiple file uploads
@@ -38,6 +47,7 @@ class ResourceListCreateView(generics.ListCreateAPIView):
         for file in files:
             file_type = file.content_type.split('/')[0]  # e.g., "image", "video", "application"
             ResourceFile.objects.create(resource=resource, file=file, file_type=file_type)
+            logger.info(f"Added file {file.name} of type {file_type} to resource {resource.id}")
 
 class ResourceDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
@@ -54,6 +64,7 @@ def toggle_vote(request, resource_id):
     Toggle upvote for a resource.
     """
     resource = get_object_or_404(Resource, id=resource_id)
+    logger.info(f"User {request.user.username} toggling vote on resource {resource_id}")
     vote, created = ResourceVote.objects.get_or_create(user=request.user, resource=resource)
     if not created:  # If upvote exists, remove it
         vote.delete()
@@ -64,11 +75,6 @@ def toggle_vote(request, resource_id):
         message = "Upvote added"  # Increment handled by signal
     return Response({"message": message, "upvotes": resource.upvotes}, status=status.HTTP_200_OK)
 
-import zipfile
-import io
-from django.http import StreamingHttpResponse
-from urllib.parse import quote
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def download_resource(request, resource_id):
@@ -76,6 +82,7 @@ def download_resource(request, resource_id):
     Download all files of a resource as a ZIP archive and record a single download event.
     """
     resource = get_object_or_404(Resource, id=resource_id)
+    logger.info(f"User {request.user.username} downloading resource {resource_id}")
     
     # Record the download (triggers credit awarding via signal)
     ResourceDownload.objects.get_or_create(user=request.user, resource=resource)
@@ -84,6 +91,7 @@ def download_resource(request, resource_id):
     files = resource.files.all()
     
     if not files:
+        logger.warning(f"No files found for resource {resource_id}")
         return Response({"error": "No files available for this resource"}, status=status.HTTP_400_BAD_REQUEST)
     
     # Create an in-memory ZIP file
@@ -93,6 +101,7 @@ def download_resource(request, resource_id):
             # Read the file content
             file_path = resource_file.file.path
             file_name = resource_file.file.name.split('/')[-1]  # Extract filename
+            logger.info(f"Adding file {file_name} to zip for resource {resource_id}")
             with open(file_path, 'rb') as f:
                 zip_file.writestr(file_name, f.read())
     

@@ -7,6 +7,9 @@ from django.shortcuts import get_object_or_404
 from .models import Discussion, DiscussionPost, DiscussionPostUpvote, Category
 from .serializers import DiscussionSerializer, DiscussionPostSerializer, CategorySerializer
 from rest_framework.filters import SearchFilter, OrderingFilter
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CategoryListView(generics.ListAPIView):
     queryset = Category.objects.all()
@@ -21,6 +24,7 @@ class DiscussionListCreateView(generics.ListCreateAPIView):
     ordering = ['-created_at']
 
     def get_queryset(self):
+        logger.info(f"Retrieving discussions with category filter: {self.request.query_params.get('category')}")
         queryset = Discussion.objects.all()
         category_id = self.request.query_params.get('category')
         if category_id:
@@ -28,6 +32,7 @@ class DiscussionListCreateView(generics.ListCreateAPIView):
         return queryset
 
     def perform_create(self, serializer):
+        logger.info(f"Creating new discussion for user {self.request.user.username}")
         serializer.save(created_by=self.request.user)
 
 class DiscussionDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -41,11 +46,13 @@ class DiscussionPostListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         discussion_id = self.kwargs.get('discussion_id')
+        logger.info(f"Retrieving posts for discussion {discussion_id}")
         return DiscussionPost.objects.filter(discussion_id=discussion_id).order_by('-created_at')
 
     def perform_create(self, serializer):
         discussion_id = self.kwargs.get("discussion_id")
         discussion = get_object_or_404(Discussion, id=discussion_id)
+        logger.info(f"User {self.request.user.username} creating post in discussion {discussion_id}")
         serializer.save(user=self.request.user, discussion=discussion)
 
 class DiscussionPostDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -57,14 +64,16 @@ class DiscussionPostDetailView(generics.RetrieveUpdateDestroyAPIView):
 def toggle_upvote(request, post_id):
     try:
         post = DiscussionPost.objects.get(id=post_id)
+        logger.info(f"User {request.user.username} toggling upvote on post {post_id}")
         upvote, created = DiscussionPostUpvote.objects.get_or_create(user=request.user, post=post)
-        if not created:  # If upvote exists, remove it
+        if not created:
             upvote.delete()
-            post.upvotes -= 1  # Decrement only on removal
+            post.upvotes -= 1
             post.save()
             message = "Upvote removed"
         else:
-            message = "Upvote added"  # Increment handled by signal
+            message = "Upvote added"
         return Response({"message": message, "upvotes": post.upvotes}, status=status.HTTP_200_OK)
     except DiscussionPost.DoesNotExist:
+        logger.warning(f"Attempted to upvote non-existent post {post_id}")
         return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)

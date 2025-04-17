@@ -85,6 +85,7 @@ class VideoCall(models.Model):
     is_active = models.BooleanField(default=True)
 
     def end_call(self):
+        logger.info(f"Ending video call for help request {self.help_request.title} between {self.requester.username} and {self.helper.username}")
         self.is_active = False
         self.ended_at = timezone.now()
         self.save(update_fields=['is_active', 'ended_at'])
@@ -113,7 +114,7 @@ class Notification(models.Model):
 @receiver(post_save, sender=Notification)
 def send_notification(sender, instance, created, **kwargs):
     if created:
-        logger.info(f"Notification created: {instance.id} - {instance.message}")
+        logger.info(f"Creating notification for user {instance.user.username}: {instance.message}")
         channel_layer = get_channel_layer()
         notification_data = {
             'id': instance.id,
@@ -124,7 +125,6 @@ def send_notification(sender, instance, created, **kwargs):
             'link': instance.link
         }
 
-        # Add callId for video_call_started
         if instance.notification_type == 'video_call_started':
             try:
                 video_call = VideoCall.objects.filter(
@@ -139,7 +139,6 @@ def send_notification(sender, instance, created, **kwargs):
 
         logger.info(f"Sending notification to user {instance.user.id}: {notification_data}")
         
-        # Send to user-specific group
         async_to_sync(channel_layer.group_send)(
             f'notifications_{instance.user.id}',
             {

@@ -4,6 +4,9 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from credits.models import CreditTransaction
 from api.models import Category
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Resource(models.Model):
     title = models.CharField(max_length=255)
@@ -52,14 +55,15 @@ def award_credits_on_download(sender, instance, created, **kwargs):
     if created:
         resource = instance.resource
         user = resource.uploaded_by
+        logger.info(f"Processing download of resource {resource.title} by user {instance.user.username}")
 
-        # Check if this user has already earned credits for this download
         has_earned_credits = CreditTransaction.objects.filter(
             user=user,
             description=f"Earned 5 credits for first download of {resource.title}",
         ).exists()
 
         if not has_earned_credits:
+            logger.info(f"Awarding 5 credits to {user.username} for first download of {resource.title}")
             resource.download_count += 1
             resource.save()
             user.get_credits().add_credits(5, f"Earned 5 credits for first download of {resource.title}")
@@ -72,14 +76,15 @@ def award_credits_on_upvote(sender, instance, created, **kwargs):
     if created:  # Only on new upvotes
         resource = instance.resource
         user = resource.uploaded_by
+        logger.info(f"Processing upvote on resource {resource.title} by user {instance.user.username}")
 
-        # Check if this user has already earned credits for this upvote
         has_earned_credits = CreditTransaction.objects.filter(
             user=user,
             description=f"Earned 1 credit for first upvote on {resource.title}"
         ).exists()
 
         if not has_earned_credits:
+            logger.info(f"Awarding 1 credit to {user.username} for first upvote on {resource.title}")
             resource.upvotes += 1
             resource.save()
             user.get_credits().add_credits(1, f"Earned 1 credit for first upvote on {resource.title}")

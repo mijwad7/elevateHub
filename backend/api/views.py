@@ -27,8 +27,10 @@ from django.core.mail import send_mail
 from django.conf import settings
 import os
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
+import logging
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
@@ -62,9 +64,11 @@ def create_session(request):
         user, _ = jwt_auth.authenticate(request)
         if user:
             login(request, user)  # Create session
+            logger.info(f"Session created for user {user.username}")  # Log session creation
             return Response({"message": "Session created"}, status=200)
         return Response({"error": "Invalid token"}, status=401)
     except Exception as e:
+        logger.error(f"Session creation failed: {str(e)}")  # Log error
         return Response({"error": str(e)}, status=401)
 
 @api_view(['POST'])
@@ -78,6 +82,10 @@ class CreateUserView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
+
+    def perform_create(self, serializer):
+        user = serializer.save()
+        logger.info(f"User created: {user.username}")  # Log user creation
 
 class UserListView(generics.ListAPIView):
     queryset = CustomUser.objects.all()
@@ -337,6 +345,7 @@ class UserUpdateView(APIView):
         try:
             # Ensure the user can only update their own profile
             if str(request.user.id) != str(user_id):
+                logger.warning(f"Unauthorized update attempt by user {request.user.username} on user {user_id}")  # Log warning
                 return Response(
                     {"error": "You can only update your own profile"},
                     status=status.HTTP_403_FORBIDDEN
@@ -345,6 +354,7 @@ class UserUpdateView(APIView):
             try:
                 user = CustomUser.objects.get(id=user_id)
             except CustomUser.DoesNotExist:
+                logger.error(f"User not found for update: {user_id}")  # Log error
                 return Response(
                     {"error": "User not found"},
                     status=status.HTTP_404_NOT_FOUND
@@ -353,12 +363,13 @@ class UserUpdateView(APIView):
             # Update user data
             serializer = UserSerializer(user, data=request.data, partial=True)
             if serializer.is_valid():
-                # Only update the fields that were provided
                 updated_user = serializer.save()
+                logger.info(f"User updated: {updated_user.username}")  # Log user update
                 return Response(UserSerializer(updated_user).data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
+            logger.error(f"Error updating user {user_id}: {str(e)}")  # Log error
             return Response(
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

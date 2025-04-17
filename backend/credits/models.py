@@ -8,6 +8,9 @@ from django.dispatch import receiver
 from projects.models import Notification
 from django.utils import timezone
 from datetime import timedelta
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Credit(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='credits')
@@ -17,6 +20,7 @@ class Credit(models.Model):
         return f"{self.user.username}: {self.balance} credits"
 
     def add_credits(self, amount, description="Earned credits"):
+        logger.info(f"Adding {amount} credits to user {self.user.username}: {description}")
         self.balance += amount
         self.save()
         transaction = CreditTransaction.objects.create(user=self.user, amount=amount, description=description)
@@ -24,10 +28,12 @@ class Credit(models.Model):
 
     def spend_credits(self, amount, description="Spent credits"):
         if amount <= self.balance:
+            logger.info(f"Spending {amount} credits from user {self.user.username}: {description}")
             self.balance -= amount
             self.save()
             transaction = CreditTransaction.objects.create(user=self.user, amount=-amount, description=description)
             return transaction
+        logger.warning(f"Failed to spend {amount} credits from user {self.user.username}: Insufficient balance")
         return False
 
     def _send_notification(self, type, amount, description, skip_signal=False):
@@ -76,6 +82,7 @@ class CreditTransaction(models.Model):
 @receiver(post_save, sender=CreditTransaction)
 def transaction_created(sender, instance, created, **kwargs):
     if created:  # Only on new transactions
+        logger.info(f"New credit transaction created for user {instance.user.username}: {instance.amount} credits")
         type = 'credit_added' if instance.amount > 0 else 'credit_spent'
         notification_message = f"{'Earned' if instance.amount > 0 else 'Spent'} {abs(instance.amount)} credits: {instance.description}"
 
