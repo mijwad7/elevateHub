@@ -1,4 +1,3 @@
-// src/components/VideoCall.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { Button } from 'react-bootstrap';

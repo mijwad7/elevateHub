@@ -78,7 +78,6 @@ export const toggleCommentUpvote = async (requestId, commentId) => {
     }
 };
 
-// src/apiRequests/helpRequestsApi.js
 export const startChat = async (requestId) => {
     try {
         const response = await api.post(`api/help-requests/${requestId}/start-chat/`);
