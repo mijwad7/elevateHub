@@ -162,7 +162,7 @@ const ChatHelp = () => {
                             style={{ maxWidth: "100%", maxHeight: "200px" }}
                           />
                         )}
-                        <small className="text-muted">
+                        <small className="text-white">
                           {new Date(msg.timestamp).toLocaleTimeString([], {
                             hour: "2-digit",
                             minute: "2-digit",
