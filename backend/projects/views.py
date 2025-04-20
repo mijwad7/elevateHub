@@ -1,26 +1,37 @@
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status, viewsets
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.filters import SearchFilter, OrderingFilter
 from django.shortcuts import get_object_or_404
-from .models import HelpRequest, HelpComment, HelpCommentUpvote, ChatSession, VideoCall, Notification
+from django.db.models import Q
+from django.conf import settings
+from django.utils import timezone
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+from .models import (
+    HelpRequest,
+    HelpComment,
+    HelpCommentUpvote,
+    ChatSession,
+    VideoCall,
+    Notification
+)
 from .serializers import (
     HelpRequestSerializer,
     HelpCommentSerializer,
     ChatSessionSerializer,
-    NotificationSerializer
+    NotificationSerializer,
+    CategorySerializer
 )
-from rest_framework.filters import SearchFilter, OrderingFilter
 from api.models import Category
-from .serializers import CategorySerializer
+from api.serializers import UserSerializer
 from credits.models import CreditTransaction
-from rest_framework.views import APIView
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
-from rest_framework import viewsets
-from rest_framework.decorators import action
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class CategoryListView(generics.ListAPIView):
@@ -131,16 +142,18 @@ def end_chat(request, chat_id):
         amount=credits,
         description=f"Earned from chat help on {chat_session.help_request.title}",
     )
+
+    # Notify all participants via WebSocket
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"chat_{chat_id}",
+        {
+            'type': 'chat_ended',
+            'message': {'status': 'chat_ended'}
+        }
+    )
+
     return Response({"detail": "Chat ended"}, status=status.HTTP_200_OK)
-
-
-# projects/views.py
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from .models import ChatSession
-from django.db.models import Q
-from api.serializers import UserSerializer  # Assuming you have this
 
 
 @api_view(["GET"])
@@ -173,19 +186,6 @@ def active_chats(request):
 
     return Response(data)
 
-# projects/views.py
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from .models import HelpRequest, VideoCall, Notification
-from django.conf import settings
-from django.utils import timezone
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
-
-import logging
-
-logger = logging.getLogger(__name__)
 
 class StartVideoCall(APIView):
     permission_classes = [IsAuthenticated]

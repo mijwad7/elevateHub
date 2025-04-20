@@ -13,7 +13,8 @@ const ChatHelp = () => {
   const [image, setImage] = useState(null);
   const [ws, setWs] = useState(null);
   const [isConnecting, setIsConnecting] = useState(true);
-  const [error, setError] = useState(null); // Changed to null
+  const [error, setError] = useState(null);
+  const [isChatEnded, setIsChatEnded] = useState(false);
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
 
@@ -40,6 +41,10 @@ const ChatHelp = () => {
 
       websocket.onmessage = (e) => {
         const data = JSON.parse(e.data);
+        if (data.type === 'chat_ended') {
+          setIsChatEnded(true);
+          return;
+        }
         if (data.content || data.image_url) {
           setMessages((prev) => {
             if (prev.some((msg) => msg.id === data.id)) return prev;
@@ -57,7 +62,7 @@ const ChatHelp = () => {
       websocket.onclose = (e) => {
         console.log("WebSocket closed with code:", e.code);
         setIsConnecting(false);
-        if (e.code !== 1000 && !error) {
+        if (e.code !== 1000 && !error && !isChatEnded) {
           setError("Unable to connect to chat. You may not have permission to access this chat or the chat may have ended.");
         }
       };
@@ -68,6 +73,7 @@ const ChatHelp = () => {
     setIsConnecting(true);
     setError(null);
     setMessages([]);
+    setIsChatEnded(false);
     
     const websocket = connectWebSocket();
     return () => {
@@ -150,7 +156,7 @@ const ChatHelp = () => {
         )}
 
         {/* Error State */}
-        {!isConnecting && error && (
+        {!isConnecting && error && !isChatEnded && (
           <div className="text-center">
             <Alert variant="danger" dismissible onClose={() => setError(null)}>
               {error}
@@ -166,7 +172,7 @@ const ChatHelp = () => {
         )}
 
         {/* Chat Interface */}
-        {!isConnecting && !error && (
+        {!isConnecting && !error && !isChatEnded && (
           <>
             <div
               className="card border-0 shadow-sm chat-card mb-4"
@@ -265,6 +271,22 @@ const ChatHelp = () => {
               End Chat
             </Button>
           </>
+        )}
+
+        {/* Chat Ended State */}
+        {isChatEnded && (
+          <div className="text-center">
+            <Alert variant="info">
+              This chat has been ended. You can no longer send messages.
+            </Alert>
+            <Button
+              variant="primary"
+              className="rounded-3 px-4"
+              onClick={() => navigate("/help-requests")}
+            >
+              Go Back to Help Requests
+            </Button>
+          </div>
         )}
       </div>
     </>

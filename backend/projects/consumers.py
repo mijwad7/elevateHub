@@ -151,6 +151,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
             logger.info(f"Broadcasting to {self.channel_name}: {message_data}")
             await self.send(text_data=json.dumps(message_data))
 
+    async def chat_ended(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'chat_ended',
+            'message': event['message']
+        }))
+        await self.close(code=1000, reason="Chat ended by other participant")
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
