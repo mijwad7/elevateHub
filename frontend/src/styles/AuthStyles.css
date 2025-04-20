@@ -77,9 +77,7 @@
     transition: background-color 0.3s ease;
   }
   
-  .btn-outline-secondary:hover {
-    background-color: #f8f9fa;
-  }
+ 
   
   .google-btn {
     background: white;

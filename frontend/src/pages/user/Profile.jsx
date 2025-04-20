@@ -66,6 +66,7 @@ const Profile = () => {
     confirm_password: "",
   });
   const [passwordError, setPasswordError] = useState(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(null);
 
   // Validate authentication and redirect if needed
   useEffect(() => {
@@ -496,10 +497,11 @@ const Profile = () => {
     }
   };
 
-  // Add this function after the handleEditSubmit function
+  // Update the handlePasswordChange function
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     setPasswordError(null);
+    setPasswordSuccess(null);
 
     if (passwordData.new_password !== passwordData.confirm_password) {
       setPasswordError("New passwords do not match");
@@ -518,13 +520,21 @@ const Profile = () => {
       );
 
       if (response.data.message) {
+        setPasswordSuccess("Password changed successfully!");
         toast.success("Password changed successfully!");
-        setIsChangingPassword(false);
+        
+        // Clear the form but keep it visible
         setPasswordData({
           current_password: "",
           new_password: "",
           confirm_password: "",
         });
+
+        // Hide the form after 2 seconds
+        setTimeout(() => {
+          setIsChangingPassword(false);
+          setPasswordSuccess(null);
+        }, 2000);
       }
     } catch (error) {
       console.error("Error changing password:", error);
@@ -780,8 +790,15 @@ const Profile = () => {
                                 Edit Profile
                               </button>
                               <button
+                              onClick={() => setIsChangingPassword(true)}
+                              className="btn btn-outline-primary"
+                            >
+                              <i className="bi bi-shield-lock me-2"></i>
+                              Change Password
+                            </button>
+                              <button
                                 onClick={handleLogout}
-                                className="btn btn-link text-danger p-0 d-flex align-items-center"
+                                className="btn btn-outline-danger d-flex align-items-center"
                               >
                                 <FaSignOutAlt className="me-2" />
                                 Logout
@@ -789,64 +806,15 @@ const Profile = () => {
                             </div>
                           )}
                           {isChangingPassword ? (
-                            <form onSubmit={handlePasswordChange} className="mb-3">
-                              <div className="mb-3">
-                                <label htmlFor="current_password" className="form-label">
-                                  Current Password
-                                </label>
-                                <input
-                                  type="password"
-                                  className="form-control"
-                                  id="current_password"
-                                  value={passwordData.current_password}
-                                  onChange={(e) =>
-                                    setPasswordData({ ...passwordData, current_password: e.target.value })
-                                  }
-                                  required
-                                />
-                              </div>
-                              <div className="mb-3">
-                                <label htmlFor="new_password" className="form-label">
-                                  New Password
-                                </label>
-                                <input
-                                  type="password"
-                                  className="form-control"
-                                  id="new_password"
-                                  value={passwordData.new_password}
-                                  onChange={(e) =>
-                                    setPasswordData({ ...passwordData, new_password: e.target.value })
-                                  }
-                                  required
-                                />
-                              </div>
-                              <div className="mb-3">
-                                <label htmlFor="confirm_password" className="form-label">
-                                  Confirm New Password
-                                </label>
-                                <input
-                                  type="password"
-                                  className="form-control"
-                                  id="confirm_password"
-                                  value={passwordData.confirm_password}
-                                  onChange={(e) =>
-                                    setPasswordData({ ...passwordData, confirm_password: e.target.value })
-                                  }
-                                  required
-                                />
-                              </div>
-                              {passwordError && (
-                                <div className="alert alert-danger" role="alert">
-                                  {passwordError}
-                                </div>
-                              )}
-                              <div className="d-flex gap-2">
-                                <button type="submit" className="btn btn-primary">
+                            <div className="card shadow-sm mt-4">
+                              <div className="card-header bg-primary bg-opacity-10 d-flex justify-content-between align-items-center">
+                                <h5 className="card-title mb-0">
+                                  <i className="bi bi-shield-lock me-2"></i>
                                   Change Password
-                                </button>
+                                </h5>
                                 <button
                                   type="button"
-                                  className="btn btn-outline-secondary"
+                                  className="btn-close"
                                   onClick={() => {
                                     setIsChangingPassword(false);
                                     setPasswordData({
@@ -855,20 +823,114 @@ const Profile = () => {
                                       confirm_password: "",
                                     });
                                     setPasswordError(null);
+                                    setPasswordSuccess(null);
                                   }}
-                                >
-                                  Cancel
-                                </button>
+                                ></button>
                               </div>
-                            </form>
+                              <div className="card-body">
+                                <form onSubmit={handlePasswordChange}>
+                                  <div className="row g-4">
+                                    <div className="col-12">
+                                      <div className="form-floating">
+                                        <input
+                                          type="password"
+                                          className="form-control"
+                                          id="current_password"
+                                          value={passwordData.current_password}
+                                          onChange={(e) =>
+                                            setPasswordData({ ...passwordData, current_password: e.target.value })
+                                          }
+                                          required
+                                          placeholder="Enter your current password"
+                                        />
+                                        <label htmlFor="current_password">
+                                          <i className="bi bi-key me-2"></i>
+                                          Current Password
+                                        </label>
+                                      </div>
+                                    </div>
+                                    <div className="col-12">
+                                      <div className="form-floating">
+                                        <input
+                                          type="password"
+                                          className="form-control"
+                                          id="new_password"
+                                          value={passwordData.new_password}
+                                          onChange={(e) =>
+                                            setPasswordData({ ...passwordData, new_password: e.target.value })
+                                          }
+                                          required
+                                          placeholder="Enter your new password"
+                                        />
+                                        <label htmlFor="new_password">
+                                          <i className="bi bi-lock me-2"></i>
+                                          New Password
+                                        </label>
+                                      </div>
+                                    </div>
+                                    <div className="col-12">
+                                      <div className="form-floating">
+                                        <input
+                                          type="password"
+                                          className="form-control"
+                                          id="confirm_password"
+                                          value={passwordData.confirm_password}
+                                          onChange={(e) =>
+                                            setPasswordData({ ...passwordData, confirm_password: e.target.value })
+                                          }
+                                          required
+                                          placeholder="Confirm your new password"
+                                        />
+                                        <label htmlFor="confirm_password">
+                                          <i className="bi bi-lock-fill me-2"></i>
+                                          Confirm New Password
+                                        </label>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {passwordError && (
+                                    <div className="alert alert-danger mt-4 d-flex align-items-center" role="alert">
+                                      <i className="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                                      <div>{passwordError}</div>
+                                    </div>
+                                  )}
+
+                                  {passwordSuccess && (
+                                    <div className="alert alert-success mt-4 d-flex align-items-center" role="alert">
+                                      <i className="bi bi-check-circle-fill me-2 fs-5"></i>
+                                      <div>{passwordSuccess}</div>
+                                    </div>
+                                  )}
+
+                                  <div className="d-flex gap-3 mt-4">
+                                    <button type="submit" className="btn btn-primary flex-grow-1">
+                                      <i className="bi bi-check-lg me-2"></i>
+                                      Update Password
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="btn btn-outline-secondary"
+                                      onClick={() => {
+                                        setIsChangingPassword(false);
+                                        setPasswordData({
+                                          current_password: "",
+                                          new_password: "",
+                                          confirm_password: "",
+                                        });
+                                        setPasswordError(null);
+                                        setPasswordSuccess(null);
+                                      }}
+                                    >
+                                      <i className="bi bi-x-lg me-2"></i>
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </form>
+                              </div>
+                            </div>
                           ) : (
-                            <button
-                              onClick={() => setIsChangingPassword(true)}
-                              className="btn btn-outline-primary mb-3"
-                            >
-                              <i className="bi bi-key me-2"></i>
-                              Change Password
-                            </button>
+                            <></>
                           )}
                         </div>
 
