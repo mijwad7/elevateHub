@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { Button } from 'react-bootstrap';
-import { FaVideoSlash } from 'react-icons/fa';
+import { FaVideoSlash, FaMicrophone, FaMicrophoneSlash, FaVideo } from 'react-icons/fa';
 import { ACCESS_TOKEN } from '../constants';
 import axios from 'axios';
 
@@ -17,6 +17,8 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
     const isRemoteDescriptionSet = useRef(false);
     const [isAudioEnabled, setIsAudioEnabled] = useState(true);
     const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+    const [isRemoteAudioEnabled, setIsRemoteAudioEnabled] = useState(true);
+    const [isRemoteVideoEnabled, setIsRemoteVideoEnabled] = useState(true);
 
     useEffect(() => {
         if (!isAuthenticated) return;
@@ -45,6 +47,11 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
                 console.log("Remote track received:", event.streams[0], "Track:", event.track);
                 remoteVideoRef.current.srcObject = event.streams[0];
                 setConnectionState('connected');
+                // Initialize remote track states
+                const audioTrack = event.streams[0].getAudioTracks()[0];
+                const videoTrack = event.streams[0].getVideoTracks()[0];
+                if (audioTrack) setIsRemoteAudioEnabled(audioTrack.enabled);
+                if (videoTrack) setIsRemoteVideoEnabled(videoTrack.enabled);
             };
 
             pcRef.current.onicecandidate = (event) => {
@@ -111,6 +118,13 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
                 } else if (data.type === 'candidate') {
                     console.log("Queuing candidate (remote description not set):", data.candidate);
                     candidateQueue.current.push(data.candidate);
+                } else if (data.type === 'track_status') {
+                    console.log("Received track status update:", data);
+                    if (data.trackType === 'audio') {
+                        setIsRemoteAudioEnabled(data.enabled);
+                    } else if (data.trackType === 'video') {
+                        setIsRemoteVideoEnabled(data.enabled);
+                    }
                 }
             };
 
@@ -165,7 +179,17 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
         audioTracks.forEach(track => {
             track.enabled = !track.enabled;
         });
-        setIsAudioEnabled(prev => !prev);
+        setIsAudioEnabled(prev => {
+            const newState = !prev;
+            if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                wsRef.current.send(JSON.stringify({
+                    type: 'track_status',
+                    trackType: 'audio',
+                    enabled: newState
+                }));
+            }
+            return newState;
+        });
     };
 
     const toggleVideo = () => {
@@ -173,7 +197,17 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
         videoTracks.forEach(track => {
             track.enabled = !track.enabled;
         });
-        setIsVideoEnabled(prev => !prev);
+        setIsVideoEnabled(prev => {
+            const newState = !prev;
+            if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                wsRef.current.send(JSON.stringify({
+                    type: 'track_status',
+                    trackType: 'video',
+                    enabled: newState
+                }));
+            }
+            return newState;
+        });
     };
 
     if (!isCallActive) return null;
@@ -181,8 +215,39 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
     return (
         <div className="video-call-container d-flex flex-column justify-content-center align-items-center" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', zIndex: 1000 }}>
             <div className="d-flex justify-content-center align-items-center mb-3">
-                <video ref={localVideoRef} autoPlay muted className="rounded border border-light" style={{ width: '500px', margin: '10px' }} />
-                <video ref={remoteVideoRef} autoPlay className="rounded border border-light" style={{ width: '500px', margin: '10px' }} />
+                <div className="video-container position-relative">
+                    <video
+                        ref={localVideoRef}
+                        autoPlay
+                        muted
+                        className="rounded border border-light"
+                        style={{ width: '500px', margin: '10px' }}
+                    />
+                    <div className="icon-overlay position-absolute top-0 end-0 p-2 d-flex flex-column">
+                        {!isAudioEnabled && (
+                            <FaMicrophoneSlash size={24} color="white" className="mb-2" title="Audio Muted" />
+                        )}
+                        {!isVideoEnabled && (
+                            <FaVideoSlash size={24} color="white" title="Video Disabled" />
+                        )}
+                    </div>
+                </div>
+                <div className="video-container position-relative">
+                    <video
+                        ref={remoteVideoRef}
+                        autoPlay
+                        className="rounded border border-light"
+                        style={{ width: '500px', margin: '10px' }}
+                    />
+                    <div className="icon-overlay position-absolute top-0 end-0 p-2 d-flex flex-column">
+                        {!isRemoteAudioEnabled && (
+                            <FaMicrophoneSlash size={24} color="white" className="mb-2" title="Remote Audio Muted" />
+                        )}
+                        {!isRemoteVideoEnabled && (
+                            <FaVideoSlash size={24} color="white" title="Remote Video Disabled" />
+                        )}
+                    </div>
+                </div>
             </div>
             <div className="button-group" style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)' }}>
                 <Button variant="danger" onClick={handleEndCall} className="mx-2">
@@ -200,4 +265,3 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
 };
 
 export default VideoCall;
-

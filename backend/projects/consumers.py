@@ -273,7 +273,7 @@ class VideoCallConsumer(AsyncWebsocketConsumer):
         try:
             data = json.loads(text_data)
             message_type = data.get('type')
-            if message_type in ['offer', 'answer', 'candidate']:
+            if message_type in ['offer', 'answer', 'candidate', 'track_status']:
                 await self.channel_layer.group_send(
                     self.group_name,
                     {'type': 'video_message', 'message': data}
