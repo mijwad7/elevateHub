@@ -48,50 +48,6 @@ ElevateHub is built to make sure **no one has to learn alone**. It brings people
 - Node.js 14+
 - Redis
 
-### Environment Configuration
-
-Create `.env` files in both backend and frontend directories with the following configurations:
-
-#### Backend (.env)
-```bash
-# Django settings
-DEBUG=True
-SECRET_KEY=your-secret-key-here
-ALLOWED_HOSTS=localhost,127.0.0.1
-
-# Database settings
-DATABASE_URL=postgres://user:password@localhost:5432/elevatehub
-
-# Redis settings (for WebSocket)
-REDIS_URL=redis://localhost:6379/0
-
-# Email settings
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_HOST_USER=your-email@gmail.com
-EMAIL_HOST_PASSWORD=your-app-password
-EMAIL_USE_TLS=True
-
-# WebRTC settings
-WEBRTC_STUN_SERVER=stun:stun.l.google.com:19302
-WEBRTC_TURN_SERVER=turn:your-turn-server.com:3478
-WEBRTC_TURN_USERNAME=your-turn-username
-WEBRTC_TURN_CREDENTIAL=your-turn-password
-```
-
-#### Frontend (.env)
-```bash
-# API settings
-VITE_API_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000
-
-# WebRTC settings
-VITE_WEBRTC_STUN_SERVER=stun:stun.l.google.com:19302
-VITE_WEBRTC_TURN_SERVER=turn:your-turn-server.com:3478
-VITE_WEBRTC_TURN_USERNAME=your-turn-username
-VITE_WEBRTC_TURN_CREDENTIAL=your-turn-password
-```
-
 ### Backend Setup
 
 1. Create and activate a virtual environment:
@@ -137,6 +93,28 @@ cp .env.example .env
 3. Start the development server:
 ```bash
 npm run dev
+```
+
+### Environment Variables
+
+#### Backend (.env)
+```bash
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
+DEFAULT_FROM_EMAIL=your-email@gmail.com
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+```
+
+#### Frontend (.env)
+```bash
+VITE_API_URL=http://localhost:8000
+VITE_OAUTH_CLIENT_ID=your-oauth-client-id
+VITE_OAUTH_CLIENT_SECRET=your-oauth-client-secret
+VITE_GOOGLE_CLIENT_ID=your-google-client-id
 ```
 
 ## Project Structure
