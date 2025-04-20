@@ -161,8 +161,8 @@ const Navbar = () => {
             </li>
           </ul>
           {isAuthenticated ? (
-            <ul className="navbar-nav ms-auto align-items-center">
-              <li className="nav-item">
+            <ul className="navbar-nav ms-auto mb-2 mb-lg-0">
+              <li className="nav-item d-flex align-items-center">
                 <Dropdown>
                   <Dropdown.Toggle
                     variant="link"
@@ -208,16 +208,18 @@ const Navbar = () => {
                       filteredNotifications.map((notification) => (
                         <Dropdown.Item
                           key={notification.id}
-                          as="div" // Prevent <a> tag
+                          as="div"
                           className={`notification-item py-2 px-3 mb-1 rounded animate__animated animate__fadeInUp ${
                             !notification.is_read ? 'bg-light' : ''
                           }`}
                         >
                           <div className="d-flex justify-content-between align-items-start">
                             <div
-                              className={`notification-message ${expandedNotificationId === notification.id ? 'expanded' : ''}`}
+                              className={`notification-message ${
+                                expandedNotificationId === notification.id ? 'expanded' : ''
+                              }`}
                               onClick={(e) => {
-                                e.stopPropagation(); // Prevent dropdown from closing
+                                e.stopPropagation();
                                 toggleExpandNotification(notification.id);
                               }}
                             >
@@ -229,7 +231,7 @@ const Navbar = () => {
                                     className="text-primary me-2"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    onClick={(e) => e.stopPropagation()} // Prevent dropdown close
+                                    onClick={(e) => e.stopPropagation()}
                                   >
                                     View
                                   </a>
@@ -239,7 +241,7 @@ const Navbar = () => {
                                     variant="primary"
                                     size="sm"
                                     onClick={(e) => {
-                                      e.stopPropagation(); // Prevent expand and dropdown close
+                                      e.stopPropagation();
                                       handleJoinCall(notification.callId);
                                     }}
                                     disabled={!notification.callId}
@@ -255,7 +257,7 @@ const Navbar = () => {
                                 variant="link"
                                 size="sm"
                                 onClick={(e) => {
-                                  e.stopPropagation(); // Prevent dropdown close
+                                  e.stopPropagation();
                                   handleMarkAsRead(notification.id);
                                 }}
                                 className="text-muted p-0 btn-mark-read"
@@ -277,22 +279,24 @@ const Navbar = () => {
                   </Dropdown.Menu>
                 </Dropdown>
               </li>
-              <li className="nav-item ms-3">
-                <NavLink className="nav-link text-white" to="/profile"><FaUserCircle size={20} /></NavLink>
+              <li className="nav-item ms-lg-2  d-flex align-items-center">
+                <NavLink className="nav-link text-white" to="/profile">
+                  <FaUserCircle size={20} />
+                </NavLink>
               </li>
-              <li className="nav-item ms-3">
+              <li className="nav-item ms-lg-2 d-flex align-items-center">
                 <Button
                   variant="outline-light"
                   size="sm"
                   onClick={handleLogout}
-                  className="ms-2"
+                  className="ms-0 ms-lg-2"
                 >
-                  <FaSignOutAlt size={20} /> Logout
+                  <FaSignOutAlt className="me-1" /> Logout
                 </Button>
               </li>
             </ul>
           ) : (
-            <ul className="navbar-nav ms-auto">
+            <ul className="navbar-nav ms-auto mb-2 mb-lg-0">
               <li className="nav-item">
                 <NavLink className="nav-link btn btn-primary me-2" to="/login">
                   Login
@@ -307,7 +311,9 @@ const Navbar = () => {
           )}
         </div>
       </div>
-      {activeCallId && <VideoCall callId={activeCallId} isHelper={false} onEndCall={handleEndCall} />}
+      {activeCallId && (
+        <VideoCall callId={activeCallId} isHelper={false} onEndCall={handleEndCall} />
+      )}
     </nav>
   );
 };
