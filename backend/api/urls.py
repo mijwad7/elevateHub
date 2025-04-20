@@ -5,7 +5,7 @@ from .views import (
     PasswordResetRequestView, PasswordResetConfirmView, auth_status, LogoutView,
     GenerateOTPView, VerifyOTPView, UserUpdateView, create_session, get_csrf,
     user_contributions, edit_contribution, delete_contribution, logout_session,
-    user_help_requests, edit_help_request, delete_help_request
+    user_help_requests, edit_help_request, delete_help_request, ChangePasswordView
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.conf import settings
@@ -37,6 +37,7 @@ urlpatterns = [
     path('user/help-requests/', user_help_requests, name='user_help_requests'),
     path('help-requests/<int:help_request_id>/edit/', edit_help_request, name='edit_help_request'),
     path('help-requests/<int:help_request_id>/delete/', delete_help_request, name='delete_help_request'),
+    path('change-password/', ChangePasswordView.as_view(), name='change-password'),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

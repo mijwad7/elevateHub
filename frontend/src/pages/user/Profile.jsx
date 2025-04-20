@@ -59,6 +59,13 @@ const Profile = () => {
   const [helpRequestsLoading, setHelpRequestsLoading] = useState(true);
   const [helpRequestsError, setHelpRequestsError] = useState(null);
   const [deleteHelpRequestId, setDeleteHelpRequestId] = useState(null);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    current_password: "",
+    new_password: "",
+    confirm_password: "",
+  });
+  const [passwordError, setPasswordError] = useState(null);
 
   // Validate authentication and redirect if needed
   useEffect(() => {
@@ -489,6 +496,43 @@ const Profile = () => {
     }
   };
 
+  // Add this function after the handleEditSubmit function
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPasswordError(null);
+
+    if (passwordData.new_password !== passwordData.confirm_password) {
+      setPasswordError("New passwords do not match");
+      return;
+    }
+
+    try {
+      const config = await getAuthConfig();
+      const response = await api.put(
+        "/api/change-password/",
+        {
+          current_password: passwordData.current_password,
+          new_password: passwordData.new_password,
+        },
+        config
+      );
+
+      if (response.data.message) {
+        toast.success("Password changed successfully!");
+        setIsChangingPassword(false);
+        setPasswordData({
+          current_password: "",
+          new_password: "",
+          confirm_password: "",
+        });
+      }
+    } catch (error) {
+      console.error("Error changing password:", error);
+      setPasswordError(error.response?.data?.error || "Failed to change password");
+      toast.error(error.response?.data?.error || "Failed to change password");
+    }
+  };
+
   if (!isAuthenticated || !user) {
     return (
       <div className="d-flex justify-content-center align-items-center vh-100">
@@ -743,6 +787,88 @@ const Profile = () => {
                                 Logout
                               </button>
                             </div>
+                          )}
+                          {isChangingPassword ? (
+                            <form onSubmit={handlePasswordChange} className="mb-3">
+                              <div className="mb-3">
+                                <label htmlFor="current_password" className="form-label">
+                                  Current Password
+                                </label>
+                                <input
+                                  type="password"
+                                  className="form-control"
+                                  id="current_password"
+                                  value={passwordData.current_password}
+                                  onChange={(e) =>
+                                    setPasswordData({ ...passwordData, current_password: e.target.value })
+                                  }
+                                  required
+                                />
+                              </div>
+                              <div className="mb-3">
+                                <label htmlFor="new_password" className="form-label">
+                                  New Password
+                                </label>
+                                <input
+                                  type="password"
+                                  className="form-control"
+                                  id="new_password"
+                                  value={passwordData.new_password}
+                                  onChange={(e) =>
+                                    setPasswordData({ ...passwordData, new_password: e.target.value })
+                                  }
+                                  required
+                                />
+                              </div>
+                              <div className="mb-3">
+                                <label htmlFor="confirm_password" className="form-label">
+                                  Confirm New Password
+                                </label>
+                                <input
+                                  type="password"
+                                  className="form-control"
+                                  id="confirm_password"
+                                  value={passwordData.confirm_password}
+                                  onChange={(e) =>
+                                    setPasswordData({ ...passwordData, confirm_password: e.target.value })
+                                  }
+                                  required
+                                />
+                              </div>
+                              {passwordError && (
+                                <div className="alert alert-danger" role="alert">
+                                  {passwordError}
+                                </div>
+                              )}
+                              <div className="d-flex gap-2">
+                                <button type="submit" className="btn btn-primary">
+                                  Change Password
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn-outline-secondary"
+                                  onClick={() => {
+                                    setIsChangingPassword(false);
+                                    setPasswordData({
+                                      current_password: "",
+                                      new_password: "",
+                                      confirm_password: "",
+                                    });
+                                    setPasswordError(null);
+                                  }}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </form>
+                          ) : (
+                            <button
+                              onClick={() => setIsChangingPassword(true)}
+                              className="btn btn-outline-primary mb-3"
+                            >
+                              <i className="bi bi-key me-2"></i>
+                              Change Password
+                            </button>
                           )}
                         </div>
 
