@@ -10,10 +10,10 @@ const ChatHelp = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
-  const [image, setImage] = useState(null); // New state for image file
+  const [image, setImage] = useState(null);
   const [ws, setWs] = useState(null);
   const [isConnecting, setIsConnecting] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(null); // Changed to null
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
 
@@ -30,16 +30,17 @@ const ChatHelp = () => {
         wsUrl += `?token=${accessToken}`;
       }
       const websocket = new WebSocket(wsUrl);
-      
+
       websocket.onopen = () => {
+        console.log("WebSocket connected for chat:", chatId);
         setIsConnecting(false);
         setError(null);
+        setWs(websocket);
       };
 
       websocket.onmessage = (e) => {
         const data = JSON.parse(e.data);
         if (data.content || data.image_url) {
-          // Handle both text and images
           setMessages((prev) => {
             if (prev.some((msg) => msg.id === data.id)) return prev;
             return [...prev, data];
@@ -56,13 +57,18 @@ const ChatHelp = () => {
       websocket.onclose = (e) => {
         console.log("WebSocket closed with code:", e.code);
         setIsConnecting(false);
-        setError("Unable to connect to chat. You may not have permission to access this chat or the chat may have ended.");
+        if (e.code !== 1000 && !error) {
+          setError("Unable to connect to chat. You may not have permission to access this chat or the chat may have ended.");
+        }
       };
 
-      setWs(websocket);
       return websocket;
     };
 
+    setIsConnecting(true);
+    setError(null);
+    setMessages([]);
+    
     const websocket = connectWebSocket();
     return () => {
       if (websocket) websocket.close(1000, "Component unmounted");
@@ -84,7 +90,7 @@ const ChatHelp = () => {
     if (ws && ws.readyState === WebSocket.OPEN && image) {
       const reader = new FileReader();
       reader.onload = () => {
-        const base64Image = reader.result.split(",")[1]; // Remove "data:image/jpeg;base64,"
+        const base64Image = reader.result.split(",")[1];
         ws.send(JSON.stringify({ image: base64Image }));
         setImage(null);
       };
@@ -131,9 +137,9 @@ const ChatHelp = () => {
             border-radius: 0.5rem;
           }
         `}</style>
-  
+
         <h2 className="mb-4 text-center fw-semibold">Chat Help</h2>
-  
+
         {/* Loading State */}
         {isConnecting && (
           <div className="d-flex justify-content-center my-5">
@@ -142,27 +148,23 @@ const ChatHelp = () => {
             </div>
           </div>
         )}
-  
+
         {/* Error State */}
         {!isConnecting && error && (
           <div className="text-center">
-            <div className="alert alert-danger alert-dismissible fade show" role="alert">
+            <Alert variant="danger" dismissible onClose={() => setError(null)}>
               {error}
-              <button
-                type="button"
-                className="btn-close"
-                onClick={() => setError("")}
-              ></button>
-            </div>
-            <button
-              className="btn btn-primary rounded-3 px-4"
+            </Alert>
+            <Button
+              variant="primary"
+              className="rounded-3 px-4"
               onClick={() => navigate("/help-requests")}
             >
               Go Back to Help Requests
-            </button>
+            </Button>
           </div>
         )}
-  
+
         {/* Chat Interface */}
         {!isConnecting && !error && (
           <>
@@ -216,7 +218,7 @@ const ChatHelp = () => {
                 <div ref={messagesEndRef} />
               </div>
             </div>
-  
+
             <div className="input-group mb-3">
               <input
                 type="text"
@@ -226,17 +228,18 @@ const ChatHelp = () => {
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && sendMessage()}
               />
-              <button
-                className="btn btn-primary rounded-3"
+              <Button
+                variant="primary"
+                className="rounded-3"
                 onClick={sendMessage}
                 disabled={
                   !ws || ws.readyState !== WebSocket.OPEN || !message.trim()
                 }
               >
                 Send
-              </button>
+              </Button>
             </div>
-  
+
             <div className="mb-3">
               <input
                 type="file"
@@ -244,21 +247,23 @@ const ChatHelp = () => {
                 className="form-control rounded-3"
                 onChange={(e) => setImage(e.target.files[0])}
               />
-              <button
-                className="btn btn-secondary rounded-3 w-100 mt-2"
+              <Button
+                variant="secondary"
+                className="rounded-3 w-100 mt-2"
                 onClick={sendImage}
                 disabled={!ws || ws.readyState !== WebSocket.OPEN || !image}
               >
                 Send Image
-              </button>
+              </Button>
             </div>
-  
-            <button
-              className="btn btn-danger rounded-3 w-100"
+
+            <Button
+              variant="danger"
+              className="rounded-3 w-100"
               onClick={handleEndChat}
             >
               End Chat
-            </button>
+            </Button>
           </>
         )}
       </div>
