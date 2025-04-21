@@ -20,6 +20,10 @@ import Resources from "./pages/resources/Resources";
 import ResourceDetail from "./pages/resources/ResourceDetail";
 import UploadResource from "./pages/resources/UploadResource";
 import HelpRequests from "./pages/projects/HelpRequests";
+import SkillsLanding from './pages/skills/SkillsLanding';
+import SkillProfileForm from './pages/skills/SkillProfileForm';
+import MentorshipDetails from './pages/skills/MentorshipDetails';
+import MentorshipRequest from './pages/skills/MentorshipRequest';
 import ChatHelp from "./pages/projects/ChatHelp";
 import HelpRequestDetail from "./pages/projects/HelpRequestDetail";
 import ResetPassword from "./pages/auth/ResetPassword";
@@ -161,6 +165,10 @@ function App() {
             />
             <Route path="/resources" element={<Resources />} />
             <Route path="/resources/:id" element={<ResourceDetail />} />
+            <Route path="/skills" element={<SkillsLanding />} />
+            <Route path="/skills/profile" element={<SkillProfileForm />} />
+            <Route path="/mentorships/:id" element={<MentorshipDetails />} />
+            <Route path="/mentorships/request" element={<MentorshipRequest />} />
             <Route
               path="/admin"
               element={

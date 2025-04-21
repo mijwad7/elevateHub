@@ -19,7 +19,16 @@ logger = logging.getLogger(__name__)
 class SkillProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
+    def get(self, request, id=None):
+        if id is not None:
+            try:
+                profile = SkillProfile.objects.get(id=id)
+                serializer = SkillProfileSerializer(profile)
+                return Response(serializer.data)
+            except SkillProfile.DoesNotExist:
+                logger.error(f"SkillProfile {id} not found")
+                return Response({"error": "Skill profile not found"}, status=status.HTTP_404_NOT_FOUND)
+        
         skill = request.query_params.get('skill')
         is_mentor = request.query_params.get('is_mentor')
         profiles = SkillProfile.objects.all()

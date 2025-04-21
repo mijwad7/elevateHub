@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, NavLink } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { FaComments, FaFolderOpen, FaHandsHelping, FaBell, FaUserCircle, FaSignOutAlt } from 'react-icons/fa';
+import { FaComments, FaFolderOpen, FaHandsHelping, FaBell, FaUserCircle, FaSignOutAlt, FaBook } from 'react-icons/fa';
 import { logoutUser } from '../redux/authSlice';
 import { addNotification, fetchNotifications, markNotificationAsRead, markAllAsRead, clearNotifications } from '../redux/notificationSlice';
 import { Button, Badge, Dropdown, Spinner } from 'react-bootstrap';
@@ -157,6 +157,11 @@ const Navbar = () => {
             <li className="nav-item">
               <NavLink className="nav-link" to="/help-requests">
                 <FaHandsHelping className="me-1" /> Project Help
+              </NavLink>
+            </li>
+            <li className="nav-item">
+              <NavLink className="nav-link" to="/skills">
+                <FaBook className="me-1" /> Upskill
               </NavLink>
             </li>
           </ul>
