@@ -46,6 +46,22 @@ class SkillProfileView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class MentorshipView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id):
+        try:
+            mentorship = Mentorship.objects.get(id=id)
+            # Ensure the user is either the learner or mentor
+            if request.user not in [mentorship.learner, mentorship.mentor]:
+                logger.warning(f"User {request.user.username} unauthorized for mentorship {id}")
+                return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+            serializer = MentorshipSerializer(mentorship)
+            return Response(serializer.data)
+        except Mentorship.DoesNotExist:
+            logger.error(f"Mentorship {id} not found")
+            return Response({"error": "Mentorship not found"}, status=status.HTTP_404_NOT_FOUND)
+
 class MentorshipRequestView(APIView):
     permission_classes = [IsAuthenticated]
 
