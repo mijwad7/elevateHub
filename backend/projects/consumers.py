@@ -1,16 +1,15 @@
-# projects/consumers.py
+```python
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-import json
+from rest_framework_simplejwt.tokens import AccessToken
+from api.models import CustomUser
 from .models import ChatSession, ChatMessage, Notification
 from api.serializers import UserSerializer
+import json
 import logging
 import base64
 from django.core.files.base import ContentFile
 from django.conf import settings
-from rest_framework_simplejwt.tokens import AccessToken
-from django.contrib.auth import get_user_model
-from django.db import models
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +18,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.chat_id = self.scope['url_route']['kwargs']['chat_id']
         self.chat_group_name = f'chat_{self.chat_id}'
         try:
-            # Get chat session and user info in async context
             self.chat_session = await database_sync_to_async(ChatSession.objects.get)(id=self.chat_id, is_active=True)
             user = self.scope['user']
             
@@ -28,7 +26,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.close(code=4001, reason="Authentication required")
                 return
 
-            # Get helper and requester IDs in async context
             helper_id = await database_sync_to_async(lambda: self.chat_session.helper.id)()
             requester_id = await database_sync_to_async(lambda: self.chat_session.requester.id)()
 
@@ -68,7 +65,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         try:
             data = json.loads(text_data)
-            logger.info(f"Received data: {data}")  # Log incoming data for debugging
+            logger.info(f"Received data: {data}")
             message = data.get('message', '')
             image_base64 = data.get('image', '')
             sender = self.scope['user']
@@ -77,7 +74,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 logger.warning("Empty message received")
                 return
 
-            message_data = None  # Initialize message_data to None
+            message_data = None
 
             if message:
                 logger.info("Processing text message")
@@ -120,10 +117,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     'timestamp': chat_message.timestamp.isoformat()
                 }
 
-            # Only proceed if message_data was set (i.e., chat_message was successfully created)
             if message_data:
                 logger.info(f"Sending message_data: {message_data}")
-                # Broadcast to group (excluding sender)
                 await self.channel_layer.group_send(
                     self.chat_group_name,
                     {
@@ -132,7 +127,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         'sender_channel': self.channel_name
                     }
                 )
-                # Send to sender
                 await self.send(text_data=json.dumps(message_data))
             else:
                 logger.error("No message_data created; skipping send")
@@ -147,7 +141,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def chat_message(self, event):
         message_data = event['message']
         sender_channel = event.get('sender_channel')
-        if self.channel_name != sender_channel:  # Broadcast to others
+        if self.channel_name != sender_channel:
             logger.info(f"Broadcasting to {self.channel_name}: {message_data}")
             await self.send(text_data=json.dumps(message_data))
 
@@ -160,38 +154,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        query_string = self.scope['query_string'].decode()
+        token = dict(qc.split('=') for qc in query_string.split('&')).get('token', '')
         try:
-            # Get the token from query parameters
-            query_string = self.scope['query_string'].decode()
-            token = None
-            for param in query_string.split('&'):
-                if param.startswith('token='):
-                    token = param.split('=')[1]
-                    break
-
-            if not token:
-                logger.warning("No token provided in WebSocket connection")
-                await self.close(code=4001)
-                return
-
-            try:
-                # Verify the token and get the user
-                access_token = AccessToken(token)
-                user_id = access_token['user_id']
-                self.user = await database_sync_to_async(get_user_model().objects.get)(id=user_id)
-            except Exception as e:
-                logger.warning(f"JWT authentication failed: {str(e)}")
-                await self.close(code=4001)
-                return
-
-            # Add to both global and user-specific groups
-            self.group_name = f'notifications_{self.user.id}'
+            access_token = AccessToken(token)
+            user_id = access_token['user_id']
+            self.user = await database_sync_to_async(CustomUser.objects.get)(id=user_id)
+            self.group_name = f'notifications_{user_id}'
             await self.channel_layer.group_add('notifications', self.channel_name)
             await self.channel_layer.group_add(self.group_name, self.channel_name)
             await self.accept()
-            logger.info(f"WebSocket connection accepted for user {self.user.username}")
+            logger.info(f"NotificationConsumer connected for user {self.user.username}")
 
-            # Fetch notifications asynchronously
             notifications = await self.get_notifications()
             for notification in notifications:
                 await self.send(text_data=json.dumps({
@@ -205,38 +179,29 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                         'link': notification['link'] or None
                     }
                 }))
-
         except Exception as e:
-            logger.error(f"Error in WebSocket connection: {str(e)}")
-            await self.close(code=4000)
+            logger.error(f"NotificationConsumer connection failed: {str(e)}")
+            await self.close(code=4001, reason="Authentication failed")
 
     async def disconnect(self, close_code):
-        try:
-            if hasattr(self, 'group_name'):
-                await self.channel_layer.group_discard(self.group_name, self.channel_name)
+        if hasattr(self, 'group_name'):
             await self.channel_layer.group_discard('notifications', self.channel_name)
-            logger.info(f"WebSocket disconnected with code {close_code}")
-        except Exception as e:
-            logger.error(f"Error in WebSocket disconnect: {str(e)}")
+            await self.channel_layer.group_discard(self.group_name, self.channel_name)
+            logger.info(f"NotificationConsumer disconnected for user {self.user.username}, code: {close_code}")
 
     async def notification(self, event):
         try:
-            logger.debug(f"Received notification event: {event}")
             notification = event['notification']
-            
-            # Check if all required fields are present
             if not all(key in notification for key in ['id', 'message', 'is_read', 'created_at', 'notification_type']):
                 logger.error("Missing fields in notification data")
                 return
-            
-            # Send notification to WebSocket
             await self.send(text_data=json.dumps({
                 'type': 'notification',
                 'notification': notification
             }))
-            logger.debug("Notification sent to WebSocket client")
+            logger.info(f"Sent notification to user {self.user.username}: {notification['message']}")
         except Exception as e:
-            logger.error(f"Error handling notification: {str(e)}")
+            logger.error(f"Error sending notification: {str(e)}")
             await self.send(text_data=json.dumps({
                 'type': 'error',
                 'message': 'Error processing notification'
@@ -244,30 +209,30 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_notifications(self):
-        # Fetch queryset as list of dictionaries with formatted datetime
         return list(Notification.objects.filter(user=self.user).values(
             'id', 'message', 'is_read', 'created_at', 'notification_type', 'link'
-        ).annotate(
-            created_at_str=models.functions.Cast('created_at', output_field=models.CharField())
         ))
 
 class VideoCallConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        token = self.scope['query_string'].decode().split('token=')[1] if 'token=' in self.scope['query_string'].decode() else None
-        if not token or not await self.get_user_from_token(token):
+        query_string = self.scope['query_string'].decode()
+        token = dict(qc.split('=') for qc in query_string.split('&')).get('token', '')
+        try:
+            access_token = AccessToken(token)
+            self.user = await database_sync_to_async(CustomUser.objects.get)(id=access_token['user_id'])
+            self.call_id = self.scope['url_route']['kwargs']['call_id']
+            self.group_name = f"video_call_{self.call_id}"
+            await self.channel_layer.group_add(self.group_name, self.channel_name)
+            await self.accept()
+            logger.info(f"VideoCallConsumer connected for user {self.user.username}, call_id {self.call_id}")
+        except Exception as e:
+            logger.error(f"VideoCallConsumer connection failed: {str(e)}")
             await self.close(code=4001, reason="Invalid token")
-            return
-
-        self.call_id = self.scope['url_route']['kwargs']['call_id']
-        self.group_name = f"video_call_{self.call_id}"
-
-        await self.channel_layer.group_add(self.group_name, self.channel_name)
-        await self.accept()
-        logger.info(f"Connected to video call {self.call_id}: {self.channel_name}")
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(self.group_name, self.channel_name)
-        logger.info(f"Disconnected from video call {self.call_id}: {self.channel_name}")
+        if hasattr(self, 'group_name'):
+            await self.channel_layer.group_discard(self.group_name, self.channel_name)
+            logger.info(f"VideoCallConsumer disconnected for user {self.user.username}, call_id {self.call_id}")
 
     async def receive(self, text_data):
         try:
@@ -278,19 +243,28 @@ class VideoCallConsumer(AsyncWebsocketConsumer):
                     self.group_name,
                     {'type': 'video_message', 'message': data}
                 )
+            elif message_type == 'chat':
+                await self.channel_layer.group_send(
+                    self.group_name,
+                    {
+                        'type': 'chat_message',
+                        'message': {
+                            'type': 'chat',
+                            'content': data['content'],
+                            'sender': self.user.username,
+                            'timestamp': data.get('timestamp', '')
+                        }
+                    }
+                )
         except json.JSONDecodeError as e:
             logger.error(f"Invalid video call data: {str(e)}")
+            await self.send(text_data=json.dumps({'type': 'error', 'message': 'Invalid data'}))
 
     async def video_message(self, event):
         await self.send(text_data=json.dumps(event['message']))
 
-    async def call_ended(self, event):
+    async def chat_message(self, event):
         await self.send(text_data=json.dumps(event['message']))
 
-    @database_sync_to_async
-    def get_user_from_token(self, token):
-        try:
-            access_token = AccessToken(token)
-            return get_user_model().objects.get(id=access_token['user_id'])
-        except Exception:
-            return None
+    async def call_ended(self, event):
+        await self.send(text_data=json.dumps(event['message']))

@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'credits',
     'resources',
     'projects',
+    'skills',
     "django.contrib.sites",  # Required by allauth
     "allauth",
     "allauth.account",
