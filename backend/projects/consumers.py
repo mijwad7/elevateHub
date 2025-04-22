@@ -2,14 +2,16 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from rest_framework_simplejwt.tokens import AccessToken
 from api.models import CustomUser
-from projects.models import ChatSession, ChatMessage, Notification
+from projects.models import ChatSession, ChatMessage, Notification, VideoCall
 from skills.models import Mentorship
 from api.serializers import UserSerializer
+from django.contrib.auth import get_user_model
 import json
 import logging
 import base64
 from django.core.files.base import ContentFile
 from django.conf import settings
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -25,29 +27,31 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         try:
-            # Check if chat_id is a Mentorship.chat_session_id first
+            # Try ChatSession (integer ID)
             try:
-                mentorship = await database_sync_to_async(Mentorship.objects.get)(chat_session_id=self.chat_id, status='active')
-                learner_id = await database_sync_to_async(lambda: mentorship.learner.id)()
-                mentor_id = await database_sync_to_async(lambda: mentorship.mentor.id)()
-                if user.id not in [learner_id, mentor_id]:
-                    logger.warning(f"Unauthorized user {user.id} ({user.username}) attempted to join mentorship chat {self.chat_id}")
+                self.chat_session = await database_sync_to_async(ChatSession.objects.get)(id=int(self.chat_id), is_active=True)
+                helper_id = await database_sync_to_async(lambda: self.chat_session.helper.id)()
+                requester_id = await database_sync_to_async(lambda: self.chat_session.requester.id)()
+                if user.id not in [helper_id, requester_id]:
+                    logger.warning(f"Unauthorized user {user.id} ({user.username}) attempted to join chat {self.chat_id}")
                     await self.close(code=4003, reason="Unauthorized access")
                     return
-                self.chat_session = None  # No ChatSession for mentorships, use mentorship directly
-            except Mentorship.DoesNotExist:
-                # If not a mentorship, check if it's a ChatSession
+                self.is_mentorship = False
+            except (ChatSession.DoesNotExist, ValueError):
+                # Try Mentorship (UUID)
                 try:
-                    self.chat_session = await database_sync_to_async(ChatSession.objects.get)(id=self.chat_id, is_active=True)
-                    helper_id = await database_sync_to_async(lambda: self.chat_session.helper.id)()
-                    requester_id = await database_sync_to_async(lambda: self.chat_session.requester.id)()
-                    if user.id not in [helper_id, requester_id]:
-                        logger.warning(f"Unauthorized user {user.id} ({user.username}) attempted to join chat {self.chat_id}")
+                    mentorship = await database_sync_to_async(Mentorship.objects.get)(chat_session_id=self.chat_id, status='active')
+                    learner_id = await database_sync_to_async(lambda: mentorship.learner.id)()
+                    mentor_id = await database_sync_to_async(lambda: mentorship.mentor.id)()
+                    if user.id not in [learner_id, mentor_id]:
+                        logger.warning(f"Unauthorized user {user.id} ({user.username}) attempted to join mentorship chat {self.chat_id}")
                         await self.close(code=4003, reason="Unauthorized access")
                         return
-                except ChatSession.DoesNotExist:
-                    logger.error(f"Chat session {self.chat_id} not found")
-                    await self.close(code=4000, reason="Chat session not found")
+                    self.chat_session = None
+                    self.is_mentorship = True
+                except Mentorship.DoesNotExist:
+                    logger.error(f"Chat session or mentorship {self.chat_id} not found")
+                    await self.close(code=4000, reason="Chat session or mentorship not found")
                     return
 
             await self.channel_layer.group_add(self.chat_group_name, self.channel_name)
@@ -62,8 +66,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_chat_history(self):
-        # For mentorships, use ChatMessage with mentorship_chat_session_id
-        if not self.chat_session:
+        if self.is_mentorship:
             messages = ChatMessage.objects.filter(mentorship_chat_session_id=self.chat_id).order_by('timestamp')
         else:
             messages = ChatMessage.objects.filter(chat_session=self.chat_session).order_by('timestamp')
@@ -96,8 +99,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             if message:
                 logger.info("Processing text message")
                 chat_message = await database_sync_to_async(ChatMessage.objects.create)(
-                    chat_session=self.chat_session,
-                    mentorship_chat_session_id=self.chat_id if not self.chat_session else None,
+                    chat_session=self.chat_session if not self.is_mentorship else None,
+                    mentorship_chat_session_id=self.chat_id if self.is_mentorship else None,
                     sender=sender,
                     content=message
                 )
@@ -112,8 +115,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             elif image_base64:
                 logger.info("Processing image message")
                 chat_message = await database_sync_to_async(ChatMessage.objects.create)(
-                    chat_session=self.chat_session,
-                    mentorship_chat_session_id=self.chat_id if not self.chat_session else None,
+                    chat_session=self.chat_session if not self.is_mentorship else None,
+                    mentorship_chat_session_id=self.chat_id if self.is_mentorship else None,
                     sender=sender
                 )
                 logger.info(f"Created image chat_message with ID: {chat_message.id}")
@@ -234,35 +237,21 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
 class VideoCallConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        query_string = self.scope['query_string'].decode()
-        token = dict(qc.split('=') for qc in query_string.split('&')).get('token', '')
-        try:
-            access_token = AccessToken(token)
-            self.user = await database_sync_to_async(CustomUser.objects.get)(id=access_token['user_id'])
-            self.call_id = self.scope['url_route']['kwargs']['call_id']
-            self.group_name = f"video_call_{self.call_id}"
-
-            # Verify user is part of the mentorship
-            mentorship = await database_sync_to_async(Mentorship.objects.get)(chat_session_id=self.call_id)
-            if self.user not in [mentorship.learner, mentorship.mentor]:
-                logger.warning(f"Unauthorized user {self.user.id} ({self.user.username}) attempted to join video call {self.call_id}")
-                await self.close(code=4003, reason="Unauthorized access")
-                return
-
-            await self.channel_layer.group_add(self.group_name, self.channel_name)
-            await self.accept()
-            logger.info(f"VideoCallConsumer connected for user {self.user.username}, call_id {self.call_id}")
-        except Mentorship.DoesNotExist:
-            logger.error(f"Mentorship with chat_session_id {self.call_id} not found")
-            await self.close(code=4000, reason="Mentorship not found")
-        except Exception as e:
-            logger.error(f"VideoCallConsumer connection failed: {str(e)}")
+        token = self.scope['query_string'].decode().split('token=')[1] if 'token=' in self.scope['query_string'].decode() else None
+        if not token or not await self.get_user_from_token(token):
             await self.close(code=4001, reason="Invalid token")
+            return
+
+        self.call_id = self.scope['url_route']['kwargs']['call_id']
+        self.group_name = f"video_call_{self.call_id}"
+
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+        logger.info(f"Connected to video call {self.call_id}: {self.channel_name}")
 
     async def disconnect(self, close_code):
-        if hasattr(self, 'group_name'):
-            await self.channel_layer.group_discard(self.group_name, self.channel_name)
-            logger.info(f"VideoCallConsumer disconnected for user {self.user.username}, call_id {self.call_id}")
+        await self.channel_layer.group_discard(self.group_name, self.channel_name)
+        logger.info(f"Disconnected from video call {self.call_id}: {self.channel_name}")
 
     async def receive(self, text_data):
         try:
@@ -275,10 +264,17 @@ class VideoCallConsumer(AsyncWebsocketConsumer):
                 )
         except json.JSONDecodeError as e:
             logger.error(f"Invalid video call data: {str(e)}")
-            await self.send(text_data=json.dumps({'type': 'error', 'message': 'Invalid data'}))
 
     async def video_message(self, event):
         await self.send(text_data=json.dumps(event['message']))
 
     async def call_ended(self, event):
         await self.send(text_data=json.dumps(event['message']))
+
+    @database_sync_to_async
+    def get_user_from_token(self, token):
+        try:
+            access_token = AccessToken(token)
+            return get_user_model().objects.get(id=access_token['user_id'])
+        except Exception:
+            return None
