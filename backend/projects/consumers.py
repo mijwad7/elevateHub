@@ -2,7 +2,8 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from rest_framework_simplejwt.tokens import AccessToken
 from api.models import CustomUser
-from .models import ChatSession, ChatMessage, Notification
+from projects.models import ChatSession, ChatMessage, Notification
+from skills.models import Mentorship
 from api.serializers import UserSerializer
 import json
 import logging
@@ -16,22 +17,38 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.chat_id = self.scope['url_route']['kwargs']['chat_id']
         self.chat_group_name = f'chat_{self.chat_id}'
+        user = self.scope['user']
+
+        if user.is_anonymous:
+            logger.warning("Anonymous user rejected")
+            await self.close(code=4001, reason="Authentication required")
+            return
+
         try:
-            self.chat_session = await database_sync_to_async(ChatSession.objects.get)(id=self.chat_id, is_active=True)
-            user = self.scope['user']
-            
-            if user.is_anonymous:
-                logger.warning("Anonymous user rejected")
-                await self.close(code=4001, reason="Authentication required")
-                return
-
-            helper_id = await database_sync_to_async(lambda: self.chat_session.helper.id)()
-            requester_id = await database_sync_to_async(lambda: self.chat_session.requester.id)()
-
-            if user.id != helper_id and user.id != requester_id:
-                logger.warning(f"Unauthorized user {user.id} ({user.username}) attempted to join chat {self.chat_id}")
-                await self.close(code=4003, reason="Unauthorized access")
-                return
+            # Check if chat_id is a Mentorship.chat_session_id first
+            try:
+                mentorship = await database_sync_to_async(Mentorship.objects.get)(chat_session_id=self.chat_id, status='active')
+                learner_id = await database_sync_to_async(lambda: mentorship.learner.id)()
+                mentor_id = await database_sync_to_async(lambda: mentorship.mentor.id)()
+                if user.id not in [learner_id, mentor_id]:
+                    logger.warning(f"Unauthorized user {user.id} ({user.username}) attempted to join mentorship chat {self.chat_id}")
+                    await self.close(code=4003, reason="Unauthorized access")
+                    return
+                self.chat_session = None  # No ChatSession for mentorships, use mentorship directly
+            except Mentorship.DoesNotExist:
+                # If not a mentorship, check if it's a ChatSession
+                try:
+                    self.chat_session = await database_sync_to_async(ChatSession.objects.get)(id=self.chat_id, is_active=True)
+                    helper_id = await database_sync_to_async(lambda: self.chat_session.helper.id)()
+                    requester_id = await database_sync_to_async(lambda: self.chat_session.requester.id)()
+                    if user.id not in [helper_id, requester_id]:
+                        logger.warning(f"Unauthorized user {user.id} ({user.username}) attempted to join chat {self.chat_id}")
+                        await self.close(code=4003, reason="Unauthorized access")
+                        return
+                except ChatSession.DoesNotExist:
+                    logger.error(f"Chat session {self.chat_id} not found")
+                    await self.close(code=4000, reason="Chat session not found")
+                    return
 
             await self.channel_layer.group_add(self.chat_group_name, self.channel_name)
             await self.accept()
@@ -39,16 +56,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
             messages = await self.get_chat_history()
             for msg in messages:
                 await self.send(text_data=json.dumps(msg))
-        except ChatSession.DoesNotExist:
-            logger.error(f"ChatSession {self.chat_id} not found")
-            await self.close(code=4000, reason="Chat session not found")
         except Exception as e:
             logger.error(f"Connect error: {str(e)}")
             await self.close(code=1011, reason="Server error")
 
     @database_sync_to_async
     def get_chat_history(self):
-        messages = ChatMessage.objects.filter(chat_session=self.chat_session).order_by('timestamp')
+        # For mentorships, use ChatMessage with mentorship_chat_session_id
+        if not self.chat_session:
+            messages = ChatMessage.objects.filter(mentorship_chat_session_id=self.chat_id).order_by('timestamp')
+        else:
+            messages = ChatMessage.objects.filter(chat_session=self.chat_session).order_by('timestamp')
         return [{
             'id': msg.id,
             'sender': UserSerializer(msg.sender).data,
@@ -79,6 +97,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 logger.info("Processing text message")
                 chat_message = await database_sync_to_async(ChatMessage.objects.create)(
                     chat_session=self.chat_session,
+                    mentorship_chat_session_id=self.chat_id if not self.chat_session else None,
                     sender=sender,
                     content=message
                 )
@@ -94,6 +113,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 logger.info("Processing image message")
                 chat_message = await database_sync_to_async(ChatMessage.objects.create)(
                     chat_session=self.chat_session,
+                    mentorship_chat_session_id=self.chat_id if not self.chat_session else None,
                     sender=sender
                 )
                 logger.info(f"Created image chat_message with ID: {chat_message.id}")
@@ -221,9 +241,20 @@ class VideoCallConsumer(AsyncWebsocketConsumer):
             self.user = await database_sync_to_async(CustomUser.objects.get)(id=access_token['user_id'])
             self.call_id = self.scope['url_route']['kwargs']['call_id']
             self.group_name = f"video_call_{self.call_id}"
+
+            # Verify user is part of the mentorship
+            mentorship = await database_sync_to_async(Mentorship.objects.get)(chat_session_id=self.call_id)
+            if self.user not in [mentorship.learner, mentorship.mentor]:
+                logger.warning(f"Unauthorized user {self.user.id} ({self.user.username}) attempted to join video call {self.call_id}")
+                await self.close(code=4003, reason="Unauthorized access")
+                return
+
             await self.channel_layer.group_add(self.group_name, self.channel_name)
             await self.accept()
             logger.info(f"VideoCallConsumer connected for user {self.user.username}, call_id {self.call_id}")
+        except Mentorship.DoesNotExist:
+            logger.error(f"Mentorship with chat_session_id {self.call_id} not found")
+            await self.close(code=4000, reason="Mentorship not found")
         except Exception as e:
             logger.error(f"VideoCallConsumer connection failed: {str(e)}")
             await self.close(code=4001, reason="Invalid token")
@@ -242,27 +273,11 @@ class VideoCallConsumer(AsyncWebsocketConsumer):
                     self.group_name,
                     {'type': 'video_message', 'message': data}
                 )
-            elif message_type == 'chat':
-                await self.channel_layer.group_send(
-                    self.group_name,
-                    {
-                        'type': 'chat_message',
-                        'message': {
-                            'type': 'chat',
-                            'content': data['content'],
-                            'sender': self.user.username,
-                            'timestamp': data.get('timestamp', '')
-                        }
-                    }
-                )
         except json.JSONDecodeError as e:
             logger.error(f"Invalid video call data: {str(e)}")
             await self.send(text_data=json.dumps({'type': 'error', 'message': 'Invalid data'}))
 
     async def video_message(self, event):
-        await self.send(text_data=json.dumps(event['message']))
-
-    async def chat_message(self, event):
         await self.send(text_data=json.dumps(event['message']))
 
     async def call_ended(self, event):

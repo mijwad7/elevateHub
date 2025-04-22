@@ -65,16 +65,15 @@ class ChatSession(models.Model):
         return f"Chat for {self.help_request.title} between {self.requester.username} and {self.helper.username}"
 
 class ChatMessage(models.Model):
-    chat_session = models.ForeignKey(ChatSession, on_delete=models.CASCADE, related_name="messages")
+    chat_session = models.ForeignKey(ChatSession, on_delete=models.CASCADE, null=True, blank=True)
+    mentorship_chat_session_id = models.CharField(max_length=36, null=True, blank=True)
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    content = models.TextField()
-    image = models.ImageField(upload_to='chat_images/', blank=True, null=True)  # New field
-    timestamp = models.DateTimeField(auto_now_add=True)
+    content = models.TextField(blank=True)
+    image = models.ImageField(upload_to='chat_images/', null=True, blank=True)
+    timestamp = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
-        return f"{self.sender.username}: {self.content[:50]}"
-
-
+        return f"Message by {self.sender.username} at {self.timestamp}"
 
 class VideoCall(models.Model):
     help_request = models.ForeignKey('HelpRequest', on_delete=models.CASCADE, related_name="video_calls")
