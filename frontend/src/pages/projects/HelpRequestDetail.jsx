@@ -111,7 +111,32 @@ const HelpRequestDetail = () => {
     }
   };
 
-  const handleEndCall = () => setCallId(null);
+  const handleEndCall = async () => {
+    if (callId) {
+      setLoading(true);
+      setError('');
+      try {
+        await axios.post(
+          `http://127.0.0.1:8000/api/end-video/${callId}/`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("access")}`,
+            },
+          }
+        );
+        console.log(`Successfully notified backend about ending call ${callId}`);
+      } catch (err) {
+        setError('Failed to properly notify server about ending call. Please try again.');
+        console.error('Error ending video call:', err);
+      } finally {
+        setLoading(false);
+        setCallId(null);
+      }
+    } else {
+      setCallId(null);
+    }
+  };
 
   return (
     <>

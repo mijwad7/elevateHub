@@ -7,6 +7,8 @@ from django.utils import timezone
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import logging
+from skills.models import Mentorship
+from django.db.models import Q
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +78,8 @@ class ChatMessage(models.Model):
         return f"Message by {self.sender.username} at {self.timestamp}"
 
 class VideoCall(models.Model):
-    help_request = models.ForeignKey('HelpRequest', on_delete=models.CASCADE, related_name="video_calls")
+    help_request = models.ForeignKey('HelpRequest', on_delete=models.CASCADE, related_name="video_calls", null=True, blank=True)
+    mentorship = models.ForeignKey(Mentorship, on_delete=models.CASCADE, related_name="video_calls", null=True, blank=True)
     requester = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="video_requests")
     helper = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="video_helps")
     started_at = models.DateTimeField(auto_now_add=True)
@@ -84,13 +87,15 @@ class VideoCall(models.Model):
     is_active = models.BooleanField(default=True)
 
     def end_call(self):
-        logger.info(f"Ending video call for help request {self.help_request.title} between {self.requester.username} and {self.helper.username}")
+        context_title = self.help_request.title if self.help_request else (self.mentorship.skill.skill if self.mentorship else "Unknown Context")
+        logger.info(f"Ending video call for {context_title} between {self.requester.username} and {self.helper.username}")
         self.is_active = False
         self.ended_at = timezone.now()
         self.save(update_fields=['is_active', 'ended_at'])
 
     def __str__(self):
-        return f"Video call for {self.help_request.title} between {self.requester.username} and {self.helper.username}"
+        context_title = self.help_request.title if self.help_request else (self.mentorship.skill.skill if self.mentorship else "Unknown Context")
+        return f"Video call for {context_title} between {self.requester.username} and {self.helper.username}"
 
 
 
@@ -127,7 +132,7 @@ def send_notification(sender, instance, created, **kwargs):
         if instance.notification_type == 'video_call_started':
             try:
                 video_call = VideoCall.objects.filter(
-                    requester=instance.user,
+                    Q(requester=instance.user) | Q(helper=instance.user),
                     is_active=True
                 ).latest('started_at')
                 notification_data['callId'] = video_call.id

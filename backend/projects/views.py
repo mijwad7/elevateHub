@@ -28,6 +28,7 @@ from .serializers import (
 from api.models import Category
 from api.serializers import UserSerializer
 from credits.models import CreditTransaction
+from skills.models import Mentorship
 
 import logging
 
@@ -220,6 +221,7 @@ class StartVideoCall(APIView):
             logger.error(f"HelpRequest {request_id} not found")
             return Response({'error': 'Help request not found'}, status=404)
 
+
 class EndVideoCall(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -268,6 +270,131 @@ class EndVideoCall(APIView):
             return Response({'status': 'Video call ended'})
         except VideoCall.DoesNotExist:
             return Response({'error': 'Video call not found'}, status=404)
+
+
+class StartMentorshipVideoCall(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, mentorship_id):
+        try:
+            mentorship = Mentorship.objects.get(id=mentorship_id)
+            if request.user not in [mentorship.learner, mentorship.mentor]:
+                logger.warning(f"User {request.user.username} unauthorized for mentorship video call {mentorship_id}")
+                return Response({'error': 'Unauthorized'}, status=403)
+
+            # Determine requester and helper based on who initiates
+            # Typically, either party can initiate in mentorship
+            requester = mentorship.learner # Let's designate learner as requester by default
+            helper = mentorship.mentor     # And mentor as helper
+            initiator = request.user
+            other_party = mentorship.mentor if initiator == mentorship.learner else mentorship.learner
+
+            # Check if an active call already exists for this mentorship
+            existing_call = VideoCall.objects.filter(
+                mentorship=mentorship,
+                is_active=True
+            ).first()
+            if existing_call:
+                logger.info(f"User {request.user.username} tried to start an already active call for mentorship {mentorship_id}")
+                # Return existing call ID if the *other* party is trying to join
+                if request.user == other_party:
+                    return Response({'call_id': existing_call.id, 'status': 'Video call already active'}, status=200)
+                # If initiator is trying to start again, maybe return error or same ID
+                return Response({'call_id': existing_call.id, 'status': 'Video call already active'}, status=200)
+
+            # Create the video call instance
+            video_call = VideoCall.objects.create(
+                mentorship=mentorship,
+                requester=requester, # Storing learner/mentor roles consistently
+                helper=helper
+            )
+            logger.info(f"Created VideoCall ID: {video_call.id} for Mentorship {mentorship_id}")
+
+            # Create notification for the other party
+            notification_message = f"{initiator.username} has started a video call for your mentorship session on '{mentorship.skill.skill}'"
+            Notification.objects.create(
+                user=other_party,
+                message=notification_message,
+                notification_type="video_call_started",
+                link=f"/mentorships/{mentorship_id}"
+            )
+            logger.info(f"Created video start Notification for user {other_party.username}")
+
+            return Response({'call_id': video_call.id, 'status': 'Video call started'}, status=200)
+
+        except Mentorship.DoesNotExist:
+            logger.error(f"Mentorship {mentorship_id} not found")
+            return Response({'error': 'Mentorship not found'}, status=404)
+        except Exception as e:
+            logger.error(f"Error starting mentorship video call {mentorship_id}: {str(e)}")
+            return Response({'error': 'Failed to start video call'}, status=500)
+
+
+class EndMentorshipVideoCall(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, call_id):
+        logger.info(f"Entering EndMentorshipVideoCall for call_id: {call_id} by user {request.user.username}")
+        try:
+            logger.info(f"Attempting to get VideoCall with id={call_id} and non-null mentorship")
+            video_call = VideoCall.objects.get(id=call_id, mentorship__isnull=False) # Ensure it's a mentorship call
+            logger.info(f"Found VideoCall: {video_call.id}, Active: {video_call.is_active}")
+
+            if request.user not in [video_call.requester, video_call.helper]:
+                logger.warning(f"User {request.user.username} unauthorized for ending mentorship video call {call_id}")
+                return Response({'error': 'Unauthorized'}, status=403)
+
+            logger.info(f"Checking if call {call_id} is active. Current state: {video_call.is_active}")
+            if not video_call.is_active:
+                logger.warning(f"Call {call_id} is already inactive. Returning 400.") # Changed log level to WARNING
+                return Response({'error': 'Call already ended'}, status=400)
+
+            # End the call
+            logger.info(f"Call {call_id} is active. Proceeding to end call.")
+            video_call.end_call()
+            logger.info(f"Call {call_id} marked as inactive in DB.")
+
+            mentorship = video_call.mentorship
+            other_party = video_call.helper if request.user == video_call.requester else video_call.requester
+
+            # Create notifications for both users
+            notification_message_self = f"Video call for mentorship '{mentorship.skill.skill}' has ended."
+            notification_message_other = f"Video call for mentorship '{mentorship.skill.skill}' was ended by {request.user.username}."
+
+            Notification.objects.create(
+                user=request.user,
+                message=notification_message_self,
+                notification_type='info',
+                link=f"/mentorships/{mentorship.id}"
+            )
+            Notification.objects.create(
+                user=other_party,
+                message=notification_message_other,
+                notification_type='info',
+                link=f"/mentorships/{mentorship.id}"
+            )
+            logger.info(f"Created call end notifications for mentorship {mentorship.id}")
+
+            # Notify participants via WebSocket
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f"video_call_{call_id}",
+                {
+                    'type': 'call_ended',
+                    'message': {'status': 'call_ended'}
+                }
+            )
+            logger.info(f"Sent call_ended WS message for call {call_id}")
+
+            logger.info(f"Successfully ended call {call_id}. Returning 200.")
+            return Response({'status': 'Video call ended'})
+        except VideoCall.DoesNotExist:
+            logger.error(f"VideoCall.DoesNotExist exception for call_id={call_id}")
+            return Response({'error': 'Video call not found'}, status=404)
+        except Exception as e:
+            logger.error(f"Unexpected exception in EndMentorshipVideoCall for call_id={call_id}: {str(e)}", exc_info=True)
+            return Response({'error': 'Failed to end video call'}, status=500)
+
 
 class NotificationViewSet(viewsets.ModelViewSet):
     serializer_class = NotificationSerializer

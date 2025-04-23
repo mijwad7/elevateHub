@@ -20,6 +20,7 @@ const MentorshipDetails = () => {
   const [ws, setWs] = useState(null);
   const [isWsConnecting, setIsWsConnecting] = useState(false);
   const [activeCallId, setActiveCallId] = useState(null);
+  const [realCallId, setRealCallId] = useState(null);
   const [feedback, setFeedback] = useState('');
   const [rating, setRating] = useState('');
   const messagesEndRef = useRef(null);
@@ -130,12 +131,41 @@ const MentorshipDetails = () => {
     }
   };
 
-  const handleStartCall = () => {
-    setActiveCallId(mentorship.chat_session_id);
+  const handleStartCall = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await api.post(`/api/mentorship-start-video/${id}/`);
+      if (response.data && response.data.call_id) {
+        setRealCallId(response.data.call_id);
+        setActiveCallId(response.data.call_id);
+      } else {
+        throw new Error('Invalid response from server when starting video call.');
+      }
+    } catch (err) {
+      setError('Failed to start video call.');
+      console.error('Error starting video call:', err);
+      setRealCallId(null);
+      setActiveCallId(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleEndCall = () => {
+  const handleEndCall = async () => {
+    if (realCallId) {
+      setLoading(true);
+      try {
+        await api.post(`/api/mentorship-end-video/${realCallId}/`);
+      } catch (err) {
+        setError('Failed to properly end video call on server.');
+        console.error('Error ending video call:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
     setActiveCallId(null);
+    setRealCallId(null);
   };
 
   const handleCompleteMentorship = async () => {

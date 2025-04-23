@@ -162,16 +162,9 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
         };
     }, [isAuthenticated, callId, isHelper, onEndCall]);
 
-    const handleEndCall = async () => {
-        try {
-            await axios.post(`http://127.0.0.1:8000/api/end-video/${callId}/`, {}, {
-                headers: { Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN)}` }
-            });
-            setIsCallActive(false);
-            onEndCall();
-        } catch (error) {
-            console.error("Error ending call:", error);
-        }
+    const handleEndCall = () => {
+        setIsCallActive(false);
+        onEndCall();
     };
 
     const toggleAudio = () => {
