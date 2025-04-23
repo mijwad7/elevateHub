@@ -86,9 +86,15 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
                 console.log(`Received WebSocket message (isHelper: ${isHelper}):`, data);
 
                 if (data.status === 'call_ended') {
-                    console.log("Call ended by other user");
-                    setIsCallActive(false);
-                    onEndCall();
+                    console.log("WebSocket received call_ended signal");
+                    // Only process if the call wasn't already ended locally
+                    if (isCallActive) { 
+                        console.log("Processing call_ended: Setting isCallActive false and calling onEndCall.");
+                        setIsCallActive(false);
+                        onEndCall(); // Notify parent only if we are reacting to the WS message
+                    } else {
+                        console.log("Ignoring call_ended signal as call is already inactive locally.");
+                    }
                     return;
                 }
 

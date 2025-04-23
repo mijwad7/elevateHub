@@ -21,6 +21,7 @@ const MentorshipDetails = () => {
   const [isWsConnecting, setIsWsConnecting] = useState(false);
   const [activeCallId, setActiveCallId] = useState(null);
   const [realCallId, setRealCallId] = useState(null);
+  const [userRoleInCall, setUserRoleInCall] = useState(null);
   const [feedback, setFeedback] = useState('');
   const [rating, setRating] = useState('');
   const messagesEndRef = useRef(null);
@@ -139,6 +140,8 @@ const MentorshipDetails = () => {
       if (response.data && response.data.call_id) {
         setRealCallId(response.data.call_id);
         setActiveCallId(response.data.call_id);
+        setUserRoleInCall(response.data.user_role);
+        console.log("Video call started/joined, call ID:", response.data.call_id, "Role:", response.data.user_role);
       } else {
         throw new Error('Invalid response from server when starting video call.');
       }
@@ -147,6 +150,7 @@ const MentorshipDetails = () => {
       console.error('Error starting video call:', err);
       setRealCallId(null);
       setActiveCallId(null);
+      setUserRoleInCall(null);
     } finally {
       setLoading(false);
     }
@@ -166,6 +170,7 @@ const MentorshipDetails = () => {
     }
     setActiveCallId(null);
     setRealCallId(null);
+    setUserRoleInCall(null);
   };
 
   const handleCompleteMentorship = async () => {
@@ -423,10 +428,10 @@ const MentorshipDetails = () => {
           </Card>
         )}
 
-        {activeCallId && (
+        {activeCallId && userRoleInCall && (
           <VideoCall
             callId={activeCallId}
-            isHelper={user.id === mentorship.mentor}
+            isHelper={userRoleInCall === 'helper'}
             onEndCall={handleEndCall}
           />
         )}

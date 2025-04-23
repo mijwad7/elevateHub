@@ -284,8 +284,6 @@ class StartMentorshipVideoCall(APIView):
 
             # Determine requester and helper based on who initiates
             # Typically, either party can initiate in mentorship
-            requester = mentorship.learner # Let's designate learner as requester by default
-            helper = mentorship.mentor     # And mentor as helper
             initiator = request.user
             other_party = mentorship.mentor if initiator == mentorship.learner else mentorship.learner
 
@@ -294,33 +292,50 @@ class StartMentorshipVideoCall(APIView):
                 mentorship=mentorship,
                 is_active=True
             ).first()
-            if existing_call:
-                logger.info(f"User {request.user.username} tried to start an already active call for mentorship {mentorship_id}")
-                # Return existing call ID if the *other* party is trying to join
-                if request.user == other_party:
-                    return Response({'call_id': existing_call.id, 'status': 'Video call already active'}, status=200)
-                # If initiator is trying to start again, maybe return error or same ID
-                return Response({'call_id': existing_call.id, 'status': 'Video call already active'}, status=200)
+            
+            user_role = None # Initialize user role
 
-            # Create the video call instance
+            if existing_call:
+                logger.info(f"User {request.user.username} joining existing active call {existing_call.id} for mentorship {mentorship_id}")
+                # Determine role in existing call
+                if request.user.id == existing_call.helper_id:
+                    user_role = 'helper'
+                elif request.user.id == existing_call.requester_id:
+                    user_role = 'requester'
+                else: # Should not happen if initial auth check passed
+                    logger.error(f"User {request.user.username} not part of existing call {existing_call.id} despite passing initial auth.")
+                    return Response({'error': 'Error joining call'}, status=500)
+                    
+                return Response({
+                    'call_id': existing_call.id, 
+                    'status': 'Video call already active', 
+                    'user_role': user_role
+                 }, status=200)
+
+            # Create the video call instance - initiator is the helper for WebRTC
             video_call = VideoCall.objects.create(
                 mentorship=mentorship,
-                requester=requester, # Storing learner/mentor roles consistently
-                helper=helper
+                requester=other_party, # The non-initiator is the requester
+                helper=initiator      # The initiator is the helper (starts offer)
             )
-            logger.info(f"Created VideoCall ID: {video_call.id} for Mentorship {mentorship_id}")
+            user_role = 'helper' # The user creating the call is assigned the helper role
+            logger.info(f"Created VideoCall ID: {video_call.id} for Mentorship {mentorship_id}. Initiator {initiator.username} is Helper.")
 
-            # Create notification for the other party
+            # Create notification for the other party (requester)
             notification_message = f"{initiator.username} has started a video call for your mentorship session on '{mentorship.skill.skill}'"
             Notification.objects.create(
-                user=other_party,
+                user=other_party, # Notify the requester
                 message=notification_message,
                 notification_type="video_call_started",
                 link=f"/mentorships/{mentorship_id}"
             )
             logger.info(f"Created video start Notification for user {other_party.username}")
 
-            return Response({'call_id': video_call.id, 'status': 'Video call started'}, status=200)
+            return Response({
+                'call_id': video_call.id, 
+                'status': 'Video call started', 
+                'user_role': user_role 
+            }, status=200)
 
         except Mentorship.DoesNotExist:
             logger.error(f"Mentorship {mentorship_id} not found")
