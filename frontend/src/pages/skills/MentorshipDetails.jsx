@@ -24,6 +24,7 @@ const MentorshipDetails = () => {
   const [userRoleInCall, setUserRoleInCall] = useState(null);
   const [feedback, setFeedback] = useState('');
   const [rating, setRating] = useState('');
+  const [showCompleteForm, setShowCompleteForm] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -187,6 +188,35 @@ const MentorshipDetails = () => {
     }
   };
 
+  const handleAcceptMentorship = async () => {
+    setLoading(true);
+    try {
+      await api.post(`/api/mentorship-accept/${id}/`);
+      setMentorship({ ...mentorship, status: 'active' });
+      setError(null);
+      connectWebSocket(); // Connect to chat after accepting
+    } catch (err) {
+      setError('Failed to accept mentorship.');
+      console.error('Error accepting mentorship:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRejectMentorship = async () => {
+    setLoading(true);
+    try {
+      await api.post(`/api/mentorship-reject/${id}/`);
+      setMentorship({ ...mentorship, status: 'rejected' });
+      setError(null);
+    } catch (err) {
+      setError('Failed to reject mentorship.');
+      console.error('Error rejecting mentorship:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="text-center my-5">
@@ -208,6 +238,7 @@ const MentorshipDetails = () => {
   }
 
   const isLearner = user.id === mentorship.learner;
+  const isMentor = user.id === mentorship.mentor;
 
   return (
     <>
@@ -273,6 +304,33 @@ const MentorshipDetails = () => {
                     Complete Mentorship
                   </Button>
                 )}
+              </div>
+            )}
+            {mentorship.status === 'pending' && isMentor && (
+              <div className="d-flex gap-2 mt-2">
+                <Button
+                  variant="success"
+                  onClick={handleAcceptMentorship}
+                  disabled={loading}
+                  className="rounded-3"
+                >
+                  {loading ? <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> : 'Accept'}
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={handleRejectMentorship}
+                  disabled={loading}
+                  className="rounded-3"
+                >
+                  {loading ? <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> : 'Reject'}
+                </Button>
+              </div>
+            )}
+            {mentorship.status === 'completed' && (
+              <div className="mt-3 border-top pt-3">
+                <h5>Mentorship Feedback</h5>
+                <p><strong>Feedback:</strong> {mentorship.feedback || 'No feedback provided.'}</p>
+                <p><strong>Rating:</strong> {mentorship.rating ? `${mentorship.rating}/5` : 'Not rated.'}</p>
               </div>
             )}
           </Card.Body>
