@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Form, Button, Alert, Spinner } from 'react-bootstrap';
+import { Form, Button, Alert, Spinner, Container, Row, Col } from 'react-bootstrap';
 import api from '../../apiRequests/api';
 import Navbar from '../../components/Navbar';
 
@@ -50,68 +50,90 @@ const SkillProfileForm = () => {
 
   return (
     <>
-    <Navbar />
-    <div className="container py-5">
-      <h2 className="mb-4 text-center fw-semibold">Create Skill Profile</h2>
-      <div className="row justify-content-center">
-        <div className="col-md-6">
-          {error && (
-            <Alert variant="danger" dismissible onClose={() => setError(null)}>
-              {error}
-            </Alert>
-          )}
-          {success && (
-            <Alert variant="success" dismissible onClose={() => setSuccess(null)}>
-              {success}
-            </Alert>
-          )}
-          <Form onSubmit={handleSubmit}>
-            <Form.Group className="mb-3">
-              <Form.Label>Skill</Form.Label>
-              <Form.Control
-                type="text"
-                name="skill"
-                value={formData.skill}
-                onChange={handleChange}
-                placeholder="e.g., Python"
-                required
-                className="rounded-3"
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Proficiency</Form.Label>
-              <Form.Select
-                name="proficiency"
-                value={formData.proficiency}
-                onChange={handleChange}
-                className="rounded-3"
-              >
-                <option value="beginner">Beginner</option>
-                <option value="intermediate">Intermediate</option>
-                <option value="advanced">Advanced</option>
-              </Form.Select>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Check
-                type="checkbox"
-                name="is_mentor"
-                checked={formData.is_mentor}
-                onChange={handleChange}
-                label="I am available as a mentor"
-              />
-            </Form.Group>
-            <Button
-              variant="primary"
-              type="submit"
-              disabled={loading}
-              className="w-100 rounded-3"
-            >
-              {loading ? <Spinner animation="border" size="sm" /> : 'Save Profile'}
-            </Button>
-          </Form>
-        </div>
-      </div>
-    </div>
+      <Navbar />
+      <Container className="py-5" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+        <h2 className="mb-5 text-center fw-bold text-dark" style={{ letterSpacing: '1px', fontSize: '2.5rem' }}>
+          Create Skill Profile
+        </h2>
+        <Row className="justify-content-center">
+          <Col md={8} lg={6}>
+            {error && (
+              <Alert variant="danger" dismissible onClose={() => setError(null)} className="shadow-sm rounded-3">
+                <Alert.Heading>Oops! Something went wrong.</Alert.Heading>
+                <p>{error}</p>
+              </Alert>
+            )}
+            {success && (
+              <Alert variant="success" dismissible onClose={() => setSuccess(null)} className="shadow-sm rounded-3">
+                <Alert.Heading>Success!</Alert.Heading>
+                <p>{success}</p>
+              </Alert>
+            )}
+            <div className="card shadow-lg border-0 rounded-4">
+              <div className="card-body p-4">
+                <Form onSubmit={handleSubmit}>
+                  <Form.Group className="mb-4">
+                    <Form.Label className="fw-medium text-dark">Skill</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="skill"
+                      value={formData.skill}
+                      onChange={handleChange}
+                      placeholder="e.g., Python"
+                      required
+                      className="border-0 rounded-3 shadow-sm"
+                      style={{ padding: '0.75rem 1.25rem', backgroundColor: '#fff' }}
+                    />
+                  </Form.Group>
+                  <Form.Group className="mb-4">
+                    <Form.Label className="fw-medium text-dark">Proficiency</Form.Label>
+                    <Form.Select
+                      name="proficiency"
+                      value={formData.proficiency}
+                      onChange={handleChange}
+                      className="border-0 rounded-3 shadow-sm"
+                      style={{ padding: '0.75rem 1.25rem', backgroundColor: '#fff' }}
+                    >
+                      <option value="beginner">Beginner</option>
+                      <option value="intermediate">Intermediate</option>
+                      <option value="advanced">Advanced</option>
+                    </Form.Select>
+                  </Form.Group>
+                  <Form.Group className="mb-4">
+                    <Form.Check
+                      type="switch"
+                      id="mentor-switch"
+                      name="is_mentor"
+                      checked={formData.is_mentor}
+                      onChange={handleChange}
+                      label="I am available as a mentor"
+                      className="text-muted fw-medium"
+                    />
+                  </Form.Group>
+                  <Button
+                    variant="primary"
+                    type="submit"
+                    disabled={loading}
+                    className="w-100 rounded-pill py-2 shadow-sm"
+                    style={{
+                      transition: 'all 0.3s ease',
+                      backgroundImage: 'linear-gradient(135deg, #0B2447 0%, #051124 100%)',
+                    }}
+                  >
+                    {loading ? (
+                      <Spinner animation="border" size="sm" />
+                    ) : (
+                      <>
+                        <i className="bi bi-save me-2"></i>Save Profile
+                      </>
+                    )}
+                  </Button>
+                </Form>
+              </div>
+            </div>
+          </Col>
+        </Row>
+      </Container>
     </>
   );
 };

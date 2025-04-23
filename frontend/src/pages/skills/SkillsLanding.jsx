@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Button, Form, Card, Spinner, Alert } from 'react-bootstrap';
+import { Button, Form, Card, Spinner, Alert, Container, Row, Col } from 'react-bootstrap';
 import api from '../../apiRequests/api';
 import Navbar from '../../components/Navbar';
 
@@ -46,77 +46,120 @@ const SkillsLanding = () => {
   return (
     <>
       <Navbar />
-      <div className="container py-5">
-        <h2 className="mb-4 text-center fw-semibold">Upskill Requests</h2>
-        <div className="d-flex justify-content-between mb-4">
-        <Button
-          variant="primary"
-          onClick={() => navigate('/skills/profile')}
-          className="rounded-3"
-        >
-          Create/Edit Skill Profile
-        </Button>
-        <Form className="d-flex">
-          <Form.Control
-            type="text"
-            placeholder="Search skills..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="me-2 rounded-3"
-          />
-          <Form.Check
-            type="checkbox"
-            label="Mentors Only"
-            checked={isMentorFilter}
-            onChange={() => setIsMentorFilter(!isMentorFilter)}
-            className="align-self-center"
-          />
-        </Form>
-      </div>
+      <Container className="py-5" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+        <h2 className="mb-5 text-center fw-bold text-dark" style={{ letterSpacing: '1px', fontSize: '2.5rem' }}>
+          Upskill Requests
+        </h2>
 
-      {loading && (
-        <div className="text-center my-5">
-          <Spinner animation="border" />
-        </div>
-      )}
+        <Row className="mb-5 justify-content-center">
+          <Col md={10} lg={8}>
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+              <Button
+                variant="primary"
+                onClick={() => navigate('/skills/profile')}
+                className="rounded-pill px-4 py-2 shadow-sm w-50"
+                style={{ transition: 'all 0.3s ease', backgroundImage: 'linear-gradient(135deg, #0B2447 0%, #051124 100%)' }}
+              >
+                <i className="bi bi-person-gear me-2"></i>Create/Edit Skill Profile
+              </Button>
+              <Form className="d-flex align-items-center gap-3 w-100 w-md-auto">
+                <Form.Control
+                  type="text"
+                  placeholder="Search skills..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="border-0 rounded-pill shadow-sm"
+                  style={{ padding: '0.75rem 1.25rem', backgroundColor: '#fff' }}
+                />
+                <Form.Check
+                  type="switch"
+                  id="mentor-filter"
+                  label="Mentors Only"
+                  checked={isMentorFilter}
+                  onChange={() => setIsMentorFilter(!isMentorFilter)}
+                  className="text-muted fw-medium"
+                />
+              </Form>
+            </div>
+          </Col>
+        </Row>
 
-      {error && (
-        <Alert variant="danger" dismissible onClose={() => setError(null)}>
-          {error}
-        </Alert>
-      )}
-
-      <div className="row">
-        {profiles.length === 0 && !loading && (
-          <p className="text-center text-muted">No profiles found.</p>
-        )}
-        {profiles.map((profile) => (
-          <div key={profile.id} className="col-md-4 mb-4">
-            <Card className="shadow-sm skill-card">
-              <Card.Body>
-                <Card.Title>{profile.skill}</Card.Title>
-                <Card.Subtitle className="mb-2 text-muted">
-                  {profile.username}
-                </Card.Subtitle>
-                <Card.Text>
-                  <strong>Proficiency:</strong> {profile.proficiency}<br />
-                  <strong>Mentor:</strong> {profile.is_mentor ? 'Yes' : 'No'}
-                </Card.Text>
-                {profile.is_mentor && (
-                  <Button
-                    variant="primary"
-                    onClick={() => handleRequestMentorship(profile.id)}
-                    className="rounded-3"
-                  >
-                    Request Mentorship
-                  </Button>
-                )}
-              </Card.Body>
-            </Card>
+        {loading && (
+          <div className="d-flex justify-content-center align-items-center my-5">
+            <Spinner animation="border" variant="primary" style={{ width: '2.5rem', height: '2.5rem' }} />
+            <span className="ms-3 fs-5 text-muted">Loading profiles...</span>
           </div>
-        ))}
-      </div>
-    </div>
+        )}
+
+        {error && (
+          <Alert variant="danger" dismissible onClose={() => setError(null)} className="shadow-sm rounded-3">
+            <Alert.Heading>Oops! Something went wrong.</Alert.Heading>
+            <p>{error}</p>
+          </Alert>
+        )}
+
+        <Row className="justify-content-center">
+          {profiles.length === 0 && !loading ? (
+            <Col md={8} className="text-center">
+              <p className="text-muted fst-italic fs-5">No profiles found. Try adjusting your search or filter.</p>
+            </Col>
+          ) : (
+            profiles.map((profile) => (
+              <Col key={profile.id} md={6} lg={4} className="mb-4">
+                <Card
+                  className="shadow-lg border-0 rounded-4 h-100"
+                  style={{
+                    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                    backgroundColor: '#fff',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-5px)';
+                    e.currentTarget.style.boxShadow = '0 10px 20px rgba(0, 0, 0, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.05)';
+                  }}
+                >
+                  <Card.Body className="p-4">
+                    <Card.Title className="text-primary fw-bold mb-3" style={{ fontSize: '1.5rem' }}>
+                      {profile.skill}
+                    </Card.Title>
+                    <Card.Subtitle className="mb-3 text-muted fw-medium">
+                      {profile.username}
+                    </Card.Subtitle>
+                    <Card.Text className="text-muted mb-4">
+                      <div className="mb-2">
+                        <strong>Proficiency:</strong>{' '}
+                        <span className="text-dark">{profile.proficiency}</span>
+                      </div>
+                      <div>
+                        <strong>Mentor:</strong>{' '}
+                        <span className={`badge rounded-pill ${profile.is_mentor ? 'bg-success' : 'bg-secondary'}`}>
+                          {profile.is_mentor ? 'Yes' : 'No'}
+                        </span>
+                      </div>
+                    </Card.Text>
+                    {profile.is_mentor && (
+                      <Button
+                        variant="primary"
+                        onClick={() => handleRequestMentorship(profile.id)}
+                        className="rounded-pill px-4 py-2 shadow-sm w-100"
+                        style={{
+                          transition: 'all 0.3s ease',
+                          backgroundImage: 'linear-gradient(135deg, #0B2447 0%, #051124 100%)',
+                        }}
+                      >
+                        <i className="bi bi-person-plus me-2"></i>Request Mentorship
+                      </Button>
+                    )}
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))
+          )}
+        </Row>
+      </Container>
     </>
   );
 };

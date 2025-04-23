@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Button, Alert, Spinner } from 'react-bootstrap';
+import { Button, Alert, Spinner, Container, Row, Col, Card } from 'react-bootstrap';
 import api from '../../apiRequests/api';
 import Navbar from '../../components/Navbar';
 
@@ -59,59 +59,87 @@ const MentorshipRequest = () => {
 
   if (loading) {
     return (
-      <div className="text-center my-5">
-        <Spinner animation="border" />
+      <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
+        <Spinner animation="border" variant="primary" style={{ width: '2.5rem', height: '2.5rem' }} />
+        <span className="ms-3 fs-5 text-muted">Loading...</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <Alert variant="danger" dismissible onClose={() => setError(null)}>
-        {error}
-      </Alert>
+      <Container className="mt-5">
+        <Alert variant="danger" dismissible onClose={() => setError(null)} className="shadow-sm rounded-3">
+          <Alert.Heading>Oops! Something went wrong.</Alert.Heading>
+          <p>{error}</p>
+        </Alert>
+      </Container>
     );
   }
 
   if (!profile) {
-    return <p className="text-center mt-5">Mentor not found.</p>;
+    return (
+      <Container className="mt-5 text-center">
+        <h5 className="text-muted fw-light">Mentor not found.</h5>
+      </Container>
+    );
   }
 
   return (
     <>
-    <Navbar />
-    <div className="container py-5">
-      <h2 className="mb-4 text-center fw-semibold">Request Mentorship</h2>
-      <div className="row justify-content-center">
-        <div className="col-md-6">
-          {success && (
-            <Alert variant="success" dismissible onClose={() => setSuccess(null)}>
-              {success}
-            </Alert>
-          )}
-          <div className="card shadow-sm mb-4">
-            <div className="card-body">
-              <h5>{profile.skill}</h5>
-              <p>
-                <strong>Mentor:</strong> {profile.username}<br />
-                <strong>Proficiency:</strong> {profile.proficiency}
-              </p>
-              <p className="text-muted">
-                Requesting mentorship will cost 15 credits.
-              </p>
-              <Button
-                variant="primary"
-                onClick={handleRequest}
-                disabled={loading}
-                className="w-100 rounded-3"
-              >
-                {loading ? <Spinner animation="border" size="sm" /> : 'Send Request'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      <Navbar />
+      <Container className="py-5" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+        <h2 className="mb-5 text-center fw-bold text-dark" style={{ letterSpacing: '1px', fontSize: '2.5rem' }}>
+          Request Mentorship
+        </h2>
+        <Row className="justify-content-center">
+          <Col md={8} lg={6}>
+            {success && (
+              <Alert variant="success" dismissible onClose={() => setSuccess(null)} className="shadow-sm rounded-3">
+                <Alert.Heading>Success!</Alert.Heading>
+                <p>{success}</p>
+              </Alert>
+            )}
+            <Card className="shadow-lg border-0 rounded-4">
+              <Card.Body className="p-4">
+                <Card.Title className="text-primary fw-bold mb-4" style={{ fontSize: '1.75rem' }}>
+                  {profile.skill}
+                </Card.Title>
+                <Card.Text className="text-muted mb-4">
+                  <div className="mb-3">
+                    <strong>Mentor:</strong> <span className="text-dark">{profile.username}</span>
+                  </div>
+                  <div className="mb-3">
+                    <strong>Proficiency:</strong>{' '}
+                    <span className="text-dark">{profile.proficiency.charAt(0).toUpperCase() + profile.proficiency.slice(1)}</span>
+                  </div>
+                  <div className="text-muted fst-italic">
+                    Requesting mentorship will cost <span className="text-warning fw-medium">15 credits</span>.
+                  </div>
+                </Card.Text>
+                <Button
+                  variant="primary"
+                  onClick={handleRequest}
+                  disabled={loading}
+                  className="w-100 rounded-pill py-2 shadow-sm"
+                  style={{
+                    transition: 'all 0.3s ease',
+                    backgroundImage: 'linear-gradient(135deg, #0B2447 0%, #051124 100%)',
+                  }}
+                >
+                  {loading ? (
+                    <Spinner animation="border" size="sm" />
+                  ) : (
+                    <>
+                      <i className="bi bi-person-plus me-2"></i>Send Request
+                    </>
+                  )}
+                </Button>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      </Container>
     </>
   );
 };
