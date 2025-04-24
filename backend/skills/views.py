@@ -33,19 +33,35 @@ class SkillProfileView(APIView):
         
         skill = request.query_params.get('skill')
         is_mentor = request.query_params.get('is_mentor')
-        profiles = SkillProfile.objects.all()
+        category_id = request.query_params.get('category_id')
+
+        profiles = SkillProfile.objects.select_related('user', 'category').all()
         if skill:
             profiles = profiles.filter(skill__icontains=skill)
         if is_mentor is not None:
-            profiles = profiles.filter(is_mentor=json.loads(is_mentor.lower()))
+            try:
+                is_mentor_bool = json.loads(is_mentor.lower())
+                profiles = profiles.filter(is_mentor=is_mentor_bool)
+            except json.JSONDecodeError:
+                logger.warning(f"Invalid boolean value for is_mentor: {is_mentor}")
+        if category_id is not None:
+            try:
+                profiles = profiles.filter(category_id=int(category_id))
+            except ValueError:
+                logger.warning(f"Invalid integer value for category_id: {category_id}")
+                
         serializer = SkillProfileSerializer(profiles, many=True)
         return Response(serializer.data)
 
     def post(self, request):
-        serializer = SkillProfileSerializer(data=request.data)
+        data = request.data.copy()
+        category_id = data.get('category')
+        
+        serializer = SkillProfileSerializer(data=data, context={'request': request})
         if serializer.is_valid():
             serializer.save(user=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        logger.error(f"SkillProfile creation failed: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class MentorshipView(APIView):

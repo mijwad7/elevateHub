@@ -2,6 +2,7 @@ from django.db import models
 from api.models import CustomUser
 from django.conf import settings
 import uuid
+from api.models import Category
 
 class SkillProfile(models.Model):
     PROFICIENCY_CHOICES = (
@@ -11,15 +12,16 @@ class SkillProfile(models.Model):
     )
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='skill_profiles')
     skill = models.CharField(max_length=100)
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name='skill_profiles')
     proficiency = models.CharField(max_length=20, choices=PROFICIENCY_CHOICES)
     is_mentor = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user', 'skill')
+        unique_together = ('user', 'skill', 'category')
 
     def __str__(self):
-        return f"{self.user.username} - {self.skill} ({self.proficiency})"
+        return f"{self.user.username} - {self.skill} ({self.proficiency}) - {self.category.name}"
 
 class Mentorship(models.Model):
     STATUS_CHOICES = (
