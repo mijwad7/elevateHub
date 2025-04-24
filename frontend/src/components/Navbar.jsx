@@ -128,7 +128,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm" style={{ background: 'linear-gradient(135deg, rgb(11, 36, 71) 0%, rgb(5, 17, 36) 100%)' }}>
       <div className="container">
         <Link className="navbar-brand fw-bold" to="/">ElevateHub</Link>
         <button
@@ -303,12 +303,12 @@ const Navbar = () => {
           ) : (
             <ul className="navbar-nav ms-auto mb-2 mb-lg-0">
               <li className="nav-item">
-                <NavLink className="nav-link btn btn-primary me-2" to="/login">
+                <NavLink className="nav-link me-2" to="/login">
                   Login
                 </NavLink>
               </li>
               <li className="nav-item">
-                <NavLink className="nav-link btn btn-primary" to="/register">
+                <NavLink className="nav-link" to="/register">
                   Register
                 </NavLink>
               </li>

@@ -252,7 +252,7 @@ const MentorshipDetails = () => {
     <>
       <Navbar />
       <Container className="py-5" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
-        <h2 className="mb-5 text-center fw-bold text-dark" style={{ letterSpacing: '1px' }}>
+        <h2 className="mb-5 text-center fw-bold text-primary" style={{ letterSpacing: '1px' }}>
           Mentorship Details
         </h2>
 

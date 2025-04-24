@@ -588,7 +588,7 @@ const Profile = () => {
       <Navbar />
       <div className="container py-5">
         <div className="row justify-content-center">
-          <div className="col-lg-10">
+          <div className="col-lg-12">
             {/* Profile Header with Tabs */}
             <div className="card shadow-sm mb-4">
               <div className="card-body p-0">
