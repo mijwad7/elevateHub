@@ -31,10 +31,11 @@ class SimpleUserSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'profile_image')
 
 class SimpleSkillProfileSerializer(serializers.ModelSerializer):
-    """Serializer for basic skill profile info."""
+    """Serializer for basic skill profile info, now including category."""
+    category_details = SimpleCategorySerializer(source='category', read_only=True)
     class Meta:
         model = SkillProfile
-        fields = ('id', 'skill')
+        fields = ('id', 'skill', 'category_details') # Add category_details
 
 class MentorshipSerializer(serializers.ModelSerializer):
     """Serializer for the Mentorship model, including mentor and mentee details."""
