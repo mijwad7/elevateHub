@@ -13,6 +13,8 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import json
 import logging
+from rest_framework import generics, permissions
+from django.db.models import Q
 
 logger = logging.getLogger(__name__)
 
@@ -168,3 +170,15 @@ class MentorshipCompleteView(APIView):
         except Mentorship.DoesNotExist:
             logger.error(f"Mentorship {id} not found or unauthorized for user {request.user.username}")
             return Response({"error": "Mentorship not found or not authorized"}, status=status.HTTP_404_NOT_FOUND)
+
+class UserMentorshipsListView(generics.ListAPIView):
+    """List mentorships where the requesting user is either the mentor or mentee."""
+    serializer_class = MentorshipSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        # Fetch mentorships where the user is mentor OR learner
+        # You might want to filter by status (e.g., 'active') depending on requirements
+        # return Mentorship.objects.filter(Q(mentor=user) | Q(learner=user), status='active').select_related('mentor', 'learner', 'skill').order_by('-created_at')
+        return Mentorship.objects.filter(Q(mentor=user) | Q(learner=user)).select_related('mentor', 'learner', 'skill').order_by('-created_at')

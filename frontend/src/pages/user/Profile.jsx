@@ -14,6 +14,7 @@ import {
   getUserHelpRequests,
   editHelpRequest,
   deleteHelpRequest,
+  getUserMentorships,
 } from "../../apiRequests";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../../constants";
 import {
@@ -28,6 +29,7 @@ import {
   FaEdit,
   FaTrash,
   FaQuestionCircle,
+  FaChalkboardTeacher,
 } from "react-icons/fa";
 import { formatDistanceToNow } from "date-fns";
 
@@ -67,6 +69,9 @@ const Profile = () => {
   });
   const [passwordError, setPasswordError] = useState(null);
   const [passwordSuccess, setPasswordSuccess] = useState(null);
+  const [mentorships, setMentorships] = useState([]);
+  const [mentorshipsLoading, setMentorshipsLoading] = useState(true);
+  const [mentorshipsError, setMentorshipsError] = useState(null);
 
   // Validate authentication and redirect if needed
   useEffect(() => {
@@ -200,12 +205,32 @@ const Profile = () => {
     }
   }, [isAuthenticated, user, getAuthConfig]);
 
+  // Fetch user mentorships
+  const fetchMentorships = useCallback(async () => {
+    if (!isAuthenticated || !user) return;
+
+    try {
+      setMentorshipsLoading(true);
+      setMentorshipsError(null);
+      // Use the dedicated API function (handles auth config internally)
+      const data = await getUserMentorships(); 
+      setMentorships(data);
+    } catch (error) {
+      console.error("Error fetching mentorships:", error);
+      setMentorshipsError("Failed to load mentorships. Please try again.");
+      toast.error("Failed to load mentorships");
+    } finally {
+      setMentorshipsLoading(false);
+    }
+  }, [isAuthenticated, user]);
+
   // Initial data fetch
   useEffect(() => {
     if (isAuthenticated && user) {
       fetchUserData();
       fetchContributions();
       fetchHelpRequests();
+      fetchMentorships();
     }
   }, [
     isAuthenticated,
@@ -213,6 +238,7 @@ const Profile = () => {
     fetchUserData,
     fetchContributions,
     fetchHelpRequests,
+    fetchMentorships,
   ]);
 
   // Handle file selection
@@ -704,6 +730,17 @@ const Profile = () => {
                           >
                             <FaQuestionCircle className="me-2" />
                             Help Requests
+                          </button>
+                        </li>
+                        <li className="nav-item" role="presentation">
+                          <button
+                            className={`nav-link ${
+                              activeTab === "mentorships" ? "active" : ""
+                            }`}
+                            onClick={() => setActiveTab("mentorships")}
+                          >
+                            <FaChalkboardTeacher className="me-2" />
+                            Mentorships
                           </button>
                         </li>
                       </ul>
@@ -1206,6 +1243,61 @@ const Profile = () => {
                                         )}...`
                                       : request.description}
                                   </p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {/* Mentorships Tab */}
+                        <div
+                          className={`tab-pane fade ${activeTab === "mentorships" ? "show active" : ""}`}
+                        >
+                          {mentorshipsLoading ? (
+                            <div className="d-flex justify-content-center">
+                              <div className="spinner-border text-primary" role="status">
+                                <span className="visually-hidden">Loading...</span>
+                              </div>
+                            </div>
+                          ) : mentorshipsError ? (
+                            <div className="alert alert-danger" role="alert">
+                              {mentorshipsError}
+                            </div>
+                          ) : mentorships.length === 0 ? (
+                            <p className="text-muted">No active mentorships</p>
+                          ) : (
+                            <div className="d-flex flex-column gap-3">
+                              {mentorships.map((mentorship) => (
+                                <div
+                                  key={`mentorship-${mentorship.id}`}
+                                  className="border rounded p-3 hover-bg-light"
+                                >
+                                  <div className="d-flex align-items-center mb-2">
+                                    <FaChalkboardTeacher className="me-2 text-primary" />
+                                    <Link
+                                      // Link to the existing mentorship detail route
+                                      to={`/mentorships/${mentorship.id}`}
+                                      className="text-decoration-none text-dark flex-grow-1"
+                                    >
+                                      <h3 className="h6 mb-0">
+                                        Mentorship: {mentorship.topic || 'Untitled'}
+                                      </h3>
+                                    </Link>
+                                    {/* Optional: Add Edit/Delete buttons if needed based on status/role */}
+                                  </div>
+                                  <p className="small text-muted mb-2">
+                                    Status: <span className={`badge bg-${mentorship.status === 'active' ? 'success' : mentorship.status === 'pending' ? 'warning' : 'secondary'}`}>{mentorship.status || 'N/A'}</span> |
+                                    Role: <span className="fw-semibold">{mentorship.mentor.username === user.username ? 'Mentor' : 'Mentee'}</span> |
+                                    Partner: {mentorship.mentor.username === user.username ? mentorship.mentee.username : mentorship.mentor.username}
+                                  </p>
+                                  <p className="small text-muted mb-0">
+                                    Started: {formatDistanceToNow(
+                                      new Date(mentorship.created_at),
+                                      {
+                                        addSuffix: true,
+                                      }
+                                    )}
+                                  </p>
+                                  {/* Optional: Display a snippet of description or last message if available */}
                                 </div>
                               ))}
                             </div>

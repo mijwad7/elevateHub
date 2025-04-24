@@ -261,15 +261,15 @@ const MentorshipDetails = () => {
             <Card className="shadow-lg border-0 rounded-4">
               <Card.Body className="p-4">
                 <Card.Title className="text-primary fw-bold mb-4" style={{ fontSize: '1.75rem' }}>
-                  {mentorship.skill_name}
+                  {mentorship.topic}
                 </Card.Title>
                 <Card.Text className="text-muted">
                   <div className="d-flex justify-content-between align-items-center mb-3">
-                    <span><strong>Learner:</strong> {mentorship.learner_username}</span>
+                    <span><strong>Learner:</strong> {mentorship.mentee.username}</span>
                     <span className="badge bg-secondary rounded-pill">{isLearner ? 'You' : ''}</span>
                   </div>
                   <div className="d-flex justify-content-between align-items-center mb-3">
-                    <span><strong>Mentor:</strong> {mentorship.mentor_username}</span>
+                    <span><strong>Mentor:</strong> {mentorship.mentor.username}</span>
                     <span className="badge bg-secondary rounded-pill">{isMentor ? 'You' : ''}</span>
                   </div>
                   <div className="mb-3">
