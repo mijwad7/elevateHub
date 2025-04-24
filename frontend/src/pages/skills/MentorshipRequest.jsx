@@ -5,141 +5,136 @@ import { Button, Alert, Spinner, Container, Row, Col, Card } from 'react-bootstr
 import api from '../../apiRequests/api';
 import Navbar from '../../components/Navbar';
 
-function useQuery() {
-  return new URLSearchParams(useLocation().search);
-}
-
 const MentorshipRequest = () => {
-  const query = useQuery();
+  const { isAuthenticated } = useSelector((state) => state.auth);
   const navigate = useNavigate();
-  const profileId = query.get('profileId');
-  const { user } = useSelector((state) => state.auth);
+  const location = useLocation();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [credits, setCredits] = useState(user?.credits?.balance || 0);
+  const [success, setSuccess] = useState(null);
 
   useEffect(() => {
-    const fetchProfileAndCredits = async () => {
-      setLoading(true);
-      try {
-        // Fetch profile details
-        const profileRes = await api.get(`/api/skill-profiles/${profileId}/`);
-        setProfile(profileRes.data);
-
-        // Fetch current credits (ensure latest balance)
-        const creditsRes = await api.get('/api/credits/');
-        setCredits(creditsRes.data.balance);
-
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('Failed to load mentorship request details. Please try again.');
-        setProfile(null); // Clear profile on error
-      } finally {
-        setLoading(false);
-      }
-    };
-
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    const profileId = new URLSearchParams(location.search).get('profileId');
     if (profileId) {
-      fetchProfileAndCredits();
+      fetchProfile(profileId);
     } else {
-      setError('No skill profile specified.');
+      setError('No mentor selected.');
       setLoading(false);
     }
-  }, [profileId]);
+  }, [isAuthenticated, navigate, location]);
+
+  const fetchProfile = async (profileId) => {
+    try {
+      const response = await api.get(`/api/skill-profiles/${profileId}/`);
+      setProfile(response.data);
+      setError(null);
+    } catch (err) {
+      setError('Failed to fetch mentor profile.');
+      console.error('Error fetching profile:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleRequest = async () => {
-    setSubmitting(true);
-    setError(null);
+    setLoading(true);
     try {
-      const response = await api.post('/api/mentorships/request/', { skill_profile_id: profileId });
-      // Navigate to the newly created mentorship details page
-      navigate(`/mentorships/${response.data.id}`); 
+      const response = await api.post('/api/mentorship-request/', {
+        skill_profile_id: profile.id,
+      });
+      setSuccess('Mentorship request sent successfully!');
+      setTimeout(() => navigate('/skills'), 2000);
     } catch (err) {
-      console.error('Error requesting mentorship:', err);
       setError(err.response?.data?.error || 'Failed to send mentorship request.');
+      console.error('Error requesting mentorship:', err);
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   };
 
   if (loading) {
     return (
-      <>
-        <Navbar />
-        <Container className="text-center mt-5">
-          <Spinner animation="border" variant="primary" />
-          <p>Loading request details...</p>
-        </Container>
-      </>
+      <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
+        <Spinner animation="border" variant="primary" style={{ width: '2.5rem', height: '2.5rem' }} />
+        <span className="ms-3 fs-5 text-muted">Loading...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container className="mt-5">
+        <Alert variant="danger" dismissible onClose={() => setError(null)} className="shadow-sm rounded-3">
+          <Alert.Heading>Oops! Something went wrong.</Alert.Heading>
+          <p>{error}</p>
+        </Alert>
+      </Container>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <Container className="mt-5 text-center">
+        <h5 className="text-muted fw-light">Mentor not found.</h5>
+      </Container>
     );
   }
 
   return (
     <>
       <Navbar />
-      <Container className="py-5">
+      <Container className="py-5" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+        <h2 className="mb-5 text-center fw-bold text-dark" style={{ letterSpacing: '1px', fontSize: '2.5rem' }}>
+          Request Mentorship
+        </h2>
         <Row className="justify-content-center">
           <Col md={8} lg={6}>
-            <Card className="shadow border-0 rounded-4">
-              <Card.Header as="h4" className="text-center bg-light fw-bold rounded-top-4">Request Mentorship</Card.Header>
+            {success && (
+              <Alert variant="success" dismissible onClose={() => setSuccess(null)} className="shadow-sm rounded-3">
+                <Alert.Heading>Success!</Alert.Heading>
+                <p>{success}</p>
+              </Alert>
+            )}
+            <Card className="shadow-lg border-0 rounded-4">
               <Card.Body className="p-4">
-                {error && <Alert variant="danger">{error}</Alert>}
-                
-                {profile ? (
-                  <>
-                    <p className="mb-3">You are requesting mentorship from <strong>{profile.username}</strong> in the skill:</p>
-                    <div className="mb-4 p-3 bg-light rounded-3 border">
-                        <h5 className="text-primary mb-2"><i className="bi bi-code-slash me-2"></i>{profile.skill}</h5>
-                        {/* Display Category */}
-                        {profile.category_details && (
-                           <p className="mb-1 text-muted">
-                                <i className="bi bi-tags-fill me-2"></i>Category: <strong>{profile.category_details.name}</strong>
-                           </p>
-                        )}
-                        <p className="mb-0 text-muted">
-                            <i className="bi bi-bar-chart-line-fill me-2"></i>Proficiency Level: <strong>{profile.proficiency}</strong>
-                        </p>
-                    </div>
-
-                    <div className="alert alert-info d-flex align-items-center shadow-sm border-info border-2">
-                      <i className="bi bi-info-circle-fill me-3 fs-4"></i>
-                      <div>
-                        Requesting this mentorship will cost <strong>15 credits</strong>.
-                        Your current balance is <strong>{credits} credits</strong>.
-                      </div>
-                    </div>
-
-                    {credits < 15 && (
-                      <Alert variant="warning" className="fw-bold text-center">
-                        <i className="bi bi-exclamation-triangle-fill me-2"></i>Insufficient Credits
-                      </Alert>
-                    )}
-
-                    <div className="d-grid gap-2 mt-4">
-                      <Button 
-                        variant="primary"
-                        onClick={handleRequest}
-                        disabled={submitting || credits < 15 || !profile}
-                        className="rounded-pill shadow-sm py-2"
-                      >
-                        {submitting ? (
-                          <><Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> Sending Request...</>
-                        ) : (
-                          <><i className="bi bi-send-check-fill me-2"></i>Confirm Mentorship Request</>
-                        )}
-                      </Button>
-                      <Button variant="outline-secondary" onClick={() => navigate('/skills')} className="rounded-pill py-2">
-                        Cancel
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  // Show error or specific message if profile failed to load but no general error set
-                  !error && <Alert variant="warning">Could not load skill profile details.</Alert>
-                )}
+                <Card.Title className="text-primary fw-bold mb-4" style={{ fontSize: '1.75rem' }}>
+                  {profile.skill}
+                </Card.Title>
+                <Card.Text className="text-muted mb-4">
+                  <div className="mb-3">
+                    <strong>Mentor:</strong> <span className="text-dark">{profile.username}</span>
+                  </div>
+                  <div className="mb-3">
+                    <strong>Proficiency:</strong>{' '}
+                    <span className="text-dark">{profile.proficiency.charAt(0).toUpperCase() + profile.proficiency.slice(1)}</span>
+                  </div>
+                  <div className="text-muted fst-italic">
+                    Requesting mentorship will cost <span className="text-warning fw-medium">15 credits</span>.
+                  </div>
+                </Card.Text>
+                <Button
+                  variant="primary"
+                  onClick={handleRequest}
+                  disabled={loading}
+                  className="w-100 rounded-pill py-2 shadow-sm"
+                  style={{
+                    transition: 'all 0.3s ease',
+                    backgroundImage: 'linear-gradient(135deg, #0B2447 0%, #051124 100%)',
+                  }}
+                >
+                  {loading ? (
+                    <Spinner animation="border" size="sm" />
+                  ) : (
+                    <>
+                      <i className="bi bi-person-plus me-2"></i>Send Request
+                    </>
+                  )}
+                </Button>
               </Card.Body>
             </Card>
           </Col>
