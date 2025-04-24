@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button, Form, Alert, Spinner, Card, Container, Row, Col, InputGroup } from 'react-bootstrap';
+import { Button, Form, Alert, Spinner, Card, Container, Row, Col, InputGroup, Modal } from 'react-bootstrap';
 import api from '../../apiRequests/api';
 import VideoCall from '../../components/VideoCall';
 import Navbar from '../../components/Navbar';
@@ -25,6 +25,7 @@ const MentorshipDetails = () => {
   const [feedback, setFeedback] = useState('');
   const [rating, setRating] = useState('');
   const [showCompleteForm, setShowCompleteForm] = useState(false);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -180,6 +181,9 @@ const MentorshipDetails = () => {
       await api.post(`/api/mentorship-complete/${id}/`, { feedback, rating });
       setMentorship({ ...mentorship, status: 'completed', feedback, rating });
       setError(null);
+      setShowCompleteModal(false);
+      setFeedback('');
+      setRating('');
     } catch (err) {
       setError('Failed to complete mentorship.');
       console.error('Error completing mentorship:', err);
@@ -318,7 +322,7 @@ const MentorshipDetails = () => {
                       {isLearner && (
                         <Button
                           variant="outline-success"
-                          onClick={() => setShowCompleteForm(true)}
+                          onClick={() => setShowCompleteModal(true)}
                           className="rounded-pill px-4 py-2 shadow-sm flex-grow-1"
                           style={{ transition: 'all 0.3s ease' }}
                         >
@@ -487,60 +491,57 @@ const MentorshipDetails = () => {
           )}
         </Row>
 
-        {showCompleteForm && isLearner && mentorship.status === 'active' && (
-          <Row className="justify-content-center mb-5">
-            <Col md={8} lg={6}>
-              <Card className="shadow-lg border-0 rounded-4">
-                <Card.Header className="bg-gradient bg-success text-white rounded-top-4">
-                  <h5 className="mb-0 fw-semibold">Complete Mentorship</h5>
-                </Card.Header>
-                <Card.Body className="p-4">
-                  <Form>
-                    <Form.Group className="mb-4">
-                      <Form.Label className="fw-medium">Feedback</Form.Label>
-                      <Form.Control
-                        as="textarea"
-                        rows={4}
-                        value={feedback}
-                        onChange={(e) => setFeedback(e.target.value)}
-                        placeholder="Share your experience..."
-                        className="border-0 rounded-3 shadow-sm"
-                        style={{ resize: 'none', padding: '0.75rem 1.25rem' }}
-                      />
-                    </Form.Group>
-                    <Form.Group className="mb-4">
-                      <Form.Label className="fw-medium">Rating (1-5)</Form.Label>
-                      <Form.Control
-                        type="number"
-                        min="1"
-                        max="5"
-                        value={rating}
-                        onChange={(e) => setRating(e.target.value)}
-                        className="border-0 rounded-3 shadow-sm"
-                        style={{ padding: '0.75rem 1.25rem' }}
-                      />
-                    </Form.Group>
-                    <Button
-                      variant="success"
-                      onClick={handleCompleteMentorship}
-                      disabled={loading || !feedback || !rating}
-                      className="w-100 rounded-pill py-2 shadow-sm"
-                      style={{ transition: 'all 0.3s ease' }}
-                    >
-                      {loading ? (
-                        <Spinner animation="border" size="sm" />
-                      ) : (
-                        <>
-                          <i className="bi bi-check-circle-fill me-2"></i>Submit Feedback
-                        </>
-                      )}
-                    </Button>
-                  </Form>
-                </Card.Body>
-              </Card>
-            </Col>
-          </Row>
-        )}
+        <Modal show={showCompleteModal} onHide={() => setShowCompleteModal(false)} centered>
+          <Modal.Header closeButton className="bg-success text-white">
+            <Modal.Title className="fw-semibold">Complete Mentorship</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form>
+              <Form.Group className="mb-3">
+                <Form.Label className="fw-medium">Feedback</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={4}
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  placeholder="Share your experience..."
+                  className="rounded-3 shadow-sm"
+                  style={{ resize: 'none' }}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label className="fw-medium">Rating (1-5)</Form.Label>
+                <Form.Control
+                  type="number"
+                  min="1"
+                  max="5"
+                  value={rating}
+                  onChange={(e) => setRating(e.target.value)}
+                  className="rounded-3 shadow-sm"
+                />
+              </Form.Group>
+            </Form>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowCompleteModal(false)} className="rounded-pill px-4">
+              Close
+            </Button>
+            <Button
+              variant="success"
+              onClick={handleCompleteMentorship}
+              disabled={loading || !feedback || !rating}
+              className="rounded-pill px-4"
+            >
+              {loading ? (
+                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
+              ) : (
+                <>
+                  <i className="bi bi-check-circle-fill me-2"></i>Submit Feedback
+                </>
+              )}
+            </Button>
+          </Modal.Footer>
+        </Modal>
 
         {activeCallId && userRoleInCall && (
           <Row className="justify-content-center">
