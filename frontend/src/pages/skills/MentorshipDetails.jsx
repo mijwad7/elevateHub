@@ -245,21 +245,18 @@ const MentorshipDetails = () => {
     );
   }
 
-  const isLearner = user.id === mentorship.learner;
-  const isMentor = user.id === mentorship.mentor;
+  const isLearner = user.id === mentorship.mentee.id;
+  const isMentor = user.id === mentorship.mentor.id;
 
   return (
     <>
       <Navbar />
       <Container className="py-5" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
-        <h2 className="mb-5 text-center fw-bold text-primary" style={{ letterSpacing: '1px' }}>
-          Mentorship Details
-        </h2>
 
-        <Row className="mb-5 justify-content-center">
-          <Col md={8} lg={6}>
+        <Row className="mb-5">
+          <Col md={5} className="mb-4 mb-md-0">
             <Card className="shadow-lg border-0 rounded-4">
-              <Card.Body className="p-4">
+              <Card.Body className="p-4 d-flex flex-column">
                 <Card.Title className="text-primary fw-bold mb-4" style={{ fontSize: '1.75rem' }}>
                   {mentorship.topic}
                 </Card.Title>
@@ -306,193 +303,192 @@ const MentorshipDetails = () => {
                     </>
                   )}
                 </Card.Text>
-                {mentorship.status === 'active' && (
-                  <div className="d-flex gap-3">
-                    <Button
-                      variant="primary"
-                      onClick={handleStartCall}
-                      className="rounded-pill px-4 py-2 shadow-sm"
-                      style={{ transition: 'all 0.3s ease' }}
-                    >
-                      <i className="bi bi-camera-video me-2"></i>Start Video Call
-                    </Button>
-                    {isLearner && (
+
+                <div className="mt-auto">
+                  {mentorship.status === 'active' && (
+                    <div className="d-grid gap-2 d-sm-flex">
                       <Button
-                        variant="success"
-                        onClick={() => setShowCompleteForm(true)}
+                        variant="primary"
+                        onClick={handleStartCall}
                         className="rounded-pill px-4 py-2 shadow-sm"
                         style={{ transition: 'all 0.3s ease' }}
                       >
-                        <i className="bi bi-check-circle me-2"></i>Complete Mentorship
+                        <i className="bi bi-camera-video me-2"></i>Start Video Call
                       </Button>
-                    )}
-                  </div>
-                )}
-                {mentorship.status === 'pending' && isMentor && (
-                  <div className="d-flex gap-3 mt-4">
-                    <Button
-                      variant="success"
-                      onClick={handleAcceptMentorship}
-                      disabled={loading}
-                      className="rounded-pill px-4 py-2 shadow-sm"
-                      style={{ transition: 'all 0.3s ease' }}
-                    >
-                      {loading ? (
-                        <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
-                      ) : (
-                        <>
-                          <i className="bi bi-check2 me-2"></i>Accept
-                        </>
+                      {isLearner && (
+                        <Button
+                          variant="outline-success"
+                          onClick={() => setShowCompleteForm(true)}
+                          className="rounded-pill px-4 py-2 shadow-sm flex-grow-1"
+                          style={{ transition: 'all 0.3s ease' }}
+                        >
+                          <i className="bi bi-check-circle me-2"></i>Complete Mentorship
+                        </Button>
                       )}
-                    </Button>
-                    <Button
-                      variant="danger"
-                      onClick={handleRejectMentorship}
-                      disabled={loading}
-                      className="rounded-pill px-4 py-2 shadow-sm"
-                      style={{ transition: 'all 0.3s ease' }}
-                    >
-                      {loading ? (
-                        <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
-                      ) : (
-                        <>
-                          <i className="bi bi-x-lg me-2"></i>Reject
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                )}
+                    </div>
+                  )}
+                  {mentorship.status === 'pending' && isMentor && (
+                    <div className="d-grid gap-2 d-sm-flex mt-4">
+                      <Button
+                        variant="success"
+                        onClick={handleAcceptMentorship}
+                        disabled={loading}
+                        className="rounded-pill px-4 py-2 shadow-sm"
+                        style={{ transition: 'all 0.3s ease' }}
+                      >
+                        {loading ? (
+                          <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
+                        ) : (
+                          <>
+                            <i className="bi bi-check2 me-2"></i>Accept
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="danger"
+                        onClick={handleRejectMentorship}
+                        disabled={loading}
+                        className="rounded-pill px-4 py-2 shadow-sm"
+                        style={{ transition: 'all 0.3s ease' }}
+                      >
+                        {loading ? (
+                          <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
+                        ) : (
+                          <>
+                            <i className="bi bi-x-lg me-2"></i>Reject
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </Card.Body>
             </Card>
           </Col>
-        </Row>
 
-        {mentorship.status === 'active' && (
-          <>
-            {isWsConnecting && (
-              <div className="d-flex justify-content-center align-items-center my-5">
-                <Spinner animation="border" variant="primary" style={{ width: '2.5rem', height: '2.5rem' }} />
-                <span className="ms-3 fs-5 text-muted">Connecting to chat...</span>
-              </div>
-            )}
+          {mentorship.status === 'active' && (
+            <Col md={7}>
+              {isWsConnecting && (
+                <div className="d-flex justify-content-center align-items-center my-5 p-5 bg-light rounded-3 shadow-sm">
+                  <Spinner animation="border" variant="primary" style={{ width: '2.5rem', height: '2.5rem' }} />
+                  <span className="ms-3 fs-5 text-muted">Connecting to chat...</span>
+                </div>
+              )}
 
-            {!isWsConnecting && error && (
-              <Alert variant="danger" dismissible onClose={() => setError(null)} className="shadow-sm rounded-3">
-                <Alert.Heading>Oops! Something went wrong.</Alert.Heading>
-                <p>{error}</p>
-              </Alert>
-            )}
+              {!isWsConnecting && error && (
+                <Alert variant="danger" dismissible onClose={() => setError(null)} className="shadow-sm rounded-3">
+                  <Alert.Heading>Oops! Chat Connection Error.</Alert.Heading>
+                  <p>{error}</p>
+                </Alert>
+              )}
 
-            {!isWsConnecting && (
-              <Card className="shadow-lg border-0 rounded-4 mb-5">
-                <Card.Header className="bg-gradient bg-primary text-white rounded-top-4">
-                  <h5 className="mb-0 fw-semibold">Chat Room</h5>
-                </Card.Header>
-                <Card.Body className="p-4 bg-light" style={{ height: '450px', overflowY: 'auto' }}>
-                  {messages.length === 0 ? (
-                    <p className="text-muted text-center mb-0 fst-italic">Start the conversation...</p>
-                  ) : (
-                    messages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`d-flex mb-4 ${
-                          msg.sender.username === user.username
-                            ? 'justify-content-end'
-                            : 'justify-content-start'
-                        }`}
-                      >
+              {!isWsConnecting && !error && (
+                <Card className="shadow-lg border-0 rounded-4 h-100 d-flex flex-column">
+                  <Card.Header className="bg-gradient bg-primary text-white rounded-top-4">
+                    <h5 className="mb-0 fw-semibold">Chat Room</h5>
+                  </Card.Header>
+                  <Card.Body className="p-4 bg-light flex-grow-1" style={{ height: '450px', overflowY: 'auto' }}>
+                    {messages.length === 0 ? (
+                      <p className="text-muted text-center mb-0 fst-italic">Start the conversation...</p>
+                    ) : (
+                      messages.map((msg) => (
                         <div
-                          className={`p-3 rounded-3 shadow-sm ${
+                          key={msg.id}
+                          className={`d-flex mb-4 ${
                             msg.sender.username === user.username
-                              ? 'bg-primary text-white'
-                              : 'bg-white border border-light'
+                              ? 'justify-content-end'
+                              : 'justify-content-start'
                           }`}
-                          style={{
-                            maxWidth: '70%',
-                            transition: 'all 0.3s ease',
-                            transform: msg.sender.username === user.username ? 'translateX(5px)' : 'translateX(-5px)',
-                          }}
                         >
-                          <div className="d-flex justify-content-between align-items-center mb-1">
-                            <strong>{msg.sender.username} </strong>
-                          </div>
-                          {msg.content && <p className="mb-1">{msg.content}</p>}
-                          {msg.image_url && (
-                            <img
-                              src={`http://localhost:8000${msg.image_url}`}
-                              alt="Chat image"
-                              className="img-fluid rounded-3 mt-2"
-                              style={{ maxHeight: '200px', objectFit: 'cover' }}
-                            />
-                          )}
-                          <small
-                            className={`d-block text-end mt-1 ${
-                              msg.sender.username === user.username ? 'text-white-50' : 'text-muted'
+                          <div
+                            className={`p-3 rounded-3 shadow-sm ${
+                              msg.sender.username === user.username
+                                ? 'bg-primary text-white'
+                                : 'bg-white border border-light'
                             }`}
+                            style={{
+                              maxWidth: '70%',
+                              transition: 'all 0.3s ease',
+                              transform: msg.sender.username === user.username ? 'translateX(5px)' : 'translateX(-5px)',
+                            }}
                           >
-                            {new Date(msg.timestamp).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </small>
+                            <div className="d-flex justify-content-between align-items-center mb-1">
+                              <strong>{msg.sender.username} </strong>
+                            </div>
+                            {msg.content && <p className="mb-1">{msg.content}</p>}
+                            {msg.image_url && (
+                              <img
+                                src={`http://localhost:8000${msg.image_url}`}
+                                alt="Chat image"
+                                className="img-fluid rounded-3 mt-2"
+                                style={{ maxHeight: '200px', objectFit: 'cover' }}
+                              />
+                            )}
+                            <small
+                              className={`d-block text-end mt-1 ${
+                                msg.sender.username === user.username ? 'text-white-50' : 'text-muted'
+                              }`}
+                            >
+                              {new Date(msg.timestamp).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </small>
+                          </div>
                         </div>
-                      </div>
-                    ))
-                  )}
-                  <div ref={messagesEndRef} />
-                </Card.Body>
-              </Card>
-            )}
-
-            {!isWsConnecting && (
-              <Row className="mb-5 justify-content-center">
-                <Col md={10} lg={8}>
-                  <InputGroup className="mb-3 shadow-sm rounded-3">
-                    <Form.Control
-                      type="text"
-                      placeholder="Type your message..."
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                      className="border-0 rounded-start-3"
-                      style={{ padding: '0.75rem 1.25rem' }}
-                    />
+                      ))
+                    )}
+                    <div ref={messagesEndRef} />
+                  </Card.Body>
+                  <Card.Footer className="p-3 bg-white border-top-0 rounded-bottom-4">
+                    <InputGroup className="mb-3 shadow-sm rounded-3">
+                      <Form.Control
+                        type="text"
+                        placeholder="Type your message..."
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                        className="border-0 rounded-start-3"
+                        style={{ padding: '0.75rem 1.25rem' }}
+                      />
+                      <Button
+                        variant="primary"
+                        onClick={sendMessage}
+                        disabled={!ws || ws.readyState !== WebSocket.OPEN || !message.trim()}
+                        className="rounded-end-3 px-4"
+                        style={{ transition: 'all 0.3s ease' }}
+                      >
+                        <i className="bi bi-send-fill"></i>
+                      </Button>
+                    </InputGroup>
+                    <Form.Group controlId="formFile" className="mb-3">
+                      <Form.Label className="visually-hidden">Upload Image</Form.Label>
+                      <Form.Control
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setImage(e.target.files[0])}
+                        className="border-0 rounded-3 shadow-sm"
+                        style={{ padding: '0.75rem 1.25rem' }}
+                      />
+                    </Form.Group>
                     <Button
-                      variant="primary"
-                      onClick={sendMessage}
-                      disabled={!ws || ws.readyState !== WebSocket.OPEN || !message.trim()}
-                      className="rounded-end-3 px-4"
+                      variant="secondary"
+                      onClick={sendImage}
+                      disabled={!ws || ws.readyState !== WebSocket.OPEN || !image}
+                      className="w-100 rounded-3 shadow-sm py-2"
                       style={{ transition: 'all 0.3s ease' }}
                     >
-                      <i className="bi bi-send-fill"></i>
+                      <i className="bi bi-image me-2"></i>Send Image
                     </Button>
-                  </InputGroup>
-                  <Form.Group className="mb-3">
-                    <Form.Control
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setImage(e.target.files[0])}
-                      className="border-0 rounded-3 shadow-sm"
-                      style={{ padding: '0.75rem 1.25rem' }}
-                    />
-                  </Form.Group>
-                  <Button
-                    variant="secondary"
-                    onClick={sendImage}
-                    disabled={!ws || ws.readyState !== WebSocket.OPEN || !image}
-                    className="w-100 rounded-3 shadow-sm py-2"
-                    style={{ transition: 'all 0.3s ease' }}
-                  >
-                    <i className="bi bi-image me-2"></i>Send Image
-                  </Button>
-                </Col>
-              </Row>
-            )}
-          </>
-        )}
+                  </Card.Footer>
+                </Card>
+              )}
+            </Col>
+          )}
+        </Row>
 
-        {isLearner && mentorship.status === 'active' && (
-          <Row className="justify-content-center">
+        {showCompleteForm && isLearner && mentorship.status === 'active' && (
+          <Row className="justify-content-center mb-5">
             <Col md={8} lg={6}>
               <Card className="shadow-lg border-0 rounded-4">
                 <Card.Header className="bg-gradient bg-success text-white rounded-top-4">
@@ -547,13 +543,22 @@ const MentorshipDetails = () => {
         )}
 
         {activeCallId && userRoleInCall && (
-          <div className="mt-5">
-            <VideoCall
-              callId={activeCallId}
-              isHelper={userRoleInCall === 'helper'}
-              onEndCall={handleEndCall}
-            />
-          </div>
+          <Row className="justify-content-center">
+            <Col md={10} lg={8}>
+              <Card className="shadow-lg border-0 rounded-4">
+                <Card.Header className="bg-gradient bg-info text-dark rounded-top-4">
+                  <h5 className="mb-0 fw-semibold">Video Call</h5>
+                </Card.Header>
+                <Card.Body className="p-0">
+                  <VideoCall
+                    callId={activeCallId}
+                    isHelper={userRoleInCall === 'helper'}
+                    onEndCall={handleEndCall}
+                  />
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
         )}
       </Container>
     </>
