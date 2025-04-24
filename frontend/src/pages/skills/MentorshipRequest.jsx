@@ -44,7 +44,7 @@ const MentorshipRequest = () => {
   const handleRequest = async () => {
     setLoading(true);
     try {
-      const response = await api.post('/api/mentorship-request/', {
+      const response = await api.post('/api/mentorships/request/', {
         skill_profile_id: profile.id,
       });
       setSuccess('Mentorship request sent successfully!');

@@ -178,7 +178,7 @@ const MentorshipDetails = () => {
   const handleCompleteMentorship = async () => {
     setLoading(true);
     try {
-      await api.post(`/api/mentorship-complete/${id}/`, { feedback, rating });
+      await api.post(`/api/mentorships/${id}/complete/`, { feedback, rating });
       setMentorship({ ...mentorship, status: 'completed', feedback, rating });
       setError(null);
       setShowCompleteModal(false);
@@ -195,7 +195,7 @@ const MentorshipDetails = () => {
   const handleAcceptMentorship = async () => {
     setLoading(true);
     try {
-      await api.post(`/api/mentorship-accept/${id}/`);
+      await api.post(`/api/mentorships/${id}/accept/`);
       setMentorship({ ...mentorship, status: 'active' });
       setError(null);
       connectWebSocket();
@@ -210,7 +210,7 @@ const MentorshipDetails = () => {
   const handleRejectMentorship = async () => {
     setLoading(true);
     try {
-      await api.post(`/api/mentorship-reject/${id}/`);
+      await api.post(`/api/mentorships/${id}/reject/`);
       setMentorship({ ...mentorship, status: 'rejected' });
       setError(null);
     } catch (err) {
