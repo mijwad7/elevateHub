@@ -5,3 +5,4 @@ export * from "./resources";
 export * from "./contributions";
 export * from "./helpRequests";
 export * from "./mentorships";
+export * from './skills';

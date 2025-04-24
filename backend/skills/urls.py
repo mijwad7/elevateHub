@@ -1,13 +1,32 @@
 from django.urls import path
-from . import views
-from .views import UserMentorshipsListView
+from .views import (
+    SkillProfileListView, 
+    SkillProfileDetailView,
+    UserSkillProfileListView,
+    UserSkillProfileDetailView,
+    MentorshipRequestView, 
+    MentorshipAcceptView, 
+    MentorshipRejectView,
+    MentorshipCompleteView,
+    UserMentorshipsListView,
+    MentorshipDetailView
+)
 
 urlpatterns = [
-    path('skill-profiles/', views.SkillProfileView.as_view(), name='skill-profiles'),
-    path('skill-profiles/<int:id>/', views.SkillProfileView.as_view(), name='skill-profile-detail'),
-    path('mentorships/<int:id>/', views.MentorshipView.as_view(), name='mentorship-detail'),
-    path('mentorship-request/', views.MentorshipRequestView.as_view(), name='mentorship-request'),
-    path('mentorship-accept/<int:id>/', views.MentorshipAcceptView.as_view(), name='mentorship-accept'),
-    path('mentorship-complete/<int:id>/', views.MentorshipCompleteView.as_view(), name='mentorship-complete'),
-    path('user/mentorships/', UserMentorshipsListView.as_view(), name='user_mentorships_list'),
+    # Public Skill Profile Browsing
+    path('skill-profiles/', SkillProfileListView.as_view(), name='skill-profile-list'),
+    path('skill-profiles/<int:pk>/', SkillProfileDetailView.as_view(), name='skill-profile-detail'),
+
+    # User-Specific Skill Profile Management
+    path('user/skill-profiles/', UserSkillProfileListView.as_view(), name='user-skill-profile-list'),
+    path('user/skill-profiles/<int:pk>/', UserSkillProfileDetailView.as_view(), name='user-skill-profile-detail'),
+
+    # Mentorship Actions
+    path('mentorships/request/', MentorshipRequestView.as_view(), name='mentorship-request'),
+    path('mentorships/<int:id>/accept/', MentorshipAcceptView.as_view(), name='mentorship-accept'),
+    path('mentorships/<int:id>/reject/', MentorshipRejectView.as_view(), name='mentorship-reject'),
+    path('mentorships/<int:id>/complete/', MentorshipCompleteView.as_view(), name='mentorship-complete'),
+    path('mentorships/', UserMentorshipsListView.as_view(), name='user-mentorships-list'),
+    path('mentorships/<int:pk>/', MentorshipDetailView.as_view(), name='mentorship-detail'),
+    path('user/mentorships/', UserMentorshipsListView.as_view(), name='user-mentorships-list'),
 ]

@@ -6,6 +6,14 @@ import "react-toastify/dist/ReactToastify.css";
 import api from "../../apiRequests/api";
 import { loginSuccess, updateCredits } from "../../redux/authSlice";
 import Navbar from "../../components/Navbar";
+import SkillProfileForm from "../skills/SkillProfileForm";
+import { getCategories } from "../../apiRequests";
+import {
+  getUserSkillProfiles,
+  createUserSkillProfile,
+  updateUserSkillProfile,
+  deleteUserSkillProfile
+} from "../../apiRequests/skills";
 import {
   getCreditBalance,
   getCreditTransactions,
@@ -30,8 +38,11 @@ import {
   FaTrash,
   FaQuestionCircle,
   FaChalkboardTeacher,
+  FaTasks,
+  FaPlusCircle,
 } from "react-icons/fa";
 import { formatDistanceToNow } from "date-fns";
+import { Modal, Button as BootstrapButton, Spinner, ListGroup, Alert } from 'react-bootstrap';
 
 const Profile = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth);
@@ -72,6 +83,14 @@ const Profile = () => {
   const [mentorships, setMentorships] = useState([]);
   const [mentorshipsLoading, setMentorshipsLoading] = useState(true);
   const [mentorshipsError, setMentorshipsError] = useState(null);
+  const [skillProfiles, setSkillProfiles] = useState([]);
+  const [skillProfilesLoading, setSkillProfilesLoading] = useState(true);
+  const [skillProfilesError, setSkillProfilesError] = useState(null);
+  const [editingSkillProfile, setEditingSkillProfile] = useState(null);
+  const [showSkillProfileModal, setShowSkillProfileModal] = useState(false);
+  const [deleteSkillProfileId, setDeleteSkillProfileId] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
 
   // Validate authentication and redirect if needed
   useEffect(() => {
@@ -99,7 +118,7 @@ const Profile = () => {
       }
     } catch (error) {
       console.error("Token refresh failed:", error);
-      dispatch(logoutUser());
+      dispatch({ type: 'auth/logout' });
       navigate("/login");
       return null;
     }
@@ -110,7 +129,7 @@ const Profile = () => {
     let accessToken = localStorage.getItem(ACCESS_TOKEN);
 
     if (!accessToken || accessToken === "null") {
-      return { withCredentials: true };
+      return {};
     }
 
     try {
@@ -121,14 +140,12 @@ const Profile = () => {
       if (error.response?.status === 401) {
         accessToken = await refreshToken();
         if (!accessToken) {
-          return { withCredentials: true };
+          return {};
         }
       }
     }
 
-    return {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    };
+    return { headers: { Authorization: `Bearer ${accessToken}` }, withCredentials: true };
   }, [refreshToken]);
 
   // Fetch user data
@@ -224,6 +241,39 @@ const Profile = () => {
     }
   }, [isAuthenticated, user]);
 
+  // Fetch categories needed for the SkillProfileForm
+  const fetchCategories = useCallback(async () => {
+    setCategoriesLoading(true);
+    try {
+      const data = await getCategories();
+      setCategories(data || []);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      toast.error("Could not load categories for the skill form.");
+      setCategories([]); // Set to empty array on error
+    } finally {
+      setCategoriesLoading(false);
+    }
+  }, []);
+
+  // Fetch user's skill profiles
+  const fetchSkillProfiles = useCallback(async () => {
+    if (!isAuthenticated || !user) return;
+    setSkillProfilesLoading(true);
+    setSkillProfilesError(null);
+    try {
+      const data = await getUserSkillProfiles();
+      setSkillProfiles(data || []);
+    } catch (error) {
+      console.error("Error fetching skill profiles:", error);
+      setSkillProfilesError("Failed to load your skill profiles. Please try again.");
+      toast.error("Failed to load skill profiles.");
+      setSkillProfiles([]);
+    } finally {
+      setSkillProfilesLoading(false);
+    }
+  }, [isAuthenticated, user]);
+
   // Initial data fetch
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -231,6 +281,8 @@ const Profile = () => {
       fetchContributions();
       fetchHelpRequests();
       fetchMentorships();
+      fetchSkillProfiles();
+      fetchCategories();
     }
   }, [
     isAuthenticated,
@@ -239,6 +291,8 @@ const Profile = () => {
     fetchContributions,
     fetchHelpRequests,
     fetchMentorships,
+    fetchSkillProfiles,
+    fetchCategories,
   ]);
 
   // Handle file selection
@@ -391,8 +445,12 @@ const Profile = () => {
   };
 
   const handleLogout = () => {
-    dispatch(logoutUser());
+    dispatch({ type: 'auth/logout' });
+    localStorage.removeItem(ACCESS_TOKEN);
+    localStorage.removeItem(REFRESH_TOKEN);
+    localStorage.removeItem("user");
     toast.info("Logged out successfully");
+    navigate("/login");
   };
 
   // Handle contribution edit
@@ -569,6 +627,61 @@ const Profile = () => {
     }
   };
 
+  // Skill Profile Handlers
+  const handleOpenSkillModal = (profile = null) => {
+    const initialData = profile ? profile : { skill: '', category: '', proficiency: 'beginner', is_mentor: false };
+    setEditingSkillProfile(initialData);
+    setShowSkillProfileModal(true);
+  };
+
+  const handleCloseSkillModal = () => {
+    setShowSkillProfileModal(false);
+    setEditingSkillProfile(null);
+  };
+
+  const handleSkillProfileSubmit = async (formData) => {
+    const dataToSend = { ...formData, category: formData.category };
+
+    try {
+      if (editingSkillProfile && editingSkillProfile.id) {
+        const updatedProfile = await updateUserSkillProfile(editingSkillProfile.id, dataToSend);
+        setSkillProfiles(prev => prev.map(p => p.id === updatedProfile.id ? updatedProfile : p));
+        toast.success("Skill profile updated successfully!");
+      } else {
+        const newProfile = await createUserSkillProfile(dataToSend);
+        setSkillProfiles(prev => [...prev, newProfile]);
+        toast.success("Skill profile added successfully!");
+      }
+      handleCloseSkillModal();
+    } catch (error) {
+      console.error("Error saving skill profile:", error);
+      const errorMsg = error?.detail || error?.skill?.[0] || error?.category?.[0] || "Failed to save skill profile. Ensure the skill/category combination is unique.";
+      toast.error(`Error: ${errorMsg}`);
+    }
+  };
+
+  const openDeleteSkillModal = (id) => {
+    setDeleteSkillProfileId(id);
+  };
+
+  const closeDeleteSkillModal = () => {
+    setDeleteSkillProfileId(null);
+  };
+
+  const handleDeleteSkillProfile = async () => {
+    if (!deleteSkillProfileId) return;
+    try {
+      await deleteUserSkillProfile(deleteSkillProfileId);
+      setSkillProfiles(prev => prev.filter(p => p.id !== deleteSkillProfileId));
+      toast.success("Skill profile deleted successfully!");
+      closeDeleteSkillModal();
+    } catch (error) {
+      console.error("Error deleting skill profile:", error);
+      toast.error("Failed to delete skill profile.");
+      closeDeleteSkillModal();
+    }
+  };
+
   if (!isAuthenticated || !user) {
     return (
       <div className="d-flex justify-content-center align-items-center vh-100">
@@ -741,6 +854,17 @@ const Profile = () => {
                           >
                             <FaChalkboardTeacher className="me-2" />
                             Mentorships
+                          </button>
+                        </li>
+                        <li className="nav-item" role="presentation">
+                          <button
+                            className={`nav-link ${
+                              activeTab === "skill_profiles" ? "active" : ""
+                            }`}
+                            onClick={() => setActiveTab("skill_profiles")}
+                          >
+                            <FaTasks className="me-2" />
+                            Skills
                           </button>
                         </li>
                       </ul>
@@ -1303,6 +1427,71 @@ const Profile = () => {
                             </div>
                           )}
                         </div>
+                        {/* Skill Profiles Tab */}
+                        <div
+                          className={`tab-pane fade ${activeTab === "skill_profiles" ? "show active" : ""}`}
+                        >
+                          <div className="d-flex justify-content-between align-items-center mb-3">
+                            <h4 className="mb-0 text-dark fw-medium">My Skill Profiles</h4>
+                            <BootstrapButton 
+                              variant="primary" 
+                              size="sm" 
+                              onClick={() => handleOpenSkillModal()} 
+                              disabled={categoriesLoading}
+                            >
+                              <FaPlusCircle className="me-1" /> Add New Skill
+                            </BootstrapButton>
+                          </div>
+
+                          {skillProfilesLoading || categoriesLoading ? (
+                            <div className="d-flex justify-content-center align-items-center p-5">
+                              <Spinner animation="border" variant="primary" />
+                              <span className="ms-2 text-muted">Loading...</span>
+                            </div>
+                          ) : skillProfilesError ? (
+                            <Alert variant="danger">{skillProfilesError}</Alert>
+                          ) : categories.length === 0 && !categoriesLoading ? (
+                            <Alert variant="warning">Could not load categories needed to manage skills.</Alert>
+                          ) : skillProfiles.length === 0 ? (
+                            <Alert variant="info" className="text-center fst-italic">
+                              You haven't added any skill profiles yet. Click "Add New Skill" to showcase your expertise or areas you want to learn!
+                            </Alert>
+                          ) : (
+                            <ListGroup variant="flush" className="shadow-sm rounded overflow-hidden">
+                              {skillProfiles.map((profile) => (
+                                <ListGroup.Item key={profile.id} className="px-3 py-3 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center">
+                                  <div className="mb-2 mb-sm-0">
+                                    <h5 className="mb-1 fw-semibold text-primary">
+                                      {profile.skill} 
+                                      {profile.category_details && 
+                                        <span className="badge bg-secondary fw-normal ms-2 align-middle" style={{fontSize: '0.8em'}}>
+                                          {profile.category_details.name}
+                                        </span>
+                                      }
+                                    </h5>
+                                    <small className="text-muted me-3">
+                                      Proficiency: <span className="fw-medium text-dark">{profile.proficiency}</span>
+                                    </small>
+                                    <small className="text-muted">
+                                      Mentor Role:
+                                      <span className={`badge rounded-pill ms-1 ${profile.is_mentor ? 'bg-success-subtle text-success-emphasis' : 'bg-info-subtle text-info-emphasis'}`}>
+                                        {profile.is_mentor ? 'Available' : 'Seeking'}
+                                      </span>
+                                    </small>
+                                  </div>
+                                  <div className="d-flex gap-2 flex-shrink-0 align-self-start align-self-sm-center">
+                                    <BootstrapButton variant="outline-primary" size="sm" onClick={() => handleOpenSkillModal(profile)} title="Edit Skill">
+                                      <FaEdit />
+                                    </BootstrapButton>
+                                    <BootstrapButton variant="outline-danger" size="sm" onClick={() => openDeleteSkillModal(profile.id)} title="Delete Skill">
+                                      <FaTrash />
+                                    </BootstrapButton>
+                                  </div>
+                                </ListGroup.Item>
+                              ))}
+                            </ListGroup>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1495,59 +1684,67 @@ const Profile = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {(deleteContributionId || deleteHelpRequestId) && (
-        <div
-          className="modal fade show"
-          style={{ display: "block" }}
-          tabIndex="-1"
+      {/* Skill Profile Add/Edit Modal */}
+      <Modal show={showSkillProfileModal} onHide={handleCloseSkillModal} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>
+             <FaTasks className="me-2" /> 
+             {editingSkillProfile?.id ? 'Edit Skill Profile' : 'Add New Skill Profile'}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {categoriesLoading ? (
+            <div className="text-center p-4"><Spinner animation="border" size="sm" /> Loading categories...</div>
+          ) : categories.length === 0 ? (
+            <Alert variant="warning">Cannot add/edit skills because categories could not be loaded.</Alert>
+          ) : (
+            <SkillProfileForm
+              initialData={editingSkillProfile ? { ...editingSkillProfile } : null} 
+              onSubmit={handleSkillProfileSubmit}
+              onCancel={handleCloseSkillModal}
+              categories={categories}
+            />
+          )}
+        </Modal.Body>
+      </Modal>
+
+      {/* Combined Delete Confirmation Modal */}
+      {(deleteContributionId || deleteHelpRequestId || deleteSkillProfileId) && (
+        <Modal 
+          show={true} 
+          onHide={() => { 
+            setDeleteContributionId(null); 
+            setDeleteContributionType(null); 
+            setDeleteHelpRequestId(null); 
+            setDeleteSkillProfileId(null);
+          }} 
+          centered 
+          size="sm"
         >
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Confirm Deletion</h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => {
-                    setDeleteContributionId(null);
-                    setDeleteContributionType(null);
-                    setDeleteHelpRequestId(null);
-                  }}
-                ></button>
-              </div>
-              <div className="modal-body">
-                Are you sure you want to delete this{" "}
-                {deleteHelpRequestId ? "help request" : "contribution"}? This
-                action cannot be undone.
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    setDeleteContributionId(null);
-                    setDeleteContributionType(null);
-                    setDeleteHelpRequestId(null);
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-danger"
-                  onClick={
-                    deleteHelpRequestId
-                      ? handleDeleteHelpRequest
-                      : handleDeleteContribution
-                  }
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+          <Modal.Header closeButton>
+            <Modal.Title><FaTrash className="me-2" /> Confirm Deletion</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            Are you sure you want to delete this{' '}
+            {deleteSkillProfileId ? 'skill profile' : deleteHelpRequestId ? 'help request' : 'contribution'}? 
+            This action cannot be undone.
+          </Modal.Body>
+          <Modal.Footer>
+            <BootstrapButton variant="secondary" onClick={() => { setDeleteContributionId(null); setDeleteContributionType(null); setDeleteHelpRequestId(null); setDeleteSkillProfileId(null); }}>
+              Cancel
+            </BootstrapButton>
+            <BootstrapButton
+              variant="danger"
+              onClick={
+                deleteSkillProfileId ? handleDeleteSkillProfile :
+                deleteHelpRequestId ? handleDeleteHelpRequest : 
+                handleDeleteContribution
+              }
+            >
+              Delete
+            </BootstrapButton>
+          </Modal.Footer>
+        </Modal>
       )}
     </div>
   );

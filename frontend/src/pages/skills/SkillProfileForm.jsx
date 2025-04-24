@@ -50,7 +50,6 @@ const SkillProfileForm = () => {
 
   return (
     <>
-      <Navbar />
       <Container className="py-5" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
         <h2 className="mb-5 text-center fw-bold text-dark" style={{ letterSpacing: '1px', fontSize: '2.5rem' }}>
           Create Skill Profile

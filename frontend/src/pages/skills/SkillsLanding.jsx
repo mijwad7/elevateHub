@@ -97,20 +97,6 @@ const SkillsLanding = () => {
           </Col>
         </Row>
 
-        {/* Create Profile Button */}
-        <Row className="mb-5 justify-content-center">
-            <Col md={10} lg={12} className="text-center">
-                 <Button
-                    variant="primary"
-                    onClick={() => navigate('/skills/profile')}
-                    className="rounded-pill px-5 py-2 shadow-sm"
-                    style={{ transition: 'all 0.3s ease', backgroundImage: 'linear-gradient(135deg, #11346B 0%, #0B2447 100%)' }}
-                 >
-                    <i className="bi bi-person-gear me-2"></i>Manage My Skill Profile
-                 </Button>
-            </Col>
-        </Row>
-
         {/* Loading State */}
         {loading && (
           <div className="d-flex flex-column justify-content-center align-items-center my-5 py-5">
