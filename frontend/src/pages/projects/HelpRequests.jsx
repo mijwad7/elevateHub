@@ -216,8 +216,8 @@ const HelpRequests = () => {
                                             <span className={`badge ${req.status === 'open' ? 'bg-success' : 'bg-secondary'} me-2`}>
                                                 {req.status}
                                             </span>
-                                            <span className="badge bg-primary">Chat: {req.credit_offer_chat} credits</span>
-                                            <span className="badge bg-primary ms-2">Video: {req.credit_offer_video} credits</span>
+                                            <span className="badge bg-info">Chat: {req.credit_offer_chat} credits</span>
+                                            <span className="badge bg-info ms-2">Video: {req.credit_offer_video} credits</span>
                                         </div>
                                         <a href={`/help-requests/${req.id}`} className="btn btn-outline-primary mt-3">View Details</a>
                                     </div>

@@ -51,7 +51,7 @@ const SkillsLanding = () => {
     <>
       <Navbar />
       <Container className="py-5" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
-        <h2 className="mb-4 text-center fw-bold text-dark" style={{ letterSpacing: '1px', fontSize: '2.5rem' }}>
+        <h2 className="mb-4 text-center fw-bold text-primary" style={{ letterSpacing: '1px', fontSize: '2.5rem' }}>
           Find Mentors & Skills
         </h2>
         <p className="text-center text-muted mb-5">Explore skill profiles or create your own to connect with others.</p>
