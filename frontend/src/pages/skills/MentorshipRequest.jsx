@@ -114,7 +114,7 @@ const MentorshipRequest = () => {
                     <span className="text-dark">{profile.proficiency.charAt(0).toUpperCase() + profile.proficiency.slice(1)}</span>
                   </div>
                   <div className="text-muted fst-italic">
-                    Requesting mentorship will cost <span className="text-warning fw-medium">15 credits</span>.
+                    Acceptance of this mentorship request will cost <span className="text-warning fw-medium">15 credits</span>.
                   </div>
                 </Card.Text>
                 <Button

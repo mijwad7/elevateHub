@@ -28,6 +28,7 @@ class Mentorship(models.Model):
         ('pending', 'Pending'),
         ('active', 'Active'),
         ('completed', 'Completed'),
+        ('rejected', 'Rejected'),
     )
     learner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='learner_mentorships')
     mentor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='mentor_mentorships')

@@ -117,7 +117,7 @@ class MentorshipRequestView(APIView):
                 logger.warning(f"User {request.user.username} already has a pending/active mentorship for skill {skill_profile.skill}")
                 return Response({"error": "You already have a pending or active mentorship for this skill."}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Check credits
+            # Check credits (ensure user CAN afford it, but don't deduct yet)
             learner_credits = request.user.get_credits()
             if learner_credits.balance < 15:
                 logger.warning(f"User {request.user.username} has insufficient credits ({learner_credits.balance}) for mentorship request")
@@ -131,8 +131,9 @@ class MentorshipRequestView(APIView):
             )
             serializer = MentorshipSerializer(mentorship)
 
-            learner_credits.spend_credits(15, f"Mentorship request to {skill_profile.user.username} for {skill_profile.skill}")
-            logger.info(f"Deducted 15 credits from {request.user.username} for mentorship request {mentorship.id}")
+            # learner_credits.spend_credits(15, f"Mentorship request to {skill_profile.user.username} for {skill_profile.skill}")
+            # logger.info(f"Deducted 15 credits from {request.user.username} for mentorship request {mentorship.id}")
+            logger.info(f"Created pending mentorship request {mentorship.id} from {request.user.username} to {skill_profile.user.username}")
 
             Notification.objects.create(
                 user=skill_profile.user,
@@ -157,13 +158,27 @@ class MentorshipAcceptView(APIView):
     def post(self, request, id):
         try:
             mentorship = Mentorship.objects.select_related('learner', 'skill').get(id=id, mentor=request.user, status='pending')
+
+            # Check learner credits BEFORE accepting
+            learner = mentorship.learner
+            learner_credits = learner.get_credits()
+            if learner_credits.balance < 15:
+                logger.warning(f"Mentor {request.user.username} attempted to accept mentorship {id}, but learner {learner.username} has insufficient credits ({learner_credits.balance})")
+                # Optionally notify mentor/learner about insufficient funds
+                return Response({"error": "Learner does not have enough credits (15 required)."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Deduct credits from learner
+            learner_credits.spend_credits(15, f"Mentorship accepted by {request.user.username} for {mentorship.skill.skill}")
+            logger.info(f"Deducted 15 credits from learner {learner.username} for accepted mentorship {id}")
+
             mentorship.status = 'active'
             mentorship.auto_complete_date = timezone.now() + timedelta(days=30)
             mentorship.save()
 
+            # Award credits to mentor (optional, or adjust amount)
             mentor_credits = request.user.get_credits()
             mentor_credits.add_credits(10, f"Accepted mentorship for {mentorship.skill.skill} with {mentorship.learner.username}")
-            logger.info(f"Awarded 10 credits to {request.user.username} for accepting mentorship {mentorship.id}")
+            logger.info(f"Awarded 10 credits to mentor {request.user.username} for accepting mentorship {mentorship.id}")
 
             Notification.objects.create(
                 user=mentorship.learner,
@@ -188,27 +203,26 @@ class MentorshipRejectView(APIView):
     def post(self, request, id):
         try:
             mentorship = Mentorship.objects.select_related('learner', 'skill').get(id=id, mentor=request.user, status='pending')
-            mentorship.status = 'rejected' # Add a rejected status if you want to track this
-            # Alternatively, just delete it:
-            mentorship_skill = mentorship.skill.skill
-            learner_user = mentorship.learner
-            mentorship.delete()
-            logger.info(f"Mentor {request.user.username} rejected and deleted mentorship request {id}")
+            
+            mentorship_skill_name = mentorship.skill.skill # Store for notification
+            learner_user = mentorship.learner # Store for notification
 
-            # Refund credits to the learner
-            learner_credits = learner_user.get_credits()
-            learner_credits.add_credits(15, f"Refund for rejected mentorship request for {mentorship_skill}")
-            logger.info(f"Refunded 15 credits to learner {learner_user.username} for rejected mentorship {id}")
+            mentorship.status = 'rejected' 
+            mentorship.save()
+            logger.info(f"Mentor {request.user.username} rejected mentorship request {id}")
 
             Notification.objects.create(
                 user=learner_user,
-                message=f"{request.user.username} rejected your mentorship request in {mentorship_skill}",
+                message=f"{request.user.username} rejected your mentorship request in {mentorship_skill_name}",
                 notification_type='mentorship_rejected'
-                # No link needed if it's deleted
+                # Link might still be useful to show the rejected request details
+                , link=f"/mentorships/{mentorship.id}" 
             )
             logger.info(f"Created mentorship rejected notification for learner {learner_user.username}")
 
-            return Response({"message": "Mentorship request rejected successfully."}, status=status.HTTP_200_OK)
+            # Return the updated mentorship data (optional, but can be useful for UI)
+            serializer = MentorshipSerializer(mentorship)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         except Mentorship.DoesNotExist:
             logger.error(f"Mentorship {id} not found, not pending, or user {request.user.username} is not the mentor for rejection")
             return Response({"error": "Mentorship not found, already accepted/rejected, or you are not the mentor."}, status=status.HTTP_404_NOT_FOUND)
