@@ -48,7 +48,7 @@ const Home = () => {
                 title: "Skill Improvement",
                 text: "Get one-on-one help from expert users.",
                 image: "/images/upskill.jpg",
-                link: "#",
+                link: "/skills",
               },
               {
                 title: "Resource Sharing",
