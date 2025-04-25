@@ -171,6 +171,62 @@ const HelpRequestDetail = () => {
             object-fit: cover;
             border: 2px solid #e9ecef;
           }
+          /* Base styles for our custom buttons */
+          .btn-custom {
+            display: inline-flex; /* Align icon and text properly */
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem; /* Generous padding */
+            border-radius: 50px;   /* Pill shape for modern feel */
+            border: none;
+            color: white;
+            font-weight: 600;    /* Slightly bolder text */
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease; /* Smooth transitions */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            background-size: 200% auto; /* For gradient hover effect */
+          }
+          .btn-custom i {
+            margin-right: 0.75rem; /* Space between icon and text */
+            font-size: 1.1em;     /* Make icon slightly larger */
+          }
+          /* Chat Button Specific Styles */
+          .btn-custom-chat {
+            background-image: linear-gradient(to right, #26a69a 0%, #1de9b6 51%, #26a69a 100%);
+          }
+          .btn-custom-chat:hover {
+            background-position: right center; /* Change gradient direction on hover */
+            color: #fff;
+            box-shadow: 0 6px 15px rgba(0, 200, 150, 0.3); /* Enhanced shadow on hover */
+            transform: translateY(-2px); /* Slight lift */
+          }
+          /* Video Call Button Specific Styles */
+          .btn-custom-video {
+             background-image: linear-gradient(to right, #2962ff 0%, #5c6bc0 51%, #2962ff 100%);
+          }
+          .btn-custom-video:hover {
+            background-position: right center;
+            color: #fff;
+            box-shadow: 0 6px 15px rgba(0, 100, 255, 0.3);
+            transform: translateY(-2px);
+          }
+          /* Disabled State */
+          .btn-custom:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+            background-image: none; /* Optional: remove gradient for disabled */
+            background-color: #ccc;  /* Optional: use a flat grey */
+          }
+          /* Specific disabled colors (optional) */
+          .btn-custom-chat:disabled {
+            background-color: #99cec9;
+          }
+          .btn-custom-video:disabled {
+             background-color: #a8bbf0;
+          }
         `}</style>
 
         {/* Loading State */}
@@ -235,20 +291,20 @@ const HelpRequestDetail = () => {
                 </div>
               </div>
               {isAuthenticated && request.status === "open" && (
-                <div className="d-flex gap-2 mt-4">
+                <div className="d-flex gap-3 mt-4">
                   {request.credit_offer_chat > 0 &&
                     request.created_by.username !== user?.username && (
                       <button
-                        className="btn btn-success rounded-3 px-4"
+                        className="btn-custom btn-custom-chat"
                         onClick={handleStartChat}
                         disabled={loading}
                       >
-                        <i className="bi bi-chat-fill me-2"></i>Start Chat
+                        <i className="bi bi-chat-dots-fill me-2"></i>Start Chat
                       </button>
                     )}
                   {request.created_by.username !== user?.username && (
                     <button
-                      className="btn btn-primary rounded-3 px-4"
+                      className="btn-custom btn-custom-video"
                       onClick={handleStartVideoCall}
                       disabled={loading}
                     >
