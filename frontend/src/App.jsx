@@ -37,6 +37,8 @@ import AdminResources from "./pages/admin/AdminResources";
 import Profile from "./pages/user/Profile";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminHelpRequests from "./pages/admin/AdminHelpRequests";
+import AdminSkillProfiles from "./pages/admin/AdminSkillProfiles";
+import AdminMentorships from "./pages/admin/AdminMentorships";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import NotAuthorized from "./pages/NotAuthorized";
 import "@fortawesome/fontawesome-free/css/all.min.css";
@@ -198,6 +200,22 @@ function App() {
               element={
                 <AdminProtectedRoute>
                   <AdminHelpRequests />
+                </AdminProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/skill-profiles"
+              element={
+                <AdminProtectedRoute>
+                  <AdminSkillProfiles />
+                </AdminProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/mentorships"
+              element={
+                <AdminProtectedRoute>
+                  <AdminMentorships />
                 </AdminProtectedRoute>
               }
             />

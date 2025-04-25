@@ -5,6 +5,8 @@ import discussionReducer from "./discussionSlice";
 import resourceReducer from "./resourceSlice";
 import notificationReducer from "./notificationSlice";
 import helpRequestReducer from './helpRequestSlice';
+import mentorshipReducer from './mentorshipSlice';
+import skillProfileReducer from './skillProfileSlice';
 
 
 const store = configureStore({
@@ -14,7 +16,9 @@ const store = configureStore({
         discussions: discussionReducer,
         resources: resourceReducer,
         notifications: notificationReducer,
-        helpRequests: helpRequestReducer
+        helpRequests: helpRequestReducer,
+        mentorships: mentorshipReducer,
+        skillProfiles: skillProfileReducer
     }
 })
 

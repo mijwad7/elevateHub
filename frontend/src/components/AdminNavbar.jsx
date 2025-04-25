@@ -49,7 +49,17 @@ function AdminNavbar() {
                         </li>
                         <li className="nav-item">
                             <Link className="nav-link" to="/admin/help-requests">
-                                <i className="fas fa-file me-2"></i> Help Requests
+                                <i className="fas fa-question-circle me-2"></i> Help Requests
+                            </Link>
+                        </li>
+                        <li className="nav-item">
+                            <Link className="nav-link" to="/admin/skill-profiles">
+                                <i className="fas fa-user-graduate me-2"></i> Skill Profiles
+                            </Link>
+                        </li>
+                        <li className="nav-item">
+                            <Link className="nav-link" to="/admin/mentorships">
+                                <i className="fas fa-hands-helping me-2"></i> Mentorships
                             </Link>
                         </li>
                     </ul>

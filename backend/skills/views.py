@@ -51,7 +51,7 @@ class SkillProfileListView(generics.ListAPIView):
         
         return queryset.order_by('-created_at')
 
-class SkillProfileDetailView(generics.RetrieveAPIView):
+class SkillProfileDetailView(generics.RetrieveUpdateDestroyAPIView):
     """Retrieve a specific public skill profile."""
     queryset = SkillProfile.objects.select_related('user', 'category').all()
     serializer_class = SkillProfileSerializer
@@ -298,7 +298,7 @@ class UserMentorshipsListView(generics.ListAPIView):
             
         return queryset.select_related('mentor', 'learner', 'skill', 'skill__category').order_by('-created_at')
 
-class MentorshipDetailView(generics.RetrieveAPIView):
+class MentorshipDetailView(generics.RetrieveUpdateDestroyAPIView):
     """ Retrieve details of a specific mentorship if user is mentor or learner. """
     serializer_class = MentorshipSerializer
     permission_classes = [permissions.IsAuthenticated]
