@@ -6,12 +6,16 @@ import {
   editSkillProfile,
   deleteSkillProfile,
 } from "../../redux/skillProfileSlice";
+import { fetchUsers } from "../../redux/adminSlice"; // Import fetchUsers
+import { getCategories } from "../../apiRequests";
 import AdminNavbar from "../../components/AdminNavbar";
-import { Spinner, Container, Row, Col, Form, Button, Table, Card } from "react-bootstrap";
+import { Spinner, Container, Row, Col, Form, Button, Table, Card, Modal } from "react-bootstrap";
 
 function AdminSkillProfiles() {
   const dispatch = useDispatch();
   const { skillProfiles, loading } = useSelector((state) => state.skillProfiles);
+  const { users } = useSelector((state) => state.admin); // Get users from admin slice
+  const [categories, setCategories] = useState([]); // State for categories
   const [newSkillProfileData, setNewSkillProfileData] = useState({
     user: "",
     skill: "",
@@ -21,9 +25,18 @@ function AdminSkillProfiles() {
   });
   const [editData, setEditData] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
+  const [showModal, setShowModal] = useState(false); // State for modal visibility
 
+  // Fetch users and categories on component mount
   useEffect(() => {
     dispatch(fetchSkillProfiles());
+    dispatch(fetchUsers()); // Fetch users
+    // Fetch categories
+    getCategories().then((data) => {
+      if (data) {
+        setCategories(data);
+      }
+    });
   }, [dispatch]);
 
   const handleInputChange = (e) => {
@@ -49,6 +62,7 @@ function AdminSkillProfiles() {
         proficiency: "beginner",
         is_mentor: false,
       });
+      setShowModal(false); // Close the modal
     }
   };
 
@@ -68,6 +82,7 @@ function AdminSkillProfiles() {
         proficiency: "beginner",
         is_mentor: false,
       });
+      setShowModal(false); // Close the modal
     }
   };
 
@@ -78,6 +93,30 @@ function AdminSkillProfiles() {
     }
   };
 
+  const openCreateModal = () => {
+    setEditData(null);
+    setNewSkillProfileData({
+      user: "",
+      skill: "",
+      category: "",
+      proficiency: "beginner",
+      is_mentor: false,
+    });
+    setShowModal(true);
+  };
+
+  const openEditModal = (skillProfile) => {
+    setEditData(skillProfile);
+    setNewSkillProfileData({
+      user: skillProfile.user,
+      skill: skillProfile.skill,
+      category: skillProfile.category_details.id,
+      proficiency: skillProfile.proficiency,
+      is_mentor: skillProfile.is_mentor,
+    });
+    setShowModal(true);
+  };
+
   return (
     <>
       <AdminNavbar />
@@ -86,98 +125,140 @@ function AdminSkillProfiles() {
           Skill Profile Management
         </h2>
 
-        <Row className="justify-content-center mb-5">
-          <Col md={8} lg={6}>
-            <Card className="shadow-lg border-0 rounded-4">
-              <Card.Body className="p-4">
-                <Form>
-                  <Form.Group className="mb-4">
-                    <Form.Label className="fw-medium text-dark">User ID</Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="user"
-                      value={newSkillProfileData.user}
-                      onChange={handleInputChange}
-                      placeholder="Enter user ID"
-                      className="border-0 rounded-3 shadow-sm"
-                      style={{ padding: "0.75rem 1.25rem" }}
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-4">
-                    <Form.Label className="fw-medium text-dark">Skill</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="skill"
-                      value={newSkillProfileData.skill}
-                      onChange={handleInputChange}
-                      placeholder="Enter skill"
-                      className="border-0 rounded-3 shadow-sm"
-                      style={{ padding: "0.75rem 1.25rem" }}
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-4">
-                    <Form.Label className="fw-medium text-dark">Category ID</Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="category"
-                      value={newSkillProfileData.category}
-                      onChange={handleInputChange}
-                      placeholder="Enter category ID"
-                      className="border-0 rounded-3 shadow-sm"
-                      style={{ padding: "0.75rem 1.25rem" }}
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-4">
-                    <Form.Label className="fw-medium text-dark">Proficiency</Form.Label>
-                    <Form.Select
-                      name="proficiency"
-                      value={newSkillProfileData.proficiency}
-                      onChange={handleInputChange}
-                      className="border-0 rounded-3 shadow-sm"
-                      style={{ padding: "0.75rem 1.25rem" }}
-                    >
-                      <option value="beginner">Beginner</option>
-                      <option value="intermediate">Intermediate</option>
-                      <option value="advanced">Advanced</option>
-                    </Form.Select>
-                  </Form.Group>
-                  <Form.Group className="mb-4">
-                    <Form.Check
-                      type="switch"
-                      id="is-mentor-switch"
-                      name="is_mentor"
-                      checked={newSkillProfileData.is_mentor}
-                      onChange={handleInputChange}
-                      label="Available as Mentor"
-                      className="text-muted fw-medium"
-                    />
-                  </Form.Group>
-                  <Button
-                    variant={editData ? "warning" : "primary"}
-                    onClick={editData ? handleEdit : handleCreate}
-                    className="w-100 rounded-pill py-2 shadow-sm"
-                    style={{
-                      transition: "all 0.3s ease",
-                      backgroundImage: editData
-                        ? "linear-gradient(135deg, #ffc107, #e0a800)"
-                        : "linear-gradient(135deg, #007bff, #0056b3)",
-                    }}
-                  >
-                    {editData ? (
-                      <>
-                        <i className="bi bi-pencil-square me-2"></i>Update Skill Profile
-                      </>
-                    ) : (
-                      <>
-                        <i className="bi bi-plus-circle me-2"></i>Create Skill Profile
-                      </>
-                    )}
-                  </Button>
-                </Form>
-              </Card.Body>
-            </Card>
+        {/* Button to open the create modal */}
+        <Row className="mb-4">
+          <Col className="text-end">
+            <Button
+              variant="primary"
+              className="rounded-pill px-4 py-2 shadow-sm"
+              onClick={openCreateModal}
+              style={{
+                transition: "all 0.3s ease",
+                backgroundImage: "linear-gradient(135deg, #007bff, #0056b3)",
+              }}
+            >
+              <i className="bi bi-plus-circle me-2"></i>Create Skill Profile
+            </Button>
           </Col>
         </Row>
+
+        {/* Create/Edit Modal */}
+        <Modal
+          show={showModal}
+          onHide={() => setShowModal(false)}
+          centered
+          backdrop="static"
+          keyboard={false}
+        >
+          <Modal.Header closeButton className="bg-primary text-white">
+            <Modal.Title>{editData ? "Edit Skill Profile" : "Create Skill Profile"}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form>
+              <Form.Group className="mb-4">
+                <Form.Label className="fw-medium text-dark">User</Form.Label>
+                <Form.Select
+                  name="user"
+                  value={newSkillProfileData.user}
+                  onChange={handleInputChange}
+                  className="border-0 rounded-3 shadow-sm"
+                  style={{ padding: "0.75rem 1.25rem" }}
+                >
+                  <option value="">Select a user</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.username}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+              <Form.Group className="mb-4">
+                <Form.Label className="fw-medium text-dark">Skill</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="skill"
+                  value={newSkillProfileData.skill}
+                  onChange={handleInputChange}
+                  placeholder="Enter skill"
+                  className="border-0 rounded-3 shadow-sm"
+                  style={{ padding: "0.75rem 1.25rem" }}
+                />
+              </Form.Group>
+              <Form.Group className="mb-4">
+                <Form.Label className="fw-medium text-dark">Category</Form.Label>
+                <Form.Select
+                  name="category"
+                  value={newSkillProfileData.category}
+                  onChange={handleInputChange}
+                  className="border-0 rounded-3 shadow-sm"
+                  style={{ padding: "0.75rem 1.25rem" }}
+                >
+                  <option value="">Select a category</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+              <Form.Group className="mb-4">
+                <Form.Label className="fw-medium text-dark">Proficiency</Form.Label>
+                <Form.Select
+                  name="proficiency"
+                  value={newSkillProfileData.proficiency}
+                  onChange={handleInputChange}
+                  className="border-0 rounded-3 shadow-sm"
+                  style={{ padding: "0.75rem 1.25rem" }}
+                >
+                  <option value="beginner">Beginner</option>
+                  <option value="intermediate">Intermediate</option>
+                  <option value="advanced">Advanced</option>
+                </Form.Select>
+              </Form.Group>
+              <Form.Group className="mb-4">
+                <Form.Check
+                  type="switch"
+                  id="is-mentor-switch"
+                  name="is_mentor"
+                  checked={newSkillProfileData.is_mentor}
+                  onChange={handleInputChange}
+                  label="Available as Mentor"
+                  className="text-muted fw-medium"
+                />
+              </Form.Group>
+            </Form>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button
+              variant="secondary"
+              className="rounded-pill px-3"
+              onClick={() => setShowModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant={editData ? "warning" : "primary"}
+              className="rounded-pill px-3"
+              onClick={editData ? handleEdit : handleCreate}
+              style={{
+                transition: "all 0.3s ease",
+                backgroundImage: editData
+                  ? "linear-gradient(135deg, #ffc107, #e0a800)"
+                  : "linear-gradient(135deg, #007bff, #0056b3)",
+              }}
+            >
+              {editData ? (
+                <>
+                  <i className="bi bi-pencil-square me-2"></i>Update
+                </>
+              ) : (
+                <>
+                  <i className="bi bi-plus-circle me-2"></i>Create
+                </>
+              )}
+            </Button>
+          </Modal.Footer>
+        </Modal>
 
         {loading ? (
           <div className="d-flex justify-content-center align-items-center my-5">
@@ -219,16 +300,7 @@ function AdminSkillProfiles() {
                       variant="info"
                       size="sm"
                       className="me-2 rounded-pill px-3"
-                      onClick={() => {
-                        setEditData(skillProfile);
-                        setNewSkillProfileData({
-                          user: skillProfile.user,
-                          skill: skillProfile.skill,
-                          category: skillProfile.category_details.id,
-                          proficiency: skillProfile.proficiency,
-                          is_mentor: skillProfile.is_mentor,
-                        });
-                      }}
+                      onClick={() => openEditModal(skillProfile)}
                     >
                       <i className="bi bi-pencil me-1"></i>Edit
                     </Button>
