@@ -203,13 +203,6 @@ const Home = () => {
           <div className="row">
             <div className="col-md-4">
               <h2 className="fw-bold">Frequently Asked Questions</h2>
-              <p>
-                Still have any questions? Contact our team via{" "}
-                <a href="mailto:support@ElevateHub.com">
-                  support@ElevateHub.com
-                </a>
-              </p>
-              <button className="btn btn-primary">See All FAQ’s</button>
             </div>
 
             <div className="col-md-8">
