@@ -4,7 +4,7 @@ import { ACCESS_TOKEN } from "../constants";
 
 export const fetchMentorships = createAsyncThunk("admin/fetchMentorships", async () => {
     const token = localStorage.getItem(ACCESS_TOKEN);
-    const response = await api.get("/api/mentorships/", {
+    const response = await api.get("/api/admin/mentorships/", {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -14,18 +14,21 @@ export const fetchMentorships = createAsyncThunk("admin/fetchMentorships", async
 
 export const createMentorship = createAsyncThunk("admin/createMentorship", async (mentorshipData) => {
     const token = localStorage.getItem(ACCESS_TOKEN);
-    const response = await api.post("/api/mentorships/", mentorshipData, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-        }
+    const response = await api.post("/api/admin/mentorships/", {
+      ...mentorshipData,
+      learner: mentorshipData.learner || mentorshipData.mentee, // Map 'mentee' to 'learner' if needed
+    }, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      }
     });
     return response.data;
-});
+  });
 
 export const editMentorship = createAsyncThunk("admin/editMentorship", async ({ mentorshipId, mentorshipData }) => {
     const token = localStorage.getItem(ACCESS_TOKEN);
-    const response = await api.patch(`/api/mentorships/${mentorshipId}/`, mentorshipData, {
+    const response = await api.patch(`/api/admin/mentorships/${mentorshipId}/`, mentorshipData, {
         headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json"
@@ -36,7 +39,7 @@ export const editMentorship = createAsyncThunk("admin/editMentorship", async ({ 
 
 export const deleteMentorship = createAsyncThunk("admin/deleteMentorship", async (mentorshipId) => {
     const token = localStorage.getItem(ACCESS_TOKEN);
-    await api.delete(`/api/mentorships/${mentorshipId}/`, {
+    await api.delete(`/api/admin/mentorships/${mentorshipId}/`, {
         headers: {
             Authorization: `Bearer ${token}`
         }

@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from .models import SkillProfile, Mentorship
 from .serializers import SkillProfileSerializer, MentorshipSerializer
 from api.models import CustomUser
@@ -308,3 +308,45 @@ class MentorshipDetailView(generics.RetrieveUpdateDestroyAPIView):
         user = self.request.user
         # Filter to only mentorships the user is part of
         return Mentorship.objects.filter(Q(mentor=user) | Q(learner=user)).select_related('mentor', 'learner', 'skill', 'skill__category')
+
+
+class AdminMentorshipListCreateView(generics.ListCreateAPIView):
+    """Admin view to list all mentorships or create a new one."""
+    serializer_class = MentorshipSerializer
+    permission_classes = [IsAdminUser]  # Restrict to admin users
+
+    def get_queryset(self):
+        """Return all mentorships, with optional status filtering."""
+        queryset = Mentorship.objects.all()
+        status_filter = self.request.query_params.get('status')
+        
+        if status_filter:
+            statuses = [s.strip() for s in status_filter.split(',') if s.strip()]
+            queryset = queryset.filter(status__in=statuses)
+            
+        return queryset.select_related('mentor', 'learner', 'skill', 'skill__category').order_by('-created_at')
+
+    def perform_create(self, serializer):
+        """Log the creation of a new mentorship by an admin."""
+        mentorship = serializer.save()
+        logger.info(f"Admin {self.request.user.username} created mentorship ID: {mentorship.id} for mentor {mentorship.mentor.username} and learner {mentorship.learner.username}")
+
+
+class AdminMentorshipDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Admin view to retrieve, update, or delete a specific mentorship."""
+    serializer_class = MentorshipSerializer
+    permission_classes = [IsAdminUser]  # Restrict to admin users
+
+    def get_queryset(self):
+        """Return all mentorships for admin access."""
+        return Mentorship.objects.all().select_related('mentor', 'learner', 'skill', 'skill__category')
+
+    def perform_update(self, serializer):
+        """Log the update of a mentorship by an admin."""
+        mentorship = serializer.save()
+        logger.info(f"Admin {self.request.user.username} updated mentorship ID: {mentorship.id} for mentor {mentorship.mentor.username} and learner {mentorship.learner.username}")
+
+    def perform_destroy(self, instance):
+        """Log the deletion of a mentorship by an admin."""
+        logger.warning(f"Admin {self.request.user.username} deleted mentorship ID: {instance.id} for mentor {instance.mentor.username} and learner {instance.learner.username}")
+        instance.delete()

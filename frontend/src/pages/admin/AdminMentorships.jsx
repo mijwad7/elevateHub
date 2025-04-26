@@ -6,24 +6,31 @@ import {
   editMentorship,
   deleteMentorship,
 } from "../../redux/mentorshipSlice";
+import { fetchSkillProfiles } from "../../redux/skillProfileSlice";
+import { fetchUsers } from "../../redux/adminSlice";
 import AdminNavbar from "../../components/AdminNavbar";
-import { Spinner, Container, Row, Col, Form, Button, Table, Card } from "react-bootstrap";
+import { Spinner, Container, Row, Col, Form, Button, Table, Card, Modal } from "react-bootstrap";
 
 function AdminMentorships() {
   const dispatch = useDispatch();
   const { mentorships, loading } = useSelector((state) => state.mentorships);
+  const { users } = useSelector((state) => state.admin);
+  const { skillProfiles } = useSelector((state) => state.skillProfiles);
   const [newMentorshipData, setNewMentorshipData] = useState({
-    mentor: "",
-    mentee: "",
-    skill_profile: "",
+    mentor_id: "", // Changed to mentor_id
+    learner_id: "", // Changed to learner_id
+    skill_id: "", // Changed to skill_id
     topic: "",
     status: "pending",
   });
   const [editData, setEditData] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     dispatch(fetchMentorships());
+    dispatch(fetchUsers());
+    dispatch(fetchSkillProfiles());
   }, [dispatch]);
 
   const handleInputChange = (e) => {
@@ -33,20 +40,21 @@ function AdminMentorships() {
 
   const handleCreate = () => {
     if (
-      newMentorshipData.mentor &&
-      newMentorshipData.mentee &&
-      newMentorshipData.skill_profile &&
+      newMentorshipData.mentor_id &&
+      newMentorshipData.learner_id &&
+      newMentorshipData.skill_id &&
       newMentorshipData.topic &&
       newMentorshipData.status
     ) {
       dispatch(createMentorship(newMentorshipData));
       setNewMentorshipData({
-        mentor: "",
-        mentee: "",
-        skill_profile: "",
+        mentor_id: "",
+        learner_id: "",
+        skill_id: "",
         topic: "",
         status: "pending",
       });
+      setShowModal(false);
     }
   };
 
@@ -60,12 +68,13 @@ function AdminMentorships() {
       );
       setEditData(null);
       setNewMentorshipData({
-        mentor: "",
-        mentee: "",
-        skill_profile: "",
+        mentor_id: "",
+        learner_id: "",
+        skill_id: "",
         topic: "",
         status: "pending",
       });
+      setShowModal(false);
     }
   };
 
@@ -76,6 +85,30 @@ function AdminMentorships() {
     }
   };
 
+  const openCreateModal = () => {
+    setEditData(null);
+    setNewMentorshipData({
+      mentor_id: "",
+      learner_id: "",
+      skill_id: "",
+      topic: "",
+      status: "pending",
+    });
+    setShowModal(true);
+  };
+
+  const openEditModal = (mentorship) => {
+    setEditData(mentorship);
+    setNewMentorshipData({
+      mentor_id: mentorship.mentor.id,
+      learner_id: mentorship.mentee.id, // Maps to learner_id
+      skill_id: mentorship.skill_profile.id,
+      topic: mentorship.topic,
+      status: mentorship.status,
+    });
+    setShowModal(true);
+  };
+
   return (
     <>
       <AdminNavbar />
@@ -84,100 +117,145 @@ function AdminMentorships() {
           Mentorship Management
         </h2>
 
-        <Row className="justify-content-center mb-5">
-          <Col md={8} lg={6}>
-            <Card className="shadow-lg border-0 rounded-4">
-              <Card.Body className="p-4">
-                <Form>
-                  <Form.Group className="mb-4">
-                    <Form.Label className="fw-medium text-dark">Mentor ID</Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="mentor"
-                      value={newMentorshipData.mentor}
-                      onChange={handleInputChange}
-                      placeholder="Enter mentor ID"
-                      className="border-0 rounded-3 shadow-sm"
-                      style={{ padding: "0.75rem 1.25rem" }}
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-4">
-                    <Form.Label className="fw-medium text-dark">Mentee ID</Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="mentee"
-                      value={newMentorshipData.mentee}
-                      onChange={handleInputChange}
-                      placeholder="Enter mentee ID"
-                      className="border-0 rounded-3 shadow-sm"
-                      style={{ padding: "0.75rem 1.25rem" }}
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-4">
-                    <Form.Label className="fw-medium text-dark">Skill Profile ID</Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="skill_profile"
-                      value={newMentorshipData.skill_profile}
-                      onChange={handleInputChange}
-                      placeholder="Enter skill profile ID"
-                      className="border-0 rounded-3 shadow-sm"
-                      style={{ padding: "0.75rem 1.25rem" }}
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-4">
-                    <Form.Label className="fw-medium text-dark">Topic</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="topic"
-                      value={newMentorshipData.topic}
-                      onChange={handleInputChange}
-                      placeholder="Enter topic"
-                      className="border-0 rounded-3 shadow-sm"
-                      style={{ padding: "0.75rem 1.25rem" }}
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-4">
-                    <Form.Label className="fw-medium text-dark">Status</Form.Label>
-                    <Form.Select
-                      name="status"
-                      value={newMentorshipData.status}
-                      onChange={handleInputChange}
-                      className="border-0 rounded-3 shadow-sm"
-                      style={{ padding: "0.75rem 1.25rem" }}
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="active">Active</option>
-                      <option value="completed">Completed</option>
-                      <option value="rejected">Rejected</option>
-                    </Form.Select>
-                  </Form.Group>
-                  <Button
-                    variant={editData ? "warning" : "primary"}
-                    onClick={editData ? handleEdit : handleCreate}
-                    className="w-100 rounded-pill py-2 shadow-sm"
-                    style={{
-                      transition: "all 0.3s ease",
-                      backgroundImage: editData
-                        ? "linear-gradient(135deg, #ffc107, #e0a800)"
-                        : "linear-gradient(135deg, #007bff, #0056b3)",
-                    }}
-                  >
-                    {editData ? (
-                      <>
-                        <i className="bi bi-pencil-square me-2"></i>Update Mentorship
-                      </>
-                    ) : (
-                      <>
-                        <i className="bi bi-plus-circle me-2"></i>Create Mentorship
-                      </>
-                    )}
-                  </Button>
-                </Form>
-              </Card.Body>
-            </Card>
+        <Row className="mb-4">
+          <Col className="text-end">
+            <Button
+              variant="primary"
+              className="rounded-pill px-4 py-2 shadow-sm"
+              onClick={openCreateModal}
+              style={{
+                transition: "all 0.3s ease",
+                backgroundImage: "linear-gradient(135deg, #007bff, #0056b3)",
+              }}
+            >
+              <i className="bi bi-plus-circle me-2"></i>Create Mentorship
+            </Button>
           </Col>
         </Row>
+
+        <Modal
+          show={showModal}
+          onHide={() => setShowModal(false)}
+          centered
+          backdrop="static"
+          keyboard={false}
+        >
+          <Modal.Header closeButton className="bg-primary text-white">
+            <Modal.Title>{editData ? "Edit Mentorship" : "Create Mentorship"}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form>
+              <Form.Group className="mb-4">
+                <Form.Label className="fw-medium text-dark">Mentor</Form.Label>
+                <Form.Select
+                  name="mentor_id" // Changed to mentor_id
+                  value={newMentorshipData.mentor_id}
+                  onChange={handleInputChange}
+                  className="border-0 rounded-3 shadow-sm"
+                  style={{ padding: "0.75rem 1.25rem" }}
+                >
+                  <option value="">Select a mentor</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.username}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+              <Form.Group className="mb-4">
+                <Form.Label className="fw-medium text-dark">Learner</Form.Label>
+                <Form.Select
+                  name="learner_id" // Changed to learner_id
+                  value={newMentorshipData.learner_id}
+                  onChange={handleInputChange}
+                  className="border-0 rounded-3 shadow-sm"
+                  style={{ padding: "0.75rem 1.25rem" }}
+                >
+                  <option value="">Select a learner</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.username}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+              <Form.Group className="mb-4">
+                <Form.Label className="fw-medium text-dark">Skill Profile</Form.Label>
+                <Form.Select
+                  name="skill_id" // Changed to skill_id
+                  value={newMentorshipData.skill_id}
+                  onChange={handleInputChange}
+                  className="border-0 rounded-3 shadow-sm"
+                  style={{ padding: "0.75rem 1.25rem" }}
+                >
+                  <option value="">Select a skill profile</option>
+                  {skillProfiles.map((skillProfile) => (
+                    <option key={skillProfile.id} value={skillProfile.id}>
+                      {skillProfile.skill}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+              <Form.Group className="mb-4">
+                <Form.Label className="fw-medium text-dark">Topic</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="topic"
+                  value={newMentorshipData.topic}
+                  onChange={handleInputChange}
+                  placeholder="Enter topic"
+                  className="border-0 rounded-3 shadow-sm"
+                  style={{ padding: "0.75rem 1.25rem" }}
+                />
+              </Form.Group>
+              <Form.Group className="mb-4">
+                <Form.Label className="fw-medium text-dark">Status</Form.Label>
+                <Form.Select
+                  name="status"
+                  value={newMentorshipData.status}
+                  onChange={handleInputChange}
+                  className="border-0 rounded-3 shadow-sm"
+                  style={{ padding: "0.75rem 1.25rem" }}
+                >
+                  <option value="pending">Pending</option>
+                  <option value="active">Active</option>
+                  <option value="completed">Completed</option>
+                  <option value="rejected">Rejected</option>
+                </Form.Select>
+              </Form.Group>
+            </Form>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button
+              variant="secondary"
+              className="rounded-pill px-3"
+              onClick={() => setShowModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant={editData ? "warning" : "primary"}
+              className="rounded-pill px-3"
+              onClick={editData ? handleEdit : handleCreate}
+              style={{
+                transition: "all 0.3s ease",
+                backgroundImage: editData
+                  ? "linear-gradient(135deg, #ffc107, #e0a800)"
+                  : "linear-gradient(135deg, #007bff, #0056b3)",
+              }}
+            >
+              {editData ? (
+                <>
+                  <i className="bi bi-pencil-square me-2"></i>Update
+                </>
+              ) : (
+                <>
+                  <i className="bi bi-plus-circle me-2"></i>Create
+                </>
+              )}
+            </Button>
+          </Modal.Footer>
+        </Modal>
 
         {loading ? (
           <div className="d-flex justify-content-center align-items-center my-5">
@@ -190,7 +268,7 @@ function AdminMentorships() {
               <tr>
                 <th>ID</th>
                 <th>Mentor</th>
-                <th>Mentee</th>
+                <th>Learner</th>
                 <th>Skill</th>
                 <th>Topic</th>
                 <th>Status</th>
@@ -227,16 +305,7 @@ function AdminMentorships() {
                       variant="info"
                       size="sm"
                       className="me-2 rounded-pill px-3"
-                      onClick={() => {
-                        setEditData(mentorship);
-                        setNewMentorshipData({
-                          mentor: mentorship.mentor.id,
-                          mentee: mentorship.mentee.id,
-                          skill_profile: mentorship.skill_profile.id,
-                          topic: mentorship.topic,
-                          status: mentorship.status,
-                        });
-                      }}
+                      onClick={() => openEditModal(mentorship)}
                     >
                       <i className="bi bi-pencil me-1"></i>Edit
                     </Button>
@@ -257,7 +326,6 @@ function AdminMentorships() {
           </Table>
         )}
 
-        {/* Delete Confirmation Modal */}
         <div
           className="modal fade"
           id="deleteMentorshipModal"

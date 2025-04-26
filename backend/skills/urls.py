@@ -9,7 +9,9 @@ from .views import (
     MentorshipRejectView,
     MentorshipCompleteView,
     UserMentorshipsListView,
-    MentorshipDetailView
+    MentorshipDetailView,
+    AdminMentorshipListCreateView,
+    AdminMentorshipDetailView
 )
 
 urlpatterns = [
@@ -29,4 +31,6 @@ urlpatterns = [
     path('mentorships/', UserMentorshipsListView.as_view(), name='user-mentorships-list'),
     path('mentorships/<int:pk>/', MentorshipDetailView.as_view(), name='mentorship-detail'),
     path('user/mentorships/', UserMentorshipsListView.as_view(), name='user-mentorships-list'),
+    path('admin/mentorships/', AdminMentorshipListCreateView.as_view(), name='admin-mentorships-list-create'),
+    path('admin/mentorships/<int:pk>/', AdminMentorshipDetailView.as_view(), name='admin-mentorship-detail'),
 ]
