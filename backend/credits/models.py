@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class Credit(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='credits')
-    balance = models.IntegerField(default=0)
+    balance = models.IntegerField(default=50)
 
     def __str__(self):
         return f"{self.user.username}: {self.balance} credits"
