@@ -22,7 +22,7 @@ class SkillProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = SkillProfile
         fields = ['id', 'user', 'username', 'skill', 'category', 'category_details', 'proficiency', 'is_mentor', 'created_at']
-        read_only_fields = ['user', 'username', 'created_at', 'category_details']
+        read_only_fields = ['username', 'created_at', 'category_details']
 
 class SimpleUserSerializer(serializers.ModelSerializer):
     """Serializer for basic user info."""

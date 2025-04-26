@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 # --- Public Skill Profile Views ---
 
-class SkillProfileListView(generics.ListAPIView):
+class SkillProfileListView(generics.ListCreateAPIView):
     """List public skill profiles, filterable by skill, mentor status, category."""
     serializer_class = SkillProfileSerializer
     permission_classes = [permissions.AllowAny] # Allow anyone to browse
