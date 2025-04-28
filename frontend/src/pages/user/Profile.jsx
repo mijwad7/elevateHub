@@ -618,7 +618,7 @@ const Profile = () => {
         setTimeout(() => {
           setIsChangingPassword(false);
           setPasswordSuccess(null);
-        }, 2000);
+        }, 4000);
       }
     } catch (error) {
       console.error("Error changing password:", error);
