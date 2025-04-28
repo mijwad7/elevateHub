@@ -18,10 +18,15 @@ class HelpRequest(models.Model):
     description = models.TextField()
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name="help_requests")
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="help_requests")
-    created_at = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=20, choices=[('open', 'Open'), ('resolved', 'Resolved')], default='open')
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)  # Index for sorting/filtering
+    status = models.CharField(max_length=20, choices=[('open', 'Open'), ('resolved', 'Resolved')], default='open', db_index=True)  # Index for filtering
     credit_offer_chat = models.IntegerField(default=0, help_text="Credits offered for chat help")
     credit_offer_video = models.IntegerField(default=0, help_text="Credits offered for video help")
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['created_by', 'status']),  # Composite index for user-specific status queries
+        ]
 
     def __str__(self):
         return self.title
@@ -31,7 +36,12 @@ class HelpComment(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="help_comments")
     content = models.TextField()
     upvotes = models.IntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)  # Index for sorting
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['help_request', 'created_at']),  # Composite index for comments per request
+        ]
 
     def __str__(self):
         return f"Comment by {self.user.username} on {self.help_request.title}"
@@ -60,19 +70,30 @@ class ChatSession(models.Model):
     help_request = models.ForeignKey('HelpRequest', on_delete=models.CASCADE, related_name="chat_sessions")
     requester = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="chat_requests")
     helper = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="chat_helps")
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)  # Index for sorting
     is_active = models.BooleanField(default=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['requester', 'is_active']),  # For user-specific active sessions
+            models.Index(fields=['helper', 'is_active']),    # For helper-specific active sessions
+        ]
 
     def __str__(self):
         return f"Chat for {self.help_request.title} between {self.requester.username} and {self.helper.username}"
 
 class ChatMessage(models.Model):
     chat_session = models.ForeignKey(ChatSession, on_delete=models.CASCADE, null=True, blank=True)
-    mentorship_chat_session_id = models.CharField(max_length=36, null=True, blank=True)
+    mentorship_chat_session_id = models.CharField(max_length=36, null=True, blank=True, db_index=True)  # Index for mentorship lookups
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     content = models.TextField(blank=True)
     image = models.ImageField(upload_to='chat_images/', null=True, blank=True)
-    timestamp = models.DateTimeField(default=timezone.now)
+    timestamp = models.DateTimeField(default=timezone.now, db_index=True)  # Index for sorting
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['chat_session', 'timestamp']),  # For messages per session
+        ]
 
     def __str__(self):
         return f"Message by {self.sender.username} at {self.timestamp}"
@@ -82,9 +103,15 @@ class VideoCall(models.Model):
     mentorship = models.ForeignKey(Mentorship, on_delete=models.CASCADE, related_name="video_calls", null=True, blank=True)
     requester = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="video_requests")
     helper = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="video_helps")
-    started_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(auto_now_add=True, db_index=True)  # Index for sorting
     ended_at = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['requester', 'is_active']),  # For user-specific active calls
+            models.Index(fields=['helper', 'is_active']),    # For helper-specific active calls
+        ]
 
     def end_call(self):
         context_title = self.help_request.title if self.help_request else (self.mentorship.skill.skill if self.mentorship else "Unknown Context")
@@ -97,20 +124,19 @@ class VideoCall(models.Model):
         context_title = self.help_request.title if self.help_request else (self.mentorship.skill.skill if self.mentorship else "Unknown Context")
         return f"Video call for {context_title} between {self.requester.username} and {self.helper.username}"
 
-
-
-
-
 class Notification(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
     message = models.TextField()
     is_read = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    notification_type = models.CharField(max_length=50, default='info')  # info, success, warning, error
-    link = models.URLField(blank=True, null=True)  # Optional link for the notification
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)  # Index for sorting
+    notification_type = models.CharField(max_length=50, default='info', db_index=True)  # Index for filtering
+    link = models.URLField(blank=True, null=True)
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'is_read', 'created_at']),  # For user-specific unread notifications
+        ]
 
     def __str__(self):
         return f"{self.user.username} - {self.message[:50]}"

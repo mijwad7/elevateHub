@@ -13,9 +13,15 @@ class Resource(models.Model):
     description = models.TextField()
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)  # Index for sorting
     upvotes = models.IntegerField(default=0)
     download_count = models.IntegerField(default=0)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['uploaded_by', 'created_at']),  # For user-specific resources
+            models.Index(fields=['category', 'created_at']),     # For category-specific resources
+        ]
 
     def __str__(self):
         return self.title
