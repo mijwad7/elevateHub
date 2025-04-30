@@ -107,7 +107,7 @@ function DiscussionPosts() {
             <div className="card-body p-4">
               <div className="d-flex align-items-center mb-3">
                 <img
-                  src={discussion.created_by.profile || "https://avatar.iran.liara.run/public/4"}
+                  src="https://avatar.iran.liara.run/public/4"
                   alt="User"
                   className="rounded-circle me-3 avatar-img"
                   width="50"

@@ -88,7 +88,7 @@ function Discussions() {
                 <div className="d-flex align-items-center justify-content-between">
                   <div className="d-flex align-items-center">
                     <img
-                      src={`${import.meta.env.VITE_API_URL}${discussion.created_by_profile}` || "https://avatar.iran.liara.run/public/4"}
+                      src="https://avatar.iran.liara.run/public/4"
                       alt={discussion.created_by.username}
                       className="rounded-circle me-3"
                       width="40"

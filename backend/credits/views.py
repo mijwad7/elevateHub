@@ -21,3 +21,5 @@ class CreditTransactionListView(generics.ListAPIView):
     def get_queryset(self):
         logger.info(f"Retrieving credit transactions for user {self.request.user.username}")
         return CreditTransaction.objects.filter(user=self.request.user).order_by('-timestamp')
+    
+
