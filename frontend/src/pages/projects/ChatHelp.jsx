@@ -26,7 +26,7 @@ const ChatHelp = () => {
 
     const connectWebSocket = () => {
       const accessToken = localStorage.getItem("access");
-      let wsUrl = `ws://127.0.0.1:8000/api/ws/chat/${chatId}/`;
+      let wsUrl = `ws://http://ec2-44-244-135-39.us-west-2.compute.amazonaws.com/api/ws/chat/${chatId}/`;
       if (accessToken && accessToken !== "undefined") {
         wsUrl += `?token=${accessToken}`;
       }
@@ -202,7 +202,7 @@ const ChatHelp = () => {
                         {msg.content && <p className="mb-1">{msg.content}</p>}
                         {msg.image_url && (
                           <img
-                            src={`http://localhost:8000${msg.image_url}`}
+                            src={`http://ec2-44-244-135-39.us-west-2.compute.amazonaws.com${msg.image_url}`}
                             alt="Chat image"
                             className="chat-image mt-2 d-block"
                           />

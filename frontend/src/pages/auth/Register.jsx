@@ -22,7 +22,7 @@ const Register = () => {
   const [success, setSuccess] = useState(""); // New state for success message
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:8000/accounts/google/login/";
+    window.location.href = "http://ec2-44-244-135-39.us-west-2.compute.amazonaws.com/accounts/google/login/";
   };
 
   const handleGenerateOTP = async (e) => {

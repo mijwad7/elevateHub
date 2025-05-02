@@ -96,7 +96,7 @@ const HelpRequestDetail = () => {
   const handleStartVideoCall = async () => {
     try {
       const response = await axios.post(
-        `http://127.0.0.1:8000/api/start-video/${id}/`,
+        `http://http://ec2-44-244-135-39.us-west-2.compute.amazonaws.com/api/start-video/${id}/`,
         {},
         {
           headers: {
@@ -117,7 +117,7 @@ const HelpRequestDetail = () => {
       setError('');
       try {
         await axios.post(
-          `http://127.0.0.1:8000/api/end-video/${callId}/`,
+          `http://http://ec2-44-244-135-39.us-west-2.compute.amazonaws.com/api/end-video/${callId}/`,
           {},
           {
             headers: {

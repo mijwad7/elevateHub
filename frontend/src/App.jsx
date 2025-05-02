@@ -47,7 +47,7 @@ import "./App.css";
 function Logout() {
   const dispatch = useDispatch();
   useEffect(() => {
-    fetch("http://localhost:8000/api/logout/", {
+    fetch("http://ec2-44-244-135-39.us-west-2.compute.amazonaws.com/api/logout/", {
       method: "POST",
       credentials: "include",
     }).then(() => {
@@ -69,7 +69,7 @@ function AuthWrapper({ children }) {
   const location = useLocation();
 
   useEffect(() => {
-    fetch("http://localhost:8000/auth/status/", {
+    fetch("http://ec2-44-244-135-39.us-west-2.compute.amazonaws.com/auth/status/", {
       credentials: "include",
       headers: { Accept: "application/json" },
     })

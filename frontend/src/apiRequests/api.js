@@ -2,7 +2,7 @@ import axios from 'axios';
 import { ACCESS_TOKEN } from '../constants';
 
 const api = axios.create({
-    baseURL: 'http://localhost:8000',
+    baseURL: 'http://ec2-44-244-135-39.us-west-2.compute.amazonaws.com',
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',

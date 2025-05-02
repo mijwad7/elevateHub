@@ -73,7 +73,7 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
             };
 
             const token = localStorage.getItem(ACCESS_TOKEN);
-            wsRef.current = new WebSocket(`ws://127.0.0.1:8000/api/ws/video-call/${callId}/?token=${token}`);
+            wsRef.current = new WebSocket(`ws://http://ec2-44-244-135-39.us-west-2.compute.amazonaws.com/api/ws/video-call/${callId}/?token=${token}`);
             wsRef.current.onopen = () => {
                 console.log(`Video WebSocket connected for call ${callId}, isHelper: ${isHelper}`);
                 if (isHelper) {
