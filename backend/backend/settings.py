@@ -54,7 +54,13 @@ INSTALLED_APPS = [
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", "*"]  # Avoid wildcard for clarity
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    "44.244.135.39",
+    "ec2-44-244-135-39.us-west-2.compute.amazonaws.com",
+    "*"
+]
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
