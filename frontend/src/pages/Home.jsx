@@ -225,7 +225,7 @@ const Home = () => {
                   >
                     <div className="accordion-body">
                       Earn credits by answering questions, helping on video
-                      calls, and sharing learning materials.
+                      calls, and sharing learning materials on the platform.
                       <br />
                       <button className="btn btn-light">Explore →</button>
                     </div>
