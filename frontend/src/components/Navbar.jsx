@@ -45,7 +45,7 @@ const Navbar = () => {
           return;
         }
 
-        const websocket = new WebSocket(`wss://elevatehub-proxy.mijuzz007.workers.dev/ws/notifications/?token=${encodeURIComponent(token)}`);
+        const websocket = new WebSocket(`wss://elevatehub-proxy.mijuzz007.workers.dev/api/ws/notifications/?token=${encodeURIComponent(token)}`);
 
         websocket.onopen = () => {
           console.log("Notification WebSocket connected");
