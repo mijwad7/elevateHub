@@ -422,7 +422,7 @@ const MentorshipDetails = () => {
                             {msg.content && <p className="mb-1">{msg.content}</p>}
                             {msg.image_url && (
                               <img
-                                src={`https://elevatehub-proxy.mijuzz007.workers.dev${msg.image_url}`}
+                                src={`https://elevatehub-proxy.mijuzz007.workers.dev/api${msg.image_url}`}
                                 alt="Chat image"
                                 className="img-fluid rounded-3 mt-2"
                                 style={{ maxHeight: '200px', objectFit: 'cover' }}

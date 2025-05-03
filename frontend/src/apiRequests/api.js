@@ -2,7 +2,7 @@ import axios from 'axios';
 import { ACCESS_TOKEN } from '../constants';
 
 const api = axios.create({
-    baseURL: 'https://elevatehub-proxy.mijuzz007.workers.dev',
+    baseURL: 'https://elevatehub-proxy.mijuzz007.workers.dev/api',
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
