@@ -133,7 +133,7 @@ const Profile = () => {
     }
 
     try {
-      await api.get("/auth/status/", {
+      await api.get("/api/auth/status/", {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
     } catch (error) {
@@ -158,7 +158,7 @@ const Profile = () => {
       const config = await getAuthConfig();
 
       const [statusResponse, balance, txs, chats] = await Promise.all([
-        api.get("/auth/status/", config),
+        api.get("/api/auth/status/", config),
         getCreditBalance(config),
         getCreditTransactions(config),
         api.get("api/active-chats/", config),

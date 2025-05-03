@@ -44,7 +44,7 @@ const Login = () => {
         localStorage.setItem("user", JSON.stringify(res.data.user));
 
         try {
-          const authStatus = await api.get("auth/status/", {
+          const authStatus = await api.get("api/auth/status/", {
             withCredentials: true,
           });
           console.log("Auth status response:", authStatus.data);
