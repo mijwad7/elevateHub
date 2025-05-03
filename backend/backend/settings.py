@@ -138,7 +138,7 @@ DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 # Application definition
 
 
-MEDIA_URL = 'https://elevatehub-proxy.mijuzz007.workers.dev/api/media/'
+MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 
