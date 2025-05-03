@@ -693,7 +693,7 @@ const Profile = () => {
   }
 
   const profileImageUrl = user?.profile_image
-    ? `https://elevatehub-proxy.mijuzz007.workers.dev/api${user.profile_image}`
+    ? user.profile_image
     : null;
 
   return (
