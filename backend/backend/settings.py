@@ -113,7 +113,10 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:5173",
     "http://localhost:8000",
     "http://ec2-44-244-135-39.us-west-2.compute.amazonaws.com",
-    "https://elevatehub-proxy.mijuzz007.workers.dev"
+    "https://elevatehub-proxy.mijuzz007.workers.dev",
+    "https://elevate-r6uuhaxzn-mijwads-projects.vercel.app",
+    "https://elevate-hub-theta.vercel.app",
+    "http://44.244.135.39",
 ]
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_HTTPONLY = False
@@ -257,7 +260,14 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    "https://elevate-r6uuhaxzn-mijwads-projects.vercel.app",
+    "https://elevate-hub-theta.vercel.app",  # Previous Vercel URL, if still used
+    "http://44.244.135.39",
+    "http://ec2-44-244-135-39.us-west-2.compute.amazonaws.com",
+    "https://elevatehub-proxy.mijuzz007.workers.dev",
 ]
+
+
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
 CORS_ALLOW_HEADERS = [
