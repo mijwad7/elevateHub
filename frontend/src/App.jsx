@@ -47,7 +47,7 @@ import "./App.css";
 function Logout() {
   const dispatch = useDispatch();
   useEffect(() => {
-    fetch("http://ec2-44-244-135-39.us-west-2.compute.amazonaws.com/api/logout/", {
+    fetch("https://elevatehub-proxy.mijuzz007.workers.dev/api/logout/", {
       method: "POST",
       credentials: "include",
     }).then(() => {
@@ -69,7 +69,7 @@ function AuthWrapper({ children }) {
   const location = useLocation();
 
   useEffect(() => {
-    fetch("http://ec2-44-244-135-39.us-west-2.compute.amazonaws.com/auth/status/", {
+    fetch("https://elevatehub-proxy.mijuzz007.workers.dev/auth/status/", {
       credentials: "include",
       headers: { Accept: "application/json" },
     })

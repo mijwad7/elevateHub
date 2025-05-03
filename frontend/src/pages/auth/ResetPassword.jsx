@@ -25,7 +25,7 @@ const ResetPassword = () => {
     }
 
     try {
-      await axios.post(`http://ec2-44-244-135-39.us-west-2.compute.amazonaws.com/api/reset-password/${uid}/${token}/`, {
+      await axios.post(`https://elevatehub-proxy.mijuzz007.workers.dev/api/reset-password/${uid}/${token}/`, {
         password: formData.new_password,
       });
       alert("Password reset successful! You can now log in.");

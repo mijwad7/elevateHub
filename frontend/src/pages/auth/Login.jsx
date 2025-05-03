@@ -17,7 +17,7 @@ const Login = () => {
   const [error, setError] = useState("");
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://ec2-44-244-135-39.us-west-2.compute.amazonaws.com/accounts/google/login/";
+    window.location.href = "https://elevatehub-proxy.mijuzz007.workers.dev/accounts/google/login/";
   };
 
   const handleNormalLogin = async (e) => {

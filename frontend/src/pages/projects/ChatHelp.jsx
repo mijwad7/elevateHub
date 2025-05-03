@@ -26,7 +26,7 @@ const ChatHelp = () => {
 
     const connectWebSocket = () => {
       const accessToken = localStorage.getItem("access");
-      let wsUrl = `ws://http://ec2-44-244-135-39.us-west-2.compute.amazonaws.com/api/ws/chat/${chatId}/`;
+      let wsUrl = `ws://https://elevatehub-proxy.mijuzz007.workers.dev/api/ws/chat/${chatId}/`;
       if (accessToken && accessToken !== "undefined") {
         wsUrl += `?token=${accessToken}`;
       }
@@ -202,7 +202,7 @@ const ChatHelp = () => {
                         {msg.content && <p className="mb-1">{msg.content}</p>}
                         {msg.image_url && (
                           <img
-                            src={`http://ec2-44-244-135-39.us-west-2.compute.amazonaws.com${msg.image_url}`}
+                            src={`https://elevatehub-proxy.mijuzz007.workers.dev${msg.image_url}`}
                             alt="Chat image"
                             className="chat-image mt-2 d-block"
                           />

@@ -693,7 +693,7 @@ const Profile = () => {
   }
 
   const profileImageUrl = user?.profile_image
-    ? `http://ec2-44-244-135-39.us-west-2.compute.amazonaws.com${user.profile_image}`
+    ? `https://elevatehub-proxy.mijuzz007.workers.dev${user.profile_image}`
     : null;
 
   return (

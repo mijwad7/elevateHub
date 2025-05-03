@@ -40,7 +40,7 @@ const HelpRequests = () => {
 
     const fetchCategories = async () => {
         try {
-            const response = await fetch('http://ec2-44-244-135-39.us-west-2.compute.amazonaws.com/api/categories/', {
+            const response = await fetch('https://elevatehub-proxy.mijuzz007.workers.dev/api/categories/', {
                 credentials: 'include',
             });
             const data = await response.json();

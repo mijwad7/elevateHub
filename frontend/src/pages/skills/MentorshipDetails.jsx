@@ -65,7 +65,7 @@ const MentorshipDetails = () => {
 
   const connectWebSocket = () => {
     const accessToken = localStorage.getItem(ACCESS_TOKEN);
-    let wsUrl = `ws://http://ec2-44-244-135-39.us-west-2.compute.amazonaws.com/api/ws/chat/${mentorship.chat_session_id}/`;
+    let wsUrl = `ws://https://elevatehub-proxy.mijuzz007.workers.dev/api/ws/chat/${mentorship.chat_session_id}/`;
     if (accessToken && accessToken !== 'undefined') {
       wsUrl += `?token=${accessToken}`;
     }
@@ -422,7 +422,7 @@ const MentorshipDetails = () => {
                             {msg.content && <p className="mb-1">{msg.content}</p>}
                             {msg.image_url && (
                               <img
-                                src={`http://ec2-44-244-135-39.us-west-2.compute.amazonaws.com${msg.image_url}`}
+                                src={`https://elevatehub-proxy.mijuzz007.workers.dev${msg.image_url}`}
                                 alt="Chat image"
                                 className="img-fluid rounded-3 mt-2"
                                 style={{ maxHeight: '200px', objectFit: 'cover' }}
