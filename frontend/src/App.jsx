@@ -69,7 +69,7 @@ function AuthWrapper({ children }) {
   const location = useLocation();
 
   useEffect(() => {
-    fetch("https://elevatehub-proxy.mijuzz007.workers.dev/auth/status/", {
+    fetch("https://elevatehub-proxy.mijuzz007.workers.dev/api/auth/status/", {
       credentials: "include",
       headers: { Accept: "application/json" },
     })
