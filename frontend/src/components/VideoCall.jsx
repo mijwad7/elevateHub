@@ -73,7 +73,7 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
             };
 
             const token = localStorage.getItem(ACCESS_TOKEN);
-            wsRef.current = new WebSocket(`wss://https://elevatehub-proxy.mijuzz007.workers.dev/api/ws/video-call/${callId}/?token=${token}`);
+            wsRef.current = new WebSocket(`wss://elevatehub-proxy.mijuzz007.workers.dev/api/ws/video-call/${callId}/?token=${token}`);
             wsRef.current.onopen = () => {
                 console.log(`Video WebSocket connected for call ${callId}, isHelper: ${isHelper}`);
                 if (isHelper) {
