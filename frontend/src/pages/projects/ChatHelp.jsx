@@ -26,7 +26,7 @@ const ChatHelp = () => {
 
     const connectWebSocket = () => {
       const accessToken = localStorage.getItem("access");
-      let wsUrl = `ws://https://elevatehub-proxy.mijuzz007.workers.dev/api/ws/chat/${chatId}/`;
+      let wsUrl = `wss://https://elevatehub-proxy.mijuzz007.workers.dev/api/ws/chat/${chatId}/`;
       if (accessToken && accessToken !== "undefined") {
         wsUrl += `?token=${accessToken}`;
       }

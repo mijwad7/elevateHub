@@ -65,7 +65,7 @@ const MentorshipDetails = () => {
 
   const connectWebSocket = () => {
     const accessToken = localStorage.getItem(ACCESS_TOKEN);
-    let wsUrl = `ws://https://elevatehub-proxy.mijuzz007.workers.dev/api/ws/chat/${mentorship.chat_session_id}/`;
+    let wsUrl = `wss://https://elevatehub-proxy.mijuzz007.workers.dev/api/ws/chat/${mentorship.chat_session_id}/`;
     if (accessToken && accessToken !== 'undefined') {
       wsUrl += `?token=${accessToken}`;
     }
