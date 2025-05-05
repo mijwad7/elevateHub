@@ -299,9 +299,6 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
                 <Button variant="secondary" onClick={toggleVideo} className="mx-2">
                     {isVideoEnabled ? 'Disable Video' : 'Enable Video'}
                 </Button>
-                <Button variant="warning" onClick={resetCall} className="mx-2">
-                    Reset Call
-                </Button>
             </div>
         </div>
     );
