@@ -13,7 +13,7 @@ const Home = () => {
             <h1 className="display-3 fw-bold text-navy mb-4 animate__animated animate__fadeInDown">
               Unlock Knowledge, Gain Skills, and Grow Together
             </h1>
-            <p className="fs-4 text-navy w-75 mx-auto mb-5 animate__animated animate__fadeInUp">
+            <p className="fs-4 text-navy mx-auto mb-5 animate__animated animate__fadeInUp">
               A collaborative learning platform where you earn credits by helping
               others and use them to improve your skills.
             </p>
@@ -30,7 +30,7 @@ const Home = () => {
         <section className="offer-section py-5" id="offer">
           <div className="container">
             <h2 className="fw-bold mb-4 text-center display-5">What We Offer</h2>
-            <p className="text-center mb-5 fs-5 w-75 mx-auto">
+            <p className="mb-5 fs-5 mx-auto">
               ElevateHub is a collaborative knowledge-sharing platform, designed to
               bring together learners, educators, and professionals in a unique,
               credit-based ecosystem.
@@ -87,7 +87,7 @@ const Home = () => {
         <section className="benefits-section py-5 bg-light">
           <div className="container">
             <h2 className="fw-bold mb-4 text-center display-5">Benefits</h2>
-            <p className="text-center mb-5 fs-5 w-75 mx-auto">
+            <p className="mb-5 fs-5 mx-auto">
               ElevateHub is built to make sure no one has to learn alone. It brings
               people together in a way that's fair, community-driven, and
               empowering for everyone involved.
@@ -141,7 +141,7 @@ const Home = () => {
         <section className="credits-section py-5">
           <div className="container">
             <h2 className="fw-bold mb-4 text-center display-5">How Credits Work</h2>
-            <p className="text-center mb-5 fs-5 w-75 mx-auto">
+            <p className="mb-5 fs-5 mx-auto">
               Earn credits by helping others, and use them to seek guidance from
               experienced members.
             </p>
