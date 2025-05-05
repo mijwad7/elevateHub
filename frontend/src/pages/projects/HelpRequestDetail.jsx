@@ -96,7 +96,7 @@ const HelpRequestDetail = () => {
   const handleStartVideoCall = async () => {
     try {
       const response = await axios.post(
-        `http://https://elevatehub-proxy.mijuzz007.workers.dev/api/start-video/${id}/`,
+        `https://elevatehub-proxy.mijuzz007.workers.dev/api/start-video/${id}/`,
         {},
         {
           headers: {
@@ -117,7 +117,7 @@ const HelpRequestDetail = () => {
       setError('');
       try {
         await axios.post(
-          `http://https://elevatehub-proxy.mijuzz007.workers.dev/api/end-video/${callId}/`,
+          `https://elevatehub-proxy.mijuzz007.workers.dev/api/end-video/${callId}/`,
           {},
           {
             headers: {
