@@ -19,79 +19,33 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
     const [isVideoEnabled, setIsVideoEnabled] = useState(true);
     const [isRemoteAudioEnabled, setIsRemoteAudioEnabled] = useState(true);
     const [isRemoteVideoEnabled, setIsRemoteVideoEnabled] = useState(true);
+    const [remoteStreamActive, setRemoteStreamActive] = useState(false);
+    const [resetKey, setResetKey] = useState(0); // Key to force remount
 
-    useEffect(() => {
-        if (!isAuthenticated) return;
+    const connectWebSocket = () => {
+        const token = localStorage.getItem(ACCESS_TOKEN);
+        const wsUrl = `wss://elevatehub-proxy.mijuzz007.workers.dev/api/ws/video-call/${callId}/?token=${token}`;
+        console.log(`Connecting to WebSocket: ${wsUrl}`);
+        wsRef.current = new WebSocket(wsUrl);
 
-        const startVideoCall = async () => {
-            pcRef.current = new RTCPeerConnection({
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }
-                ]
-            });
-
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                localVideoRef.current.srcObject = stream;
-                stream.getTracks().forEach(track => {
-                    console.log(`Adding track: ${track.kind}`);
-                    pcRef.current.addTrack(track, stream);
-                });
-            } catch (error) {
-                console.error("Error accessing media devices:", error);
-                return;
+        wsRef.current.onopen = () => {
+            console.log(`Video WebSocket connected for call ${callId}, isHelper: ${isHelper}`);
+            if (isHelper) {
+                sendOffer();
             }
+        };
 
-            pcRef.current.ontrack = (event) => {
-                console.log("Remote track received:", event.streams[0], "Track:", event.track);
-                remoteVideoRef.current.srcObject = event.streams[0];
-                setConnectionState('connected');
-                // Initialize remote track states
-                const audioTrack = event.streams[0].getAudioTracks()[0];
-                const videoTrack = event.streams[0].getVideoTracks()[0];
-                if (audioTrack) setIsRemoteAudioEnabled(audioTrack.enabled);
-                if (videoTrack) setIsRemoteVideoEnabled(videoTrack.enabled);
-            };
-
-            pcRef.current.onicecandidate = (event) => {
-                if (event.candidate) {
-                    console.log("Generated ICE candidate:", event.candidate);
-                    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-                        wsRef.current.send(JSON.stringify({ type: 'candidate', candidate: event.candidate }));
-                    } else {
-                        candidateQueue.current.push(event.candidate);
-                    }
-                } else {
-                    console.log("ICE candidate gathering complete");
-                }
-            };
-
-            pcRef.current.oniceconnectionstatechange = () => {
-                console.log("ICE connection state:", pcRef.current.iceConnectionState);
-                setConnectionState(pcRef.current.iceConnectionState);
-            };
-
-            const token = localStorage.getItem(ACCESS_TOKEN);
-            wsRef.current = new WebSocket(`wss://elevatehub-proxy.mijuzz007.workers.dev/api/ws/video-call/${callId}/?token=${token}`);
-            wsRef.current.onopen = () => {
-                console.log(`Video WebSocket connected for call ${callId}, isHelper: ${isHelper}`);
-                if (isHelper) {
-                    sendOffer();
-                }
-            };
-
-            wsRef.current.onmessage = async (e) => {
+        wsRef.current.onmessage = async (e) => {
+            try {
                 const data = JSON.parse(e.data);
                 console.log(`Received WebSocket message (isHelper: ${isHelper}):`, data);
 
                 if (data.status === 'call_ended') {
                     console.log("WebSocket received call_ended signal");
-                    // Only process if the call wasn't already ended locally
-                    if (isCallActive) { 
+                    if (isCallActive) {
                         console.log("Processing call_ended: Setting isCallActive false and calling onEndCall.");
                         setIsCallActive(false);
-                        onEndCall(); // Notify parent only if we are reacting to the WS message
+                        onEndCall();
                     } else {
                         console.log("Ignoring call_ended signal as call is already inactive locally.");
                     }
@@ -132,41 +86,123 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
                         setIsRemoteVideoEnabled(data.enabled);
                     }
                 }
-            };
-
-            wsRef.current.onerror = (e) => console.error("WebSocket error:", e);
-            wsRef.current.onclose = (e) => {
-                console.log(`Video WebSocket closed for call ${callId}, code: ${e.code}`);
-                setConnectionState('closed');
-            };
-
-            const sendOffer = async () => {
-                const offer = await pcRef.current.createOffer();
-                await pcRef.current.setLocalDescription(offer);
-                console.log("Sending offer:", offer);
-                wsRef.current.send(JSON.stringify({ type: 'offer', sdp: offer.sdp, type_sdp: offer.type }));
-                flushCandidateQueue();
-            };
+            } catch (error) {
+                console.error("Error processing WebSocket message:", error);
+            }
         };
 
-        const flushCandidateQueue = () => {
-            while (candidateQueue.current.length > 0 && wsRef.current.readyState === WebSocket.OPEN) {
-                const candidate = candidateQueue.current.shift();
-                console.log("Sending queued ICE candidate:", candidate);
-                wsRef.current.send(JSON.stringify({ type: 'candidate', candidate }));
+        wsRef.current.onerror = (e) => {
+            console.error("WebSocket error:", e);
+            setConnectionState('error');
+        };
+
+        wsRef.current.onclose = (e) => {
+            console.log(`Video WebSocket closed for call ${callId}, code: ${e.code}, retrying in 3s...`);
+            setConnectionState('closed');
+            setTimeout(connectWebSocket, 3000);
+        };
+    };
+
+    const sendOffer = async () => {
+        try {
+            const offer = await pcRef.current.createOffer();
+            await pcRef.current.setLocalDescription(offer);
+            console.log("Sending offer:", offer);
+            if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                wsRef.current.send(JSON.stringify({ type: 'offer', sdp: offer.sdp, type_sdp: offer.type }));
+                flushCandidateQueue();
+            } else {
+                console.warn("WebSocket not ready, offer will be sent on reconnect");
             }
+        } catch (error) {
+            console.error("Error sending offer:", error);
+        }
+    };
+
+    const flushCandidateQueue = () => {
+        while (candidateQueue.current.length > 0 && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            const candidate = candidateQueue.current.shift();
+            console.log("Sending queued ICE candidate:", candidate);
+            wsRef.current.send(JSON.stringify({ type: 'candidate', candidate }));
+        }
+    };
+
+    useEffect(() => {
+        if (!isAuthenticated) return;
+
+        const startVideoCall = async () => {
+            pcRef.current = new RTCPeerConnection({
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' }
+                    // Add TURN server here
+                ]
+            });
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                localVideoRef.current.srcObject = stream;
+                stream.getTracks().forEach(track => {
+                    console.log(`Adding track: ${track.kind}`);
+                    pcRef.current.addTrack(track, stream);
+                });
+            } catch (error) {
+                console.error("Error accessing media devices:", error);
+                return;
+            }
+
+            pcRef.current.ontrack = (event) => {
+                console.log("Remote track received:", event.streams[0], "Track:", event.track);
+                remoteVideoRef.current.srcObject = event.streams[0];
+                setRemoteStreamActive(true);
+                setConnectionState('connected');
+                const audioTrack = event.streams[0].getAudioTracks()[0];
+                const videoTrack = event.streams[0].getVideoTracks()[0];
+                if (audioTrack) setIsRemoteAudioEnabled(audioTrack.enabled);
+                if (videoTrack) setIsRemoteVideoEnabled(videoTrack.enabled);
+            };
+
+            pcRef.current.onicecandidate = (event) => {
+                if (event.candidate) {
+                    console.log("Generated ICE candidate:", event.candidate);
+                    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                        wsRef.current.send(JSON.stringify({ type: 'candidate', candidate: event.candidate }));
+                    } else {
+                        candidateQueue.current.push(event.candidate);
+                    }
+                } else {
+                    console.log("ICE candidate gathering complete");
+                }
+            };
+
+            pcRef.current.oniceconnectionstatechange = () => {
+                console.log("ICE connection state:", pcRef.current.iceConnectionState);
+                setConnectionState(pcRef.current.iceConnectionState);
+            };
+
+            connectWebSocket();
         };
 
         startVideoCall();
 
+        const checkRemoteStream = setInterval(() => {
+            if (!remoteStreamActive && isCallActive && connectionState !== 'connected') {
+                console.log('Remote stream not detected, resetting component...');
+                setResetKey(prev => prev + 1); // Force remount
+            } else {
+                clearInterval(checkRemoteStream);
+            }
+        }, 5000);
+
         return () => {
+            clearInterval(checkRemoteStream);
             if (wsRef.current) wsRef.current.close();
             if (pcRef.current) {
                 pcRef.current.getTracks?.().forEach(track => track.stop());
                 pcRef.current.close();
             }
         };
-    }, [isAuthenticated, callId, isHelper, onEndCall]);
+    }, [isAuthenticated, callId, isHelper, onEndCall, resetKey]);
 
     const handleEndCall = () => {
         setIsCallActive(false);
@@ -209,10 +245,15 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
         });
     };
 
+    const resetCall = () => {
+        console.log('Manually resetting call...');
+        setResetKey(prev => prev + 1); // Force remount
+    };
+
     if (!isCallActive) return null;
 
     return (
-        <div className="video-call-container d-flex flex-column justify-content-center align-items-center" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', zIndex: 1000 }}>
+        <div className="video-call-container d-flex flex-column justify-content-center align-items-center" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', zIndex: 1000 }} key={resetKey}>
             <div className="d-flex justify-content-center align-items-center mb-3">
                 <div className="video-container position-relative">
                     <video
@@ -257,6 +298,9 @@ const VideoCall = ({ callId, isHelper, onEndCall }) => {
                 </Button>
                 <Button variant="secondary" onClick={toggleVideo} className="mx-2">
                     {isVideoEnabled ? 'Disable Video' : 'Enable Video'}
+                </Button>
+                <Button variant="warning" onClick={resetCall} className="mx-2">
+                    Reset Call
                 </Button>
             </div>
         </div>
