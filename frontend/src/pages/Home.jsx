@@ -90,7 +90,7 @@ const Home = () => {
             <p className="mb-5 fs-5 mx-auto">
               ElevateHub is built to make sure no one has to learn alone. It brings
               people together in a way that's fair, community-driven, and
-              empowering for everyone involved.
+              empowering for everyone involved.ssss
             </p>
             <div className="row">
               {[
