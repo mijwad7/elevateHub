@@ -92,12 +92,12 @@ const HelpRequests = () => {
             <div className="container mt-5">
                 <div className="d-flex justify-content-between align-items-center mb-4">
                     <h1>Project/Work Help</h1>
-                    <button
+                    {isAuthenticated && <button
                         className="btn btn-primary"
                         onClick={() => setShowModal(true)}
                     >
                         + New Help Request
-                    </button>
+                    </button>}
                 </div>
 
                 <CategoryFilter
