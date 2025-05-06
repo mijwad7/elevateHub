@@ -19,7 +19,7 @@ const Home = () => {
             </p>
             <a
               href="#offer"
-              className="btn btn-primary btn-lg fw-semibold px-5 py-3 animate__animated animate__pulse animate__infinite"
+              className="btn btn-primary btn-lg fw-semibold px-3 py-2 animate__animated animate__pulse animate__infinite"
             >
               Get Started
             </a>
@@ -315,7 +315,7 @@ const Home = () => {
           text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
         .banner-section .btn-primary {
-          background: #6e8efb;
+          background: linear-gradient(135deg, rgb(11, 36, 71) 0%, rgb(5, 17, 36) 100%);
           border: none;
           transition: transform 0.3s ease, background 0.3s ease;
         }
