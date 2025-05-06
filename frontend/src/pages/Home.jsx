@@ -13,7 +13,7 @@ const Home = () => {
             <h1 className="display-3 fw-bold text-navy mb-4 animate__animated animate__fadeInDown">
               Unlock Knowledge, Gain Skills, and Grow Together
             </h1>
-            <p className="fs-4 text-navy mx-auto mb-5 animate__animated animate__fadeInUp">
+            <p className="fs-4 text-navy w-75 mx-auto mb-5 animate__animated animate__fadeInUp">
               A collaborative learning platform where you earn credits by helping
               others and use them to improve your skills.
             </p>
