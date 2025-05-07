@@ -108,17 +108,6 @@ const Login = () => {
                   </Link>
                 </div>
               </form>
-              <div className="divider">
-                <hr /><span>OR</span><hr />
-              </div>
-              <button
-                className="google-btn w-100"
-                onClick={handleGoogleLogin}
-                disabled={loading}
-              >
-                <img src="https://www.google.com/favicon.ico" alt="Google" />
-                Sign in with Google
-              </button>
             </div>
           </div>
         </div>
