@@ -108,13 +108,6 @@ class ProfileImageUploadView(APIView):
 
     def put(self, request, user_id):
         try:
-            # Ensure the user can only update their own profile
-            if request.user.id != int(user_id):
-                return Response(
-                    {"error": "You can only update your own profile"},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-
             try:
                 user = CustomUser.objects.get(id=user_id)
             except CustomUser.DoesNotExist:
@@ -343,13 +336,6 @@ class UserUpdateView(APIView):
 
     def put(self, request, user_id):
         try:
-            # Ensure the user can only update their own profile
-            if str(request.user.id) != str(user_id):
-                logger.warning(f"Unauthorized update attempt by user {request.user.username} on user {user_id}")  # Log warning
-                return Response(
-                    {"error": "You can only update your own profile"},
-                    status=status.HTTP_403_FORBIDDEN
-                )
 
             try:
                 user = CustomUser.objects.get(id=user_id)
