@@ -3,29 +3,29 @@ import Navbar from "../components/Navbar";
 
 const Home = () => {
   useEffect(() => {
-    // Set up Intersection Observer to trigger animations when sections enter viewport
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const elements = entry.target.querySelectorAll('.animate__animated');
             elements.forEach((el, index) => {
-              el.classList.add('animate__animated');
-              el.style.animationDelay = `${index * 0.1}s`; // Stagger animations
+              const animation = el.getAttribute('data-animation');
+              if (animation) {
+                el.classList.add(animation);
+                el.style.animationDelay = `${index * 0.1}s`;
+              }
             });
-            observer.unobserve(entry.target); // Stop observing once animated
+            observer.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.2 } // Trigger when 20% of section is visible
+      { threshold: 0.2 }
     );
 
-    // Observe all sections
     document.querySelectorAll('section').forEach((section) => {
       observer.observe(section);
     });
 
-    // Cleanup observer on component unmount
     return () => observer.disconnect();
   }, []);
 
@@ -37,16 +37,23 @@ const Home = () => {
         <section className="banner-section position-relative text-center py-5">
           <div className="banner-overlay"></div>
           <div className="container position-relative">
-            <h1 className="display-3 fw-bold text-navy mb-4 animate__animated animate__fadeInDown">
+            <h1
+              className="display-3 fw-bold text-navy mb-4 animate__animated"
+              data-animation="animate__fadeInDown"
+            >
               Unlock Knowledge, Gain Skills, and Grow Together
             </h1>
-            <p className="fs-4 text-navy w-75 mx-auto mb-5 animate__animated animate__fadeInUp">
+            <p
+              className="fs-4 text-navy w-75 mx-auto mb-5 animate__animated"
+              data-animation="animate__fadeInUp"
+            >
               A collaborative learning platform where you earn credits by helping
               others and use them to improve your skills.
             </p>
             <a
               href="#offer"
-              className="btn btn-primary btn-lg fw-semibold px-3 py-2 animate__animated animate__pulse animate__infinite"
+              className="btn btn-primary btn-lg fw-semibold px-3 py-2 animate__animated"
+              data-animation="animate__pulse animate__infinite"
             >
               Get Started
             </a>
@@ -56,10 +63,16 @@ const Home = () => {
         {/* Our Courses Section */}
         <section className="offer-section py-5" id="offer">
           <div className="container">
-            <h2 className="fw-bold mb-4 text-center display-5 animate__animated animate__fadeInUp">
+            <h2
+              className="fw-bold mb-4 text-center display-5 animate__animated"
+              data-animation="animate__fadeInUp"
+            >
               What We Offer
             </h2>
-            <p className="mb-5 fs-5 mx-auto animate__animated animate__fadeInUp">
+            <p
+              className="mb-5 fs-5 mx-auto animate__animated"
+              data-animation="animate__fadeInUp"
+            >
               ElevateHub is a collaborative knowledge-sharing platform, designed to
               bring together learners, educators, and professionals in a unique,
               credit-based ecosystem.
@@ -92,7 +105,10 @@ const Home = () => {
                 },
               ].map((course, index) => (
                 <div key={index} className="col-md-6 mb-4">
-                  <div className="card h-100 shadow offer-card animate__animated animate__fadeInUp">
+                  <div
+                    className="card h-100 shadow offer-card animate__animated"
+                    data-animation="animate__fadeInUp"
+                  >
                     <img
                       src={course.image}
                       className="card-img-top"
@@ -115,10 +131,16 @@ const Home = () => {
         {/* Benefits Section */}
         <section className="benefits-section py-5 bg-light">
           <div className="container">
-            <h2 className="fw-bold mb-4 text-center display-5 animate__animated animate__fadeInLeft">
+            <h2
+              className="fw-bold mb-4 text-center display-5 animate__animated"
+              data-animation="animate__fadeInLeft"
+            >
               Benefits
             </h2>
-            <p className="mb-5 fs-5 mx-auto animate__animated animate__fadeInLeft">
+            <p
+              className="mb-5 fs-5 mx-auto animate__animated"
+              data-animation="animate__fadeInLeft"
+            >
               ElevateHub is built to make sure no one has to learn alone. It brings
               people together in a way that's fair, community-driven, and
               empowering for everyone involved.
@@ -157,7 +179,10 @@ const Home = () => {
                 },
               ].map((benefit, index) => (
                 <div key={index} className="col-md-6 col-lg-4 mb-4">
-                  <div className="card h-100 shadow-sm benefit-card p-4 animate__animated animate__zoomIn">
+                  <div
+                    className="card h-100 shadow-sm benefit-card p-4 animate__animated"
+                    data-animation="animate__zoomIn"
+                  >
                     <h1 className="fw-bold text-primary mb-3">{benefit.number}</h1>
                     <h5 className="fw-bold mb-3">{benefit.title}</h5>
                     <p className="small text-muted">{benefit.text}</p>
@@ -171,16 +196,25 @@ const Home = () => {
         {/* Credits Section */}
         <section className="credits-section py-5">
           <div className="container">
-            <h2 className="fw-bold mb-4 text-center display-5 animate__animated animate__fadeInRight">
+            <h2
+              className="fw-bold mb-4 text-center display-5 animate__animated"
+              data-animation="animate__fadeInRight"
+            >
               How Credits Work
             </h2>
-            <p className="mb-5 fs-5 mx-auto animate__animated animate__fadeInRight">
+            <p
+              className="mb-5 fs-5 mx-auto animate__animated"
+              data-animation="animate__fadeInRight"
+            >
               Earn credits by helping others, and use them to seek guidance from
               experienced members.
             </p>
 
             {/* Earning Credits Section */}
-            <h3 className="fw-bold mt-5 mb-4 animate__animated animate__fadeInRight">
+            <h3
+              className="fw-bold mt-5 mb-4 animate__animated"
+              data-animation="animate__fadeInRight"
+            >
               Earning Credits
             </h3>
             <div className="row">
@@ -202,7 +236,10 @@ const Home = () => {
                 },
               ].map((credit, index) => (
                 <div key={index} className="col-md-6 col-lg-4 mb-4">
-                  <div className="card h-100 shadow-sm credit-card p-4 animate__animated animate__fadeInUp">
+                  <div
+                    className="card h-100 shadow-sm credit-card p-4 animate__animated"
+                    data-animation="animate__fadeInUp"
+                  >
                     <h5 className="fw-bold mb-3">{credit.title}</h5>
                     <p className="small text-muted">{credit.text}</p>
                   </div>
@@ -211,7 +248,10 @@ const Home = () => {
             </div>
 
             {/* Using Credits Section */}
-            <h3 className="fw-bold mt-5 mb-4 animate__animated animate__fadeInRight">
+            <h3
+              className="fw-bold mt-5 mb-4 animate__animated"
+              data-animation="animate__fadeInRight"
+            >
               Using Credits
             </h3>
             <div className="row">
@@ -233,7 +273,10 @@ const Home = () => {
                 },
               ].map((credit, index) => (
                 <div key={index} className="col-md-6 col-lg-4 mb-4">
-                  <div className="card h-100 shadow-sm credit-card p-4 animate__animated animate__fadeInUp">
+                  <div
+                    className="card h-100 shadow-sm credit-card p-4 animate__animated"
+                    data-animation="animate__fadeInUp"
+                  >
                     <h5 className="fw-bold mb-3">{credit.title}</h5>
                     <p className="small text-muted">{credit.text}</p>
                   </div>
@@ -248,7 +291,10 @@ const Home = () => {
           <div className="container">
             <div className="row">
               <div className="col-md-4 mb-4">
-                <h2 className="fw-bold display-5 animate__animated animate__fadeInLeft">
+                <h2
+                  className="fw-bold display-5 animate__animated"
+                  data-animation="animate__fadeInLeft"
+                >
                   Frequently Asked Questions
                 </h2>
               </div>
@@ -292,11 +338,15 @@ const Home = () => {
                       show: false,
                     },
                   ].map((faq, index) => (
-                    <div key={index} className="accordion-item mb-3 shadow-sm animate__animated animate__slideInUp">
+                    <div
+                      key={index}
+                      className="accordion-item mb-3 shadow-sm animate__animated"
+                      data-animation="animate__slideInUp"
+                    >
                       <h2 className="accordion-header" id={faq.id}>
                         <button
                           className={`accordion-button ${faq.show ? "" : "collapsed"}`}
-                          typescp
+                          type="button"
                           data-bs-toggle="collapse"
                           data-bs-target={`#${faq.collapseId}`}
                         >
@@ -333,6 +383,12 @@ const Home = () => {
         }
         .home-container {
           overflow-x: hidden;
+        }
+        .animate__animated {
+          opacity: 0;
+        }
+        .animate__animated[class*="animate__"] {
+          opacity: 1;
         }
         .banner-section {
           background: url('https://images.unsplash.com/photo-1516321310768-61f0e305b6df?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') no-repeat center center;
