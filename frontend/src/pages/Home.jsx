@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import Navbar from "../components/Navbar";
-import 'animate.css'; // Import Animate.css
 
 const Home = () => {
   useEffect(() => {
