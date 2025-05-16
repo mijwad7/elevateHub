@@ -402,7 +402,6 @@ const Home = () => {
           box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
         }
         .offer-card img {
-          height: 200px;
           object-fit: cover;
         }
         .benefit-card, .credit-card {
