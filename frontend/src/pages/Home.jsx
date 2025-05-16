@@ -69,25 +69,25 @@ const Home = () => {
                 {
                   title: "Forum Discussions",
                   text: "Ask and answer questions to help the community.",
-                  image: "https://images.unsplash.com/photo-1516321310768-61f0e305b6df?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80",
+                  image: "/images/discussions.jpg",
                   link: "/discussions",
                 },
                 {
                   title: "Project Help",
                   text: "Get guidance on real-world projects.",
-                  image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80",
+                  image: "/images/help.jpg",
                   link: "/help-requests",
                 },
                 {
                   title: "Skill Improvement",
                   text: "Get one-on-one help from expert users.",
-                  image: "https://images.unsplash.com/photo-1501504901893-7f69a6f27981?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80",
+                  image: "/images/upskill.jpg",
                   link: "/skills",
                 },
                 {
                   title: "Resource Sharing",
                   text: "Share and access useful study materials.",
-                  image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80",
+                  image: "/images/resources.jpg",
                   link: "/resources",
                 },
               ].map((course, index) => (
