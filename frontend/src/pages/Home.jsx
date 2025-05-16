@@ -1,7 +1,35 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Navbar from "../components/Navbar";
+import 'animate.css'; // Import Animate.css
 
 const Home = () => {
+  useEffect(() => {
+    // Set up Intersection Observer to trigger animations when sections enter viewport
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const elements = entry.target.querySelectorAll('.animate__animated');
+            elements.forEach((el, index) => {
+              el.classList.add('animate__animated');
+              el.style.animationDelay = `${index * 0.1}s`; // Stagger animations
+            });
+            observer.unobserve(entry.target); // Stop observing once animated
+          }
+        });
+      },
+      { threshold: 0.2 } // Trigger when 20% of section is visible
+    );
+
+    // Observe all sections
+    document.querySelectorAll('section').forEach((section) => {
+      observer.observe(section);
+    });
+
+    // Cleanup observer on component unmount
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <>
       <Navbar />
@@ -29,68 +57,72 @@ const Home = () => {
         {/* Our Courses Section */}
         <section className="offer-section py-5" id="offer">
           <div className="container">
-            <h2 className="fw-bold mb-4 text-center display-5">What We Offer</h2>
-            <p className="mb-5 fs-5 mx-auto">
+            <h2 className="fw-bold mb-4 text-center display-5 animate__animated animate__fadeInUp">
+              What We Offer
+            </h2>
+            <p className="mb-5 fs-5 mx-auto animate__animated animate__fadeInUp">
               ElevateHub is a collaborative knowledge-sharing platform, designed to
               bring together learners, educators, and professionals in a unique,
               credit-based ecosystem.
             </p>
             <div className="row">
-            {[
-              {
-                title: "Forum Discussions",
-                text: "Ask and answer questions to help the community.",
-                image: "/images/discussions.jpg",
-                link: "/discussions",
-              },
-              {
-                title: "Project Help",
-                text: "Get guidance on real-world projects.",
-                image: "/images/help.jpg",
-                link: "/help-requests",
-              },
-              {
-                title: "Skill Improvement",
-                text: "Get one-on-one help from expert users.",
-                image: "/images/upskill.jpg",
-                link: "/skills",
-              },
-              {
-                title: "Resource Sharing",
-                text: "Share and access useful study materials.",
-                image: "/images/resources.jpg",
-                link: "/resources",
-              },
-            ].map((course, index) => (
-              <div key={index} className="col-md-6 mb-4">
-                <div className="card h-100 shadow">
-                  <img
-                    src={course.image}
-                    className="card-img-top"
-                    alt={course.title}
-                  />
-                  <div className="card-body">
-                    <h5 className="fw-bold">{course.title}</h5>
-                    <p>{course.text}</p>
-                    <a href={course.link} className="btn btn-outline-dark">
-                      Explore
-                    </a>
+              {[
+                {
+                  title: "Forum Discussions",
+                  text: "Ask and answer questions to help the community.",
+                  image: "https://images.unsplash.com/photo-1516321310768-61f0e305b6df?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80",
+                  link: "/discussions",
+                },
+                {
+                  title: "Project Help",
+                  text: "Get guidance on real-world projects.",
+                  image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80",
+                  link: "/help-requests",
+                },
+                {
+                  title: "Skill Improvement",
+                  text: "Get one-on-one help from expert users.",
+                  image: "https://images.unsplash.com/photo-1501504901893-7f69a6f27981?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80",
+                  link: "/skills",
+                },
+                {
+                  title: "Resource Sharing",
+                  text: "Share and access useful study materials.",
+                  image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80",
+                  link: "/resources",
+                },
+              ].map((course, index) => (
+                <div key={index} className="col-md-6 mb-4">
+                  <div className="card h-100 shadow offer-card animate__animated animate__fadeInUp">
+                    <img
+                      src={course.image}
+                      className="card-img-top"
+                      alt={course.title}
+                    />
+                    <div className="card-body">
+                      <h5 className="fw-bold">{course.title}</h5>
+                      <p>{course.text}</p>
+                      <a href={course.link} className="btn btn-outline-dark">
+                        Explore
+                      </a>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
           </div>
         </section>
 
         {/* Benefits Section */}
         <section className="benefits-section py-5 bg-light">
           <div className="container">
-            <h2 className="fw-bold mb-4 text-center display-5">Benefits</h2>
-            <p className="mb-5 fs-5 mx-auto">
+            <h2 className="fw-bold mb-4 text-center display-5 animate__animated animate__fadeInLeft">
+              Benefits
+            </h2>
+            <p className="mb-5 fs-5 mx-auto animate__animated animate__fadeInLeft">
               ElevateHub is built to make sure no one has to learn alone. It brings
               people together in a way that's fair, community-driven, and
-              empowering for everyone involved.ssss
+              empowering for everyone involved.
             </p>
             <div className="row">
               {[
@@ -126,7 +158,7 @@ const Home = () => {
                 },
               ].map((benefit, index) => (
                 <div key={index} className="col-md-6 col-lg-4 mb-4">
-                  <div className="card h-100 shadow-sm benefit-card p-4">
+                  <div className="card h-100 shadow-sm benefit-card p-4 animate__animated animate__zoomIn">
                     <h1 className="fw-bold text-primary mb-3">{benefit.number}</h1>
                     <h5 className="fw-bold mb-3">{benefit.title}</h5>
                     <p className="small text-muted">{benefit.text}</p>
@@ -140,14 +172,18 @@ const Home = () => {
         {/* Credits Section */}
         <section className="credits-section py-5">
           <div className="container">
-            <h2 className="fw-bold mb-4 text-center display-5">How Credits Work</h2>
-            <p className="mb-5 fs-5 mx-auto">
+            <h2 className="fw-bold mb-4 text-center display-5 animate__animated animate__fadeInRight">
+              How Credits Work
+            </h2>
+            <p className="mb-5 fs-5 mx-auto animate__animated animate__fadeInRight">
               Earn credits by helping others, and use them to seek guidance from
               experienced members.
             </p>
 
             {/* Earning Credits Section */}
-            <h3 className="fw-bold mt-5 mb-4">Earning Credits</h3>
+            <h3 className="fw-bold mt-5 mb-4 animate__animated animate__fadeInRight">
+              Earning Credits
+            </h3>
             <div className="row">
               {[
                 {
@@ -167,7 +203,7 @@ const Home = () => {
                 },
               ].map((credit, index) => (
                 <div key={index} className="col-md-6 col-lg-4 mb-4">
-                  <div className="card h-100 shadow-sm credit-card p-4">
+                  <div className="card h-100 shadow-sm credit-card p-4 animate__animated animate__fadeInUp">
                     <h5 className="fw-bold mb-3">{credit.title}</h5>
                     <p className="small text-muted">{credit.text}</p>
                   </div>
@@ -176,7 +212,9 @@ const Home = () => {
             </div>
 
             {/* Using Credits Section */}
-            <h3 className="fw-bold mt-5 mb-4">Using Credits</h3>
+            <h3 className="fw-bold mt-5 mb-4 animate__animated animate__fadeInRight">
+              Using Credits
+            </h3>
             <div className="row">
               {[
                 {
@@ -196,7 +234,7 @@ const Home = () => {
                 },
               ].map((credit, index) => (
                 <div key={index} className="col-md-6 col-lg-4 mb-4">
-                  <div className="card h-100 shadow-sm credit-card p-4">
+                  <div className="card h-100 shadow-sm credit-card p-4 animate__animated animate__fadeInUp">
                     <h5 className="fw-bold mb-3">{credit.title}</h5>
                     <p className="small text-muted">{credit.text}</p>
                   </div>
@@ -211,7 +249,9 @@ const Home = () => {
           <div className="container">
             <div className="row">
               <div className="col-md-4 mb-4">
-                <h2 className="fw-bold display-5">Frequently Asked Questions</h2>
+                <h2 className="fw-bold display-5 animate__animated animate__fadeInLeft">
+                  Frequently Asked Questions
+                </h2>
               </div>
               <div className="col-md-8">
                 <div className="accordion" id="faqAccordion">
@@ -253,11 +293,11 @@ const Home = () => {
                       show: false,
                     },
                   ].map((faq, index) => (
-                    <div key={index} className="accordion-item mb-3 shadow-sm">
+                    <div key={index} className="accordion-item mb-3 shadow-sm animate__animated animate__slideInUp">
                       <h2 className="accordion-header" id={faq.id}>
                         <button
                           className={`accordion-button ${faq.show ? "" : "collapsed"}`}
-                          type="button"
+                          typescp
                           data-bs-toggle="collapse"
                           data-bs-target={`#${faq.collapseId}`}
                         >
@@ -309,26 +349,48 @@ const Home = () => {
           left: 0;
           right: 0;
           bottom: 0;
-          background: linear-gradient(135deg, rgb(186 220 234 / 80%), rgb(234 234 234 / 80%));
-        }
-        .banner-section h1 {
-          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-        .banner-section .btn-primary {
-          background: linear-gradient(135deg, rgb(11, 36, 71) 0%, rgb(5, 17, 36) 100%);
-          border: none;
-          transition: transform 0.3s ease, background 0.3s ease;
+          background: linear-gradient(135deg, rgba(186, 220, 234, 0.8), rgba(234, 234, 234, 0.8));
         }
         .text-navy {
           color: #0b2447;
           text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
         }
+        .banner-section h1 {
+          font-size: 3.5rem;
+          animation-duration: 0.8s;
+          animation-delay: 0.2s;
+        }
+        .banner-section p {
+          animation-duration: 0.8s;
+          animation-delay: 0.4s;
+        }
+        .banner-section a {
+          animation-duration: 1s;
+          animation-delay: 0.6s;
+        }
+        .banner-section .btn-primary {
+          background: linear-gradient(135deg, #0b2447 0%, #051124 100%);
+          border: none;
+          transition: transform 0.3s ease, background 0.3s ease;
+        }
         .banner-section .btn-primary:hover {
-          background: #5a6ff6;
+          background: #1a3c6d;
           transform: translateY(-3px);
         }
         .offer-section, .benefits-section, .credits-section, .faq-section {
           padding: 80px 0;
+        }
+        .offer-section h2, .benefits-section h2, .credits-section h2, .faq-section h2 {
+          animation-duration: 0.8s;
+        }
+        .offer-section p, .benefits-section p, .credits-section p {
+          animation-duration: 0.8s;
+        }
+        .offer-card, .benefit-card, .credit-card {
+          animation-duration: 0.6s;
+        }
+        .accordion-item {
+          animation-duration: 0.7s;
         }
         .offer-card {
           transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -362,6 +424,7 @@ const Home = () => {
           font-weight: 600;
           background: #fff;
           border-radius: 10px;
+          color: #0b2447;
         }
         .accordion-button:not(.collapsed) {
           background: #0b2447;
@@ -373,6 +436,15 @@ const Home = () => {
         .accordion-body {
           background: #fff;
           border-radius: 0 0 10px 10px;
+          color: #0b2447;
+        }
+        .btn-outline-primary {
+          border-color: #0b2447;
+          color: #0b2447;
+        }
+        .btn-outline-primary:hover {
+          background: #0b2447;
+          color: #fff;
         }
         @media (max-width: 768px) {
           .banner-section {
