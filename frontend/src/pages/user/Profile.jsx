@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import api from "../../apiRequests/api";
 import { loginSuccess, updateCredits } from "../../redux/authSlice";
@@ -700,6 +700,18 @@ const Profile = () => {
     <div className="bg-light min-vh-100">
       <Navbar />
       <div className="container py-5">
+        <ToastContainer
+                position="top-right"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="light"
+            />
         <div className="row justify-content-center">
           <div className="col-lg-12">
             {/* Profile Header with Tabs */}
