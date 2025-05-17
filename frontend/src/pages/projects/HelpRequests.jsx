@@ -3,6 +3,8 @@ import { useSelector } from 'react-redux';
 import { createHelpRequest, getHelpRequests } from '../../apiRequests/helpRequests'; // Updated path
 import Navbar from '../../components/Navbar';
 import CategoryFilter from '../../components/CategoryFilter';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const HelpRequests = () => {
     const { user, isAuthenticated } = useSelector((state) => state.auth);
@@ -58,7 +60,10 @@ const HelpRequests = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!isAuthenticated) {
-            alert("Please log in to post a help request.");
+            toast.error("Please log in to post a help request.", {
+                position: "top-right",
+                autoClose: 3000,
+            });
             return;
         }
         const { title, description, category, credit_offer_chat, credit_offer_video } = formData;
@@ -79,9 +84,15 @@ const HelpRequests = () => {
                 credit_offer_video: 0,
             });
             setShowModal(false);
-            alert("Help request posted successfully!");
+            toast.success("Help request posted successfully!", {
+                position: "top-right",
+                autoClose: 3000,
+            });
         } else {
-            alert("Failed to post help request.");
+            toast.error("Failed to post help request.", {
+                position: "top-right",
+                autoClose: 3000,
+            });
         }
     };
 
