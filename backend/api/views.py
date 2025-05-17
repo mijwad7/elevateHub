@@ -104,7 +104,6 @@ class UserDeleteView(generics.DestroyAPIView):
 class ProfileImageUploadView(APIView):
     parser_classes = [MultiPartParser, FormParser]
     permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [SessionAuthentication, TokenAuthentication]
 
     def put(self, request, user_id):
         try:
@@ -332,7 +331,6 @@ class VerifyOTPView(APIView):
 
 class UserUpdateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [SessionAuthentication, TokenAuthentication]
 
     def put(self, request, user_id):
         try:
