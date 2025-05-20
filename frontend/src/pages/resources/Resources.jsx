@@ -215,15 +215,6 @@ function Resources() {
                         <i className="bi bi-arrow-up me-1"></i>{" "}
                         {resource.upvotes}
                       </button>
-                      <a
-                        href={resource.files[0].file}
-                        download
-                        onClick={() => handleDownload(resource.id)}
-                        className="btn btn-sm btn-success"
-                      >
-                        <i className="bi bi-download me-1"></i>{" "}
-                        {resource.download_count}
-                      </a>
                     </div>
                   )}
                 </div>
