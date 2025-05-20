@@ -10,6 +10,7 @@ import {
 import axios from "axios";
 import VideoCall from "../../components/VideoCall";
 import Navbar from "../../components/Navbar";
+import { toast, ToastContainer } from "react-toastify";
 
 const HelpRequestDetail = () => {
   const { id } = useParams();
@@ -51,7 +52,10 @@ const HelpRequestDetail = () => {
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     if (!isAuthenticated) {
-      alert("Please log in to comment.");
+      toast.error("Please log in to comment.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
       return;
     }
     try {
@@ -59,10 +63,26 @@ const HelpRequestDetail = () => {
       if (newComment) {
         setRequest({ ...request, comments: [...request.comments, newComment] });
         setComment("");
-        alert("Comment posted!");
+        toast.success("Comment posted!", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      } else {
+        toast.error("Failed to post comment. Please try again.", {
+          position: "top-right",
+          autoClose: 3000,
+        });
       }
-    } catch (err) {
-      setError("Failed to post comment. Please try again.");
+    } catch (error) {
+      console.error("Error posting comment:", error);
+      toast.error(
+        error.response?.data?.error ||
+          "Failed to post comment. Please try again.",
+        {
+          position: "top-right",
+          autoClose: 3000,
+        }
+      );
     }
   };
 
@@ -114,7 +134,7 @@ const HelpRequestDetail = () => {
   const handleEndCall = async () => {
     if (callId) {
       setLoading(true);
-      setError('');
+      setError("");
       try {
         await axios.post(
           `https://elevatehub-proxy.mijuzz007.workers.dev/api/end-video/${callId}/`,
@@ -125,10 +145,14 @@ const HelpRequestDetail = () => {
             },
           }
         );
-        console.log(`Successfully notified backend about ending call ${callId}`);
+        console.log(
+          `Successfully notified backend about ending call ${callId}`
+        );
       } catch (err) {
-        setError('Failed to properly notify server about ending call. Please try again.');
-        console.error('Error ending video call:', err);
+        setError(
+          "Failed to properly notify server about ending call. Please try again."
+        );
+        console.error("Error ending video call:", err);
       } finally {
         setLoading(false);
         setCallId(null);
@@ -142,6 +166,14 @@ const HelpRequestDetail = () => {
     <>
       <Navbar />
       <div className="container py-5">
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          closeOnClick
+          pauseOnHover
+          theme="light"
+        />
         <style>{`
           .comment-card {
             transition: background-color 0.2s ease;
@@ -308,7 +340,8 @@ const HelpRequestDetail = () => {
                       onClick={handleStartVideoCall}
                       disabled={loading}
                     >
-                      <i className="bi bi-camera-video-fill me-2"></i>Start Video Call
+                      <i className="bi bi-camera-video-fill me-2"></i>Start
+                      Video Call
                     </button>
                   )}
                 </div>
