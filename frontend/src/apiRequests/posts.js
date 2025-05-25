@@ -33,7 +33,7 @@ export const getDiscussionPosts = async (discussionId) => {
       user: {
         username: post.user_username,
         profile: post.user_profile
-          ? `${import.meta.env.VITE_API_URL}${post.user_profile}`
+          ? `${post.user_profile}`
           : "https://avatar.iran.liara.run/public/4",
       },
     }));

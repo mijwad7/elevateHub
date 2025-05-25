@@ -22,7 +22,7 @@ export const getDiscussions = async (url = "/api/discussions/") => {
       posts_count: discussion.posts_count,
       created_by: {
         username: discussion.created_by_username,
-        profile: import.meta.env.VITE_API_URL + discussion.created_by_profile,
+        profile: discussion.created_by_profile,
       },
     }));
   } catch (error) {
@@ -40,7 +40,7 @@ export const getDiscussionDetails = async (discussionId) => {
       ...response.data,
       created_by: {
         username: response.data.created_by_username,
-        profile: `${import.meta.env.VITE_API_URL}${response.data.created_by_profile}`,
+        profile: `${response.data.created_by_profile}`,
       },
     };
   } catch (error) {
